@@ -1,12 +1,15 @@
 // khan/md: Machinedrum-style machines (<dk/machine/machine.h>), one body for both devices.
-// This first version holds one machine, EFM-BD: two sine operators with feedback FM.
+// Machines: EFM-BD and EFM-XT, two sine operators with feedback FM on one shared loop (_md_efm_run).
 //
 // Based on Digidrum's EFM-BD (soejrd/digidrum, machines/EFM/BD/efm_bd.c, MIT, used with the author's permission),
 // rewritten for the SHARC+: float32, phases as 32-bit integers (2^32 a turn, so they wrap for free), the
 // Machinedrum's 15-bit sine index kept (it shapes the feedback's timbre), a branch-free sine fold, a degree-7 odd
 // polynomial (max error 2.2e-6), knob curves as tables (tables.inc, gen_tables.py) and 48 kHz.
 //
-// Knobs (words 0..7, the Machinedrum's order): PTCH DEC RAMP RDEC MOD MFRQ MDEC MFB.
+// Knobs (words 0..7, the Machinedrum's order): EFM-BD PTCH DEC RAMP RDEC MOD MFRQ MDEC MFB; EFM-XT the same with CLIC for MFB.
+// EFM-XT (fitted to the Machinedrum's, research/fit_efm_xt.py): PTCH reads BD's table at 24 + PTCH / 2 (43 to 171 Hz); the
+// modulator fed back at half of BD's full; the deviation (3/8) MOD / 16 of BD's pitch at PTCH, not XT's (_md_xt_dev); a
+// one-pole high-pass at 125 Hz after the loop; a start level 0.839 of BD's; CLIC starts the carrier up to 0.19 cycle in.
 // Per sample, y1 a phase step in 2^32-units a sample:
 //   y1 = ptch8 * op1 + ptch;     op1 = op1 * rdec                    pitch ramp
 //   s1 = sin(ph1 + m + m);       ph1 += inc(step1 * y1)               modulator, fed back one sample late
@@ -19,6 +22,8 @@
 //
 // State per voice (MD_STATE bytes; the first 6 words are set at note-on, the coefficients each block):
 //   0 ph1  1 ph2  2 m  3 op1  4 op2  5 fbg  |  6 ptch  7 ptch8  8 rdec  9 mdec  10 dec  11 step1  12 fbamt  13 modamt
+//   14 hpc (the high-pass's coefficient, 0: none)  15 low (its state)
+// High-pass, per sample after the loop: d = s - low; d = d * hpc; low = low + d; out = s - low.
 // A voice whose level fbg is under 2^-22 has died away: it writes zeros and returns DK_DONE (it costs nothing more).
 //
 // Registers: I3 state, I2 voice input, I1 parameter words, I0 output, I4 the constants, I5 a table; in the loop
@@ -27,8 +32,10 @@
 #include "dk_machine.inc"
 #include "tables.inc"
 
-#define MD_STATE 56
-#define MD_CLEAR 24
+#define MD_STATE 64
+#define MD_CLEAR 64
+// EFM-XT's start level: 0.839 * 0.315478504
+#define MX_LEVEL 0x3e8784fc
 
 // the constants table _md_k, word offsets
 #define K_A1 0
@@ -41,19 +48,24 @@
 .SECTION/PM seg_pmco;
 .GLOBAL _md_render;
 .GLOBAL _md_note_on;
+.GLOBAL _mx_render;
+.GLOBAL _mx_note_on;
 .EXTERN _md_efm_ptch;
 .EXTERN _md_efm_dec;
 .EXTERN _md_efm_rdec;
 .EXTERN _md_efm_mdec;
 .EXTERN _md_semis;
 .EXTERN _md_k;
+.EXTERN _md_xt_dev;
 
 // MD_KNOB(OUT, TABLE, WORD): OUT = T[k] + (T[k + 1] - T[k]) * f for the 8.8 word k.f of parameter WORD.
 // The adapter clamps the word to 0 .. 0x7f00, so k <= 127 and k + 1 <= 128 are inside the 129 entries.
 // Addresses are bytes: the entry's address is TABLE + 4 k, made in the ALU (a register modifier does not index words here).
-// Clobbers R0 R1 R2 F3 F4 I5.
+// MD_KNOBR is the same for the word in R0. Clobbers R0 R1 R2 F3 F4 I5.
 #define MD_KNOB(OUT, TABLE, WORD) \
     R0 = DM(WORD, I1); \
+    MD_KNOBR(OUT, TABLE)
+#define MD_KNOBR(OUT, TABLE) \
     R2 = -6; \
     R1 = LSHIFT R0 BY R2; \
     R2 = 0x3fc; \
@@ -72,59 +84,68 @@
     F4 = F4 * F2; \
     OUT = F3 + F4
 
+// MD_ENTER: the call's pointers; a voice that has died away (or whose level is not a number) rests.
+#define MD_ENTER \
+    I3 = R4; \
+    I2 = R8; \
+    I1 = R12; \
+    R0 = DM(DK_IN_W_OUT, I2); \
+    I0 = R0; \
+    F13 = DM(5, I3); \
+    R0 = 0x34800000; \
+    COMP(F13, F0); \
+    IF LT JUMP _md_rest
+
+// MD_PITCH: from F5, the PTCH table's turns a sample at note 60: ptch and ptch8 for the voice's note (tests/md_ref.py pitch).
+#define MD_PITCH \
+    R0 = DM(DK_IN_W_PITCH, I2); \
+    R2 = -8; \
+    R1 = LSHIFT R0 BY R2; \
+    R2 = 12; \
+    R1 = R1 - R2; \
+    R2 = 0; \
+    R1 = MAX(R1, R2); \
+    R2 = 96; \
+    R1 = MIN(R1, R2); \
+    R1 = LSHIFT R1 BY 2; \
+    R2 = _md_semis; \
+    R1 = R1 + R2; \
+    I5 = R1; \
+    F3 = DM(0, I5); \
+    F5 = F5 * F3; \
+    R0 = 0x4f800000; \
+    F5 = F5 * F0; \
+    DM(6, I3) = F5; \
+    R0 = 0x41000000; \
+    F6 = F0 * F5; \
+    DM(7, I3) = F6
+
+// MD_DECAYS: dec, rdec, mdec and step1 = 8 max(MFRQ, 1) / 128.
+#define MD_DECAYS \
+    MD_KNOB(F5, _md_efm_dec, 1); \
+    DM(10, I3) = F5; \
+    MD_KNOB(F5, _md_efm_rdec, 3); \
+    DM(8, I3) = F5; \
+    MD_KNOB(F5, _md_efm_mdec, 6); \
+    DM(9, I3) = F5; \
+    R0 = DM(5, I1); \
+    F5 = FLOAT R0; \
+    R0 = 0x3b800000; \
+    F5 = F5 * F0; \
+    R0 = 0x3f800000; \
+    F5 = MAX(F5, F0); \
+    R0 = 0x3c000000; \
+    F5 = F5 * F0; \
+    R0 = 0x41000000; \
+    F5 = F0 * F5; \
+    DM(11, I3) = F5
+
+// ---- EFM-BD ----
 _md_render:
-    I3 = R4;
-    I2 = R8;
-    I1 = R12;
-    R0 = DM(DK_IN_W_OUT, I2);
-    I0 = R0;
-
-    // a voice that has died away (or whose level is not a number) ends
-    F13 = DM(5, I3);
-    R0 = 0x34800000;                      // 2^-22: 2^-21 of the start level 0.5
-    COMP(F13, F0);
-    IF LT JUMP _md_rest;
-
-    // ---- the block's coefficients (tests/md_ref.py: coefficients) ----
-    MD_KNOB(F5, _md_efm_ptch, 0);         // PTCH, turns a sample at note 60
-    R0 = DM(DK_IN_W_PITCH, I2);
-    R2 = -8;
-    R1 = LSHIFT R0 BY R2;                 // the note
-    R2 = 12;
-    R1 = R1 - R2;                         // note - 60 + 48, the semitone table's index
-    R2 = 0;
-    R1 = MAX(R1, R2);
-    R2 = 96;
-    R1 = MIN(R1, R2);
-    R1 = LSHIFT R1 BY 2;                  // bytes
-    R2 = _md_semis;
-    R1 = R1 + R2;
-    I5 = R1;
-    F3 = DM(0, I5);
-    F5 = F5 * F3;
-    R0 = 0x4f800000;                      // 2^32: phase units
-    F5 = F5 * F0;
-    DM(6, I3) = F5;                       // ptch
-    R0 = 0x41000000;                      // 8.0
-    F6 = F0 * F5;
-    DM(7, I3) = F6;                       // ptch8 = 8 ptch
-    MD_KNOB(F5, _md_efm_dec, 1);
-    DM(10, I3) = F5;                      // dec
-    MD_KNOB(F5, _md_efm_rdec, 3);
-    DM(8, I3) = F5;                       // rdec
-    MD_KNOB(F5, _md_efm_mdec, 6);
-    DM(9, I3) = F5;                       // mdec
-    R0 = DM(5, I1);                       // MFRQ, at least 1
-    F5 = FLOAT R0;
-    R0 = 0x3b800000;                      // 1/256
-    F5 = F5 * F0;
-    R0 = 0x3f800000;                      // 1.0
-    F5 = MAX(F5, F0);
-    R0 = 0x3c000000;                      // 1/128
-    F5 = F5 * F0;
-    R0 = 0x41000000;                      // 8.0
-    F5 = F0 * F5;
-    DM(11, I3) = F5;                      // step1 = 8 max(MFRQ, 1) / 128
+    MD_ENTER;
+    MD_KNOB(F5, _md_efm_ptch, 0);         // PTCH
+    MD_PITCH;
+    MD_DECAYS;
     R0 = DM(7, I1);                       // MFB
     F5 = FLOAT R0;
     R0 = 0x3b800000;
@@ -143,7 +164,36 @@ _md_render:
     R0 = 0x41000000;
     F5 = F0 * F5;
     DM(13, I3) = F5;                      // modamt = 8 MOD / 128
+    R0 = 0;
+    DM(14, I3) = R0;                      // no high-pass
+    JUMP _md_efm_run;
 
+// ---- EFM-XT ----
+_mx_render:
+    MD_ENTER;
+    R0 = DM(0, I1);                       // PTCH, read on BD's table at 24 + PTCH / 2
+    R2 = -1;
+    R0 = LSHIFT R0 BY R2;
+    R2 = 0x1800;
+    R0 = R0 + R2;
+    MD_KNOBR(F5, _md_efm_ptch);
+    MD_PITCH;
+    MD_DECAYS;
+    R0 = 0x4e800000;                      // 2^30: half of BD's full feedback
+    DM(12, I3) = R0;
+    MD_KNOB(F5, _md_xt_dev, 0);           // (3/8) / 16 of BD's pitch over XT's, at PTCH
+    R0 = DM(4, I1);                       // MOD
+    F6 = FLOAT R0;
+    R0 = 0x3b800000;
+    F6 = F6 * F0;
+    F5 = F6 * F5;
+    DM(13, I3) = F5;                      // modamt
+    R0 = 0x3c84f35c;                      // 1 - exp(-2 pi 125 / 48000)
+    DM(14, I3) = R0;
+    JUMP _md_efm_run;
+
+// ---- the shared loop ----
+_md_efm_run:
     // ---- the voice's state into registers; envelopes under 1e-30 are 0 (no denormals) ----
     R8 = DM(0, I3);
     R9 = DM(1, I3);
@@ -248,6 +298,23 @@ _md_efm_end: F13 = F13 * F0;
     DM(3, I3) = F11;
     DM(4, I3) = F12;
     DM(5, I3) = F13;
+
+    // the high-pass, when the machine has one
+    R3 = DM(14, I3);
+    R3 = PASS R3;
+    IF EQ JUMP _md_ok;
+    F2 = DM(15, I3);                      // low
+    R0 = DM(DK_IN_W_OUT, I2);
+    I1 = R0;
+    LCNTR = DK_BLOCK, DO _md_hp_end UNTIL LCE;
+        F0 = DM(0, I1);
+        F1 = F0 - F2;
+        F1 = F1 * F3;
+        F2 = F2 + F1;
+        F0 = F0 - F2;
+_md_hp_end: DM(I1, M6) = F0;
+    DM(15, I3) = F2;
+_md_ok:
     R0 = DK_OK;
     JUMP (M13, I13);
 
@@ -283,6 +350,36 @@ _md_note_on:
     DM(2, I3) = R0;                       // m
     JUMP (M13, I13);
 
+// EFM-XT's note_on: as BD's, the level 0.839 of BD's, the carrier CLIC * 0.19 / 128 of a cycle in, the high-pass at rest.
+_mx_note_on:
+    I3 = R4;
+    I1 = R12;
+    R0 = DM(2, I1);                       // RAMP
+    F1 = FLOAT R0;
+    R0 = 0x3b800000;
+    F1 = F1 * F0;
+    R0 = 0x41800000;
+    F1 = F1 - F0;
+    R0 = 0x3c000000;
+    F1 = F1 * F0;
+    DM(3, I3) = F1;                       // op1
+    R0 = 0x3f800000;
+    DM(4, I3) = R0;                       // op2 = 1
+    R0 = MX_LEVEL;
+    DM(5, I3) = R0;                       // fbg
+    R0 = 524288000;
+    DM(0, I3) = R0;                       // ph1
+    R0 = DM(7, I1);                       // CLIC
+    F1 = FLOAT R0;
+    R0 = 0x46c28f5c;                      // 0.19 * 2^32 / 32768
+    F1 = F1 * F0;
+    R1 = TRUNC F1;
+    DM(1, I3) = R1;                       // ph2
+    R0 = 0;
+    DM(2, I3) = R0;                       // m
+    DM(15, I3) = R0;                      // low
+    JUMP (M13, I13);
+
 .SECTION/DM seg_dmda;
 // dk_machine_desc: magic, contract, n_params, voices, state_bytes, state_clear_bytes, max_cycles_block, max_cycles_note_on,
 // max_call_depth, stack_bytes.
@@ -297,3 +394,14 @@ _md_note_on:
 .VAR _md_desc7 = 4400;
 .VAR _md_desc8 = 0;
 .VAR _md_desc9 = 0;
+.GLOBAL _mx_desc;
+.VAR _mx_desc = DK_MAGIC;
+.VAR _mx_desc1 = DK_MACHINE_V1;
+.VAR _mx_desc2 = 8;
+.VAR _mx_desc3 = DK_MAX_VOICES;
+.VAR _mx_desc4 = MD_STATE;
+.VAR _mx_desc5 = MD_CLEAR;
+.VAR _mx_desc6 = 4400;
+.VAR _mx_desc7 = 4400;
+.VAR _mx_desc8 = 0;
+.VAR _mx_desc9 = 0;

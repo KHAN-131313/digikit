@@ -15,3 +15,17 @@ DK_PARAM(md, 6, md_mdec, "Mod Decay", "MDEC", 0, 127, 32);
 DK_PARAM(md, 7, md_mfb, "Mod Feedback", "MFB", 0, 127, 127);
 DK_PAGE(md, "MDKHAN", "EFM-BD", DK_KNOB(0), DK_KNOB(1), DK_KNOB(2), DK_KNOB(3), DK_KNOB(4),
         DK_KNOB(5), DK_KNOB(6), DK_KNOB(7));
+
+/* EFM-XT: an FM tom, EFM-BD's voice over two octaves through a high-pass; CLIC starts the carrier further in. */
+DK_MACHINE(xt, .name = "MD EFM-XT", .short_name = "MDXT", .render = "_mx_render",
+           .note_on = "_mx_note_on", .desc = "_mx_desc");
+DK_PARAM(xt, 0, xt_ptch, "Pitch", "PTCH", 0, 127, 64);
+DK_PARAM(xt, 1, xt_dec, "Decay", "DEC", 0, 127, 64);
+DK_PARAM(xt, 2, xt_ramp, "Ramp", "RAMP", 0, 127, 38);
+DK_PARAM(xt, 3, xt_rdec, "Ramp Decay", "RDEC", 0, 127, 87);
+DK_PARAM(xt, 4, xt_mod, "Mod Amount", "MOD", 0, 127, 48);
+DK_PARAM(xt, 5, xt_mfrq, "Mod Freq", "MFRQ", 0, 127, 84);
+DK_PARAM(xt, 6, xt_mdec, "Mod Decay", "MDEC", 0, 127, 55);
+DK_PARAM(xt, 7, xt_clic, "Click", "CLIC", 0, 127, 127);
+DK_PAGE(xt, "MDXT", "EFM-XT", DK_KNOB(0), DK_KNOB(1), DK_KNOB(2), DK_KNOB(3), DK_KNOB(4),
+        DK_KNOB(5), DK_KNOB(6), DK_KNOB(7));

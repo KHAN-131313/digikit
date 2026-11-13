@@ -31,6 +31,8 @@ def tables() -> dict[str, np.ndarray]:
         "_md_efm_dec": ((1.0 - 0.009469 * 2.0 ** (-k / 13.5)) ** R).astype(np.float32),
         "_md_efm_rdec": ((1.0 - 0.009468 * 2.0 ** (-k / 12.6)) ** R).astype(np.float32),
         "_md_efm_mdec": ((1.0 - 0.009474 * 2.0 ** (-k / 11.52)) ** R).astype(np.float32),
+        # EFM-XT's deviation scale: (3/8) / 16 of BD's pitch at PTCH over XT's (BD's table at 24 + PTCH / 2)
+        "_md_xt_dev": (0.375 / 16 * 2.0 ** (k / 64.0 - 0.75)).astype(np.float32),
         # the note's transposition, 2^(s/12) for s = -48..+48
         "_md_semis": (2.0 ** (np.arange(-48, 49) / 12.0)).astype(np.float32),
     }

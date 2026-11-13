@@ -1,12 +1,14 @@
 """khan/md on the concrete SHARC+ core through core/dsp-voice (DN2), against the float32 model (tests/md_ref.py EfmBd), bit for bit.
 The rig draws hostile context registers for every call; Rig.run checks that they come back."""
 
+import dataclasses
+
 import numpy as np
 import pytest
 from support.machine_rig import MachineRig
 
 import md_ref
-from tools.patchkit import pk_toolchains
+from tools.patchkit import pk_conform, pk_toolchains
 
 pytestmark = pytest.mark.skipif(
     pk_toolchains.selache_dir() is None,
@@ -21,9 +23,16 @@ def words(knobs) -> list[int]:
     return [round(k * 256) for k in knobs]
 
 
+def xt_spec():
+    """EFM-XT, the module's second machine: pk_conform.spec reads only the first, so XT is BD's spec with XT's symbols
+    (both machines' knobs sit in the same positions)."""
+    base = pk_conform.spec("khan/md", "dn2")
+    return dataclasses.replace(base, entry="_mx_render", note_on="_mx_note_on", desc="_mx_desc")
+
+
 class Rig(MachineRig):
-    def __init__(self) -> None:
-        super().__init__("khan/md", "dn2")
+    def __init__(self, machine: str = "bd") -> None:
+        super().__init__("khan/md", "dn2", spec=xt_spec() if machine == "xt" else None)
 
     def play(self, note: float, vel: int, knobs) -> None:
         self.set_note(note, vel)
@@ -45,12 +54,12 @@ class Rig(MachineRig):
         return np.concatenate(ys), counts
 
 
-def played(knobs, note: int = 60, vel: int = 100, blocks: int = 60):
+def played(knobs, note: int = 60, vel: int = 100, blocks: int = 60, machine: str = "bd"):
     """The rig's blocks after the trigger block (the DN2 trigger bit starts the note in the next block) and the model's."""
-    rig = Rig()
+    rig = Rig(machine)
     rig.play(note, vel, knobs)
     y, counts = rig.run(blocks + 1)
-    m = md_ref.EfmBd()
+    m = md_ref.EfmXt() if machine == "xt" else md_ref.EfmBd()
     m.note_on(words(knobs))
     return y[32:], m.render(note << 8, words(knobs), blocks), counts[1:]
 
@@ -66,11 +75,22 @@ CASES = {
 }
 
 
-@pytest.mark.parametrize("name", CASES)
+XT_DEFAULTS = (64, 64, 38, 87, 48, 84, 55, 127)
+XT_CASES = {
+    "xt-defaults": (XT_DEFAULTS, 60),
+    "xt-no-click-low": ((0, 100, 16, 64, 30, 16, 80, 0), 36),
+    "xt-high-fractional": ((120.5, 20.25, 90, 10, 127, 127, 3.5, 64.75), 84),
+    "xt-all-max": ((127,) * 8, 96),
+    "xt-all-min": ((0,) * 8, 24),
+}
+
+
+@pytest.mark.parametrize("name", list(CASES) + list(XT_CASES))
 def test_the_routine_matches_the_model(name):
-    knobs, note = CASES[name]
-    got, want, _ = played(knobs, note)
-    assert np.max(np.abs(want)) > 0.05
+    machine = "xt" if name in XT_CASES else "bd"
+    knobs, note = (XT_CASES if machine == "xt" else CASES)[name]
+    got, want, _ = played(knobs, note, machine=machine)
+    assert np.max(np.abs(want)) > (5e-4 if machine == "xt" else 0.05)  # XT's high-pass takes the lowest notes away
     np.testing.assert_array_equal(got, want)
 
 
@@ -101,10 +121,13 @@ def test_knobs_flipping_every_block_stay_finite_and_bounded():
 
 
 def test_cost_per_block():
-    """The ceiling the description declares (4000 a block, the adapter included) holds for every knob case."""
+    """The ceilings the descriptions declare (BD 4000, XT 4400 a block, the adapter included) hold for every knob case."""
     for knobs, note in CASES.values():
         _, _, counts = played(knobs, note, blocks=4)
         assert max(counts) < 4000, counts
+    for knobs, note in XT_CASES.values():
+        _, _, counts = played(knobs, note, blocks=4, machine="xt")
+        assert max(counts) < 4400, counts
 
 
 # ---- likeness to the Machinedrum: figures measured on the original (OS 1.63 DSP2, rendered locally; numbers only) ----
@@ -149,3 +172,12 @@ def test_dec_falls_as_the_machinedrums_does(dec, at, db):
     x = x / np.max(np.abs(x))
     seg = x[int(at * 48000) : int(at * 48000) + 480]
     assert abs(10 * np.log10(np.mean(seg**2)) - db) < 1.5
+
+
+@pytest.mark.parametrize("ptch, hz", [(0, 43.2), (64, 86.1), (127, 171.0)])
+def test_xt_ptch_tunes_as_the_machinedrum(ptch, hz):
+    m = md_ref.EfmXt()
+    k = (ptch, 96, 16, 64, 0, 64, 64, 0)
+    m.note_on(words(k))
+    x = m.render(60 << 8, words(k), 300).astype(np.float64)
+    assert abs(np.log2(peak_hz(x) / hz)) * 1200 < 25  # cents

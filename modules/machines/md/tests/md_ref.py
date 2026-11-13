@@ -80,11 +80,22 @@ class EfmBd:
         self.ph1 = self.ph2 = 524288000
         self.m = 0
 
+    def ptch_word(self, params: list[int]) -> int:
+        return params[0]
+
+    def feedback(self, params: list[int]) -> np.float32:
+        return f32(params[7]) * f32(1 / 256) * f32(1 / 128) * f32(2.0**31)
+
+    def deviation(self, params: list[int]) -> np.float32:
+        return f32(8) * (f32(params[4]) * f32(1 / 256) * f32(1 / 128))
+
+    hpc = f32(0)
+
     def block(self, pitch: int, params: list[int]) -> tuple[np.ndarray, bool]:
         """One block: the samples and whether the voice is done (DK_DONE)."""
         if not self.fbg >= REST:  # NaN rests too
             return np.zeros(BLOCK, np.float32), True
-        ptch = knob("_md_efm_ptch", params[0])
+        ptch = knob("_md_efm_ptch", self.ptch_word(params))
         s = min(max((pitch >> 8) - 12, 0), 96)
         ptch = ptch * T["_md_semis"][s]
         ptch = ptch * f32(2.0**32)
@@ -95,8 +106,8 @@ class EfmBd:
         step1 = f32(params[5]) * f32(1 / 256)
         step1 = max(step1, f32(1)) * f32(1 / 128)
         step1 = f32(8) * step1
-        fbamt = f32(params[7]) * f32(1 / 256) * f32(1 / 128) * f32(2.0**31)
-        modamt = f32(8) * (f32(params[4]) * f32(1 / 256) * f32(1 / 128))
+        fbamt = self.feedback(params)
+        modamt = self.deviation(params)
         op1, op2, fbg = self.op1, self.op2, self.fbg
         if abs(op1) < TINY:
             op1 = f32(0)
@@ -122,7 +133,41 @@ class EfmBd:
             fbg = fbg * dec
         self.ph1, self.ph2, self.m = ph1, ph2, m
         self.op1, self.op2, self.fbg = op1, op2, fbg
+        if self.hpc:
+            low = self.low
+            for n in range(BLOCK):
+                d = out[n] - low
+                d = d * self.hpc
+                low = low + d
+                out[n] = out[n] - low
+            self.low = low
         return out, False
 
     def render(self, pitch: int, params: list[int], blocks: int) -> np.ndarray:
         return np.concatenate([self.block(pitch, params)[0] for _ in range(blocks)])
+
+
+class EfmXt(EfmBd):
+    """EFM-XT: BD's voice with PTCH at 24 + PTCH / 2 on BD's table, feedback 2^30, the deviation from _md_xt_dev, a one-pole
+    high-pass after the loop, the start level MX_LEVEL and CLIC's carrier start (src/dsp/md.s)."""
+
+    hpc = np.uint32(0x3C84F35C).view(np.float32)
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.low = f32(0)
+
+    def note_on(self, params: list[int]) -> None:
+        super().note_on(params)
+        self.fbg = np.uint32(0x3E8784FC).view(np.float32)
+        self.ph2 = trunc(f32(params[7]) * np.uint32(0x46C28F5C).view(np.float32))
+        self.low = f32(0)
+
+    def ptch_word(self, params: list[int]) -> int:
+        return 0x1800 + (params[0] >> 1)
+
+    def feedback(self, params: list[int]) -> np.float32:
+        return f32(2.0**30)
+
+    def deviation(self, params: list[int]) -> np.float32:
+        return f32(params[4]) * f32(1 / 256) * knob("_md_xt_dev", params[0])

@@ -53,6 +53,60 @@
       "id": "md",
       "name": "MD EFM-BD",
       "short": "MDKHAN"
+    },
+    {
+      "devices": {
+        "dn2": {
+          "clone_of": 0,
+          "knobs": [
+            {
+              "param": "xt_mfrq",
+              "slot": 25
+            },
+            {
+              "param": "xt_ptch",
+              "slot": 26
+            },
+            {
+              "param": "xt_dec",
+              "slot": 27
+            },
+            {
+              "param": "xt_mdec",
+              "slot": 28
+            },
+            {
+              "param": "xt_ramp",
+              "slot": 29
+            },
+            {
+              "param": "xt_rdec",
+              "slot": 30
+            },
+            {
+              "param": "xt_mod",
+              "slot": 31
+            },
+            {
+              "param": "xt_clic",
+              "slot": 32
+            }
+          ],
+          "level": 10,
+          "name": "MD EFM-XT",
+          "own_dsp": true,
+          "page": {
+            "name": "MDXT",
+            "title": "EFM-XT"
+          },
+          "position": null,
+          "short": "MDXT",
+          "type": null
+        }
+      },
+      "id": "xt",
+      "name": "MD EFM-XT",
+      "short": "MDXT"
     }
   ],
   "module": "khan/md",
@@ -135,6 +189,86 @@
         "min": 0,
         "name": "Mod Feedback",
         "short": "MFB",
+        "slot": 32,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "xt_ptch",
+        "max": 32512,
+        "min": 0,
+        "name": "Pitch",
+        "short": "PTCH",
+        "slot": 26,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "xt_dec",
+        "max": 32512,
+        "min": 0,
+        "name": "Decay",
+        "short": "DEC",
+        "slot": 27,
+        "template": 213
+      },
+      {
+        "default": 9728,
+        "id": "xt_ramp",
+        "max": 32512,
+        "min": 0,
+        "name": "Ramp",
+        "short": "RAMP",
+        "slot": 29,
+        "template": 213
+      },
+      {
+        "default": 22272,
+        "id": "xt_rdec",
+        "max": 32512,
+        "min": 0,
+        "name": "Ramp Decay",
+        "short": "RDEC",
+        "slot": 30,
+        "template": 213
+      },
+      {
+        "default": 12288,
+        "id": "xt_mod",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Amount",
+        "short": "MOD",
+        "slot": 31,
+        "template": 213
+      },
+      {
+        "default": 21504,
+        "id": "xt_mfrq",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Freq",
+        "short": "MFRQ",
+        "slot": 25,
+        "template": 213
+      },
+      {
+        "default": 14080,
+        "id": "xt_mdec",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Decay",
+        "short": "MDEC",
+        "slot": 28,
+        "template": 213
+      },
+      {
+        "default": 32512,
+        "id": "xt_clic",
+        "max": 32512,
+        "min": 0,
+        "name": "Click",
+        "short": "CLIC",
         "slot": 32,
         "template": 213
       }
