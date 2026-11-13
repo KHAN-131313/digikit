@@ -41,6 +41,17 @@ HH_TREM_KNOBS = [0, 16, 32, 48, 64, 80, 96, 112, 127, 128]
 HH_TREM_HZ = [r / 2.0**32 * 44100.0 for r in (92522, 155826, 262957, 438262, 749915, 1246612, 2093918, 3535313, 5746101, 5746101)]
 
 
+KN9 = [0, 16, 32, 48, 64, 80, 96, 112, 127]
+CY_MDEC = [2136736994, 2140558027, 2143155135, 2144725657, 2145752243, 2146408983, 2146820557, 2147056726, 2147200327]
+CY_HPF = [0, 125627793, 223123551, 320834057, 417470821, 515181327, 611603343, 708240107, 799508162]
+
+
+def cy_hpf(k: np.ndarray) -> np.ndarray:
+    c = np.interp(k, KN9, np.array(CY_HPF) / 2.0**31)
+    fc = -np.log(1 - c) * 44100.0 / (2 * np.pi)
+    return 1 - np.exp(-2 * np.pi * fc / 48000.0)
+
+
 def tables() -> dict[str, np.ndarray]:
     k = np.arange(129, dtype=np.float64)
     return {
@@ -70,6 +81,10 @@ def tables() -> dict[str, np.ndarray]:
         # a sample at 48 kHz (OP-XY-MNMD's rates, 0.95 Hz to 59 Hz, interpolated in log)
         "_md_hh_ptch": (0.000581 * 2.0 ** ((104 + 5 * k / 8) / 32.0) * R).astype(np.float32),
         "_md_hh_trem": (np.exp(np.interp(k, HH_TREM_KNOBS, np.log(HH_TREM_HZ))) / 48000.0 * 2.0**32).astype(np.float32),
+        # EFM-CY (research/fit_efm_cy.py): MDEC's index fall a block (48 kHz) and HPF's one-pole coefficient, from OP-XY-MNMD's
+        # fit (MIT): its per-block steps at twice their time (fitted here), its coefficients at the same cutoffs
+        "_md_cy_mdec": (np.interp(k, KN9, np.array(CY_MDEC) / 2.0**31) ** (0.5 * 44100.0 / 48000.0)).astype(np.float32),
+        "_md_cy_hpf": cy_hpf(k).astype(np.float32),
         # the note's transposition, 2^(s/12) for s = -48..+48
         "_md_semis": (2.0 ** (np.arange(-48, 49) / 12.0)).astype(np.float32),
     }

@@ -1,5 +1,5 @@
 // khan/md: Machinedrum-style machines (<dk/machine/machine.h>), one body for both devices.
-// Machines: EFM-BD, EFM-XT, EFM-SD, EFM-CP, EFM-RS, EFM-CB and EFM-HH, two sine operators with feedback FM on one shared loop (_md_efm_run).
+// Machines: EFM-BD, EFM-XT, EFM-SD, EFM-CP, EFM-RS, EFM-CB, EFM-HH and EFM-CY, two sine operators with feedback FM on one shared loop (_md_efm_run).
 //
 // Based on Digidrum's EFM-BD (soejrd/digidrum, machines/EFM/BD/efm_bd.c, MIT, used with the author's permission),
 // rewritten for the SHARC+: float32, phases as 32-bit integers (2^32 a turn, so they wrap for free), the
@@ -51,6 +51,9 @@
 #define MB_STATE 320
 #define MB_CLEAR 184
 #define MB_SCRATCH 192
+// EFM-CY: ph 0..3, mph 4..7, inc 8..11, minc 12..15 (integers), depth 16, prev 17, env 18, low1 19, low2 20, before 21
+#define MY_STATE 96
+#define MY_CLEAR 96
 // EFM-XT's start level: 0.839 * 0.315478504
 #define MX_LEVEL 0x3e8784fc
 
@@ -77,6 +80,8 @@
 .GLOBAL _mb_note_on;
 .GLOBAL _mh_render;
 .GLOBAL _mh_note_on;
+.GLOBAL _my_render;
+.GLOBAL _my_note_on;
 .EXTERN _md_efm_ptch;
 .EXTERN _md_efm_dec;
 .EXTERN _md_efm_rdec;
@@ -94,6 +99,8 @@
 .EXTERN _md_cb_ptch;
 .EXTERN _md_hh_ptch;
 .EXTERN _md_hh_trem;
+.EXTERN _md_cy_mdec;
+.EXTERN _md_cy_hpf;
 
 // MD_KNOB(OUT, TABLE, WORD): OUT = T[k] + (T[k + 1] - T[k]) * f for the 8.8 word k.f of parameter WORD.
 // The adapter clamps the word to 0 .. 0x7f00, so k <= 127 and k + 1 <= 128 are inside the 129 entries.
@@ -580,6 +587,172 @@ _mh_end: DM(I1, M6) = F1;
     DM(20, I3) = F10;
     JUMP _md_efm_post;
 
+// MD_SIN: F6 = sin(R0), R0 a 2^32-turn phase (the FM loop's sine: 15-bit index, degree-7 polynomial). I4 _md_k, F14 0.25.
+// Clobbers R0..R4, F6.
+#define MD_SIN \
+    R1 = DM(K_MASK, I4); \
+    R0 = R0 AND R1, R2 = DM(K_M32, I4); \
+    F0 = FLOAT R0 BY R2; \
+    F1 = ABS F0, F3 = DM(K_A7, I4); \
+    F1 = F1 - F14; \
+    F1 = ABS F1; \
+    F1 = F14 - F1, F4 = DM(K_A5, I4); \
+    F2 = F1 * F1; \
+    F3 = F3 * F2; \
+    F3 = F3 + F4, F4 = DM(K_A3, I4); \
+    F3 = F3 * F2; \
+    F3 = F3 + F4, F4 = DM(K_A1, I4); \
+    F3 = F3 * F2; \
+    F3 = F3 + F4; \
+    F3 = F3 * F1; \
+    F6 = F3 COPYSIGN F0
+
+// MY_PARTIAL(K): partial K of EFM-CY's sample. F9 the index, R11 the fed-back phase, F8 the sum so far.
+#define MY_PARTIAL(K) \
+    R0 = DM(4 + K, I3); \
+    R1 = DM(12 + K, I3); \
+    R5 = R0 + R1; \
+    DM(4 + K, I3) = R5; \
+    MD_SIN; \
+    F6 = F6 * F9; \
+    R7 = TRUNC F6; \
+    R7 = LSHIFT R7 BY 2; \
+    R0 = DM(0 + K, I3); \
+    R1 = DM(8 + K, I3); \
+    R5 = R0 + R1; \
+    DM(0 + K, I3) = R5; \
+    R0 = R0 + R11; \
+    R0 = R0 + R7; \
+    MD_SIN; \
+    F8 = F8 + F6
+
+// MY_INC(K, RATIO): inc K = TRUNC CLIP(base * RATIO), minc K = TRUNC CLIP(base * RATIO * r); F5 base, F10 r, F15 the clip.
+#define MY_INC(K, RATIO) \
+    R0 = RATIO; \
+    F1 = F5 * F0; \
+    F2 = CLIP F1 BY F15; \
+    R2 = TRUNC F2; \
+    DM(8 + K, I3) = R2; \
+    F1 = F1 * F10; \
+    F2 = CLIP F1 BY F15; \
+    R2 = TRUNC F2; \
+    DM(12 + K, I3) = R2
+
+// ---- EFM-CY ----
+// Four partials at 1, 1.41, 1.80 and 2.70 of _md_hh_ptch (BD's curve at 104 + 5 PTCH / 8), each phase-moved by its own
+// modulator at MFRQ / 16 + 0.5 of it, by an index (0.7 + 9.05 MOD / 127) radians that falls by _md_cy_mdec a block (MDEC); the
+// partials' sum fed back into every phase one sample late, 1.2 FB / 128 of BD's MFB scale over four. Per sample:
+//   fed = TRUNC(fbk * prev) << 2; for k: m = sin(mph_k); mph_k += minc_k; mv = TRUNC(m * idx) << 2 (fbk and idx at a
+//   quarter, so a move past half a turn wraps: TRUNC of an overflow is 0xFFFFFFFF); s = sin(ph_k + fed + mv);
+//   ph_k += inc_k; sum = sum + s.  prev = sum.
+// Then a pass: x = sum * env; env = env * dec; two one-pole high-passes (_md_cy_hpf) in cascade; a soft top (0.15).
+// Knobs: PTCH DEC FB HPF MOD MFRQ MDEC -.
+_my_render:
+    I3 = R4;
+    I2 = R8;
+    I1 = R12;
+    R0 = DM(DK_IN_W_OUT, I2);
+    I0 = R0;
+    F13 = DM(18, I3);                     // env
+    R0 = 0x34800000;
+    COMP(F13, F0);
+    IF LT JUMP _md_rest;
+    // the block's increments
+    MD_KNOB(F5, _md_hh_ptch, 0);
+    R0 = DM(DK_IN_W_PITCH, I2);
+    R2 = -8;
+    R1 = LSHIFT R0 BY R2;
+    R2 = 12;
+    R1 = R1 - R2;
+    R2 = 0;
+    R1 = MAX(R1, R2);
+    R2 = 96;
+    R1 = MIN(R1, R2);
+    R1 = LSHIFT R1 BY 2;
+    R2 = _md_semis;
+    R1 = R1 + R2;
+    I5 = R1;
+    F3 = DM(0, I5);
+    F5 = F5 * F3;
+    R0 = 0x4f800000;
+    F5 = F5 * F0;                         // base, 2^32-turn units a sample
+    R0 = DM(5, I1);                       // MFRQ
+    F10 = FLOAT R0;
+    R0 = 0x39800000;                      // 1 / 4096: MFRQ / 16 a word unit
+    F10 = F10 * F0;
+    R0 = 0x3f000000;
+    F10 = F10 + F0;                       // r = MFRQ / 16 + 0.5
+    R15 = 0x4effffff;                     // 2147483520.0
+    MY_INC(0, 0x3f800000);
+    MY_INC(1, 0x3fb47ae1);
+    MY_INC(2, 0x3fe66666);
+    MY_INC(3, 0x402ccccd);
+    // the index: (A + B MOD) * depth; depth = depth * _md_cy_mdec
+    R0 = DM(4, I1);
+    F9 = FLOAT R0;
+    R0 = 0x4839d118;
+    F9 = F9 * F0;
+    R0 = 0x4de42a1e;
+    F9 = F9 + F0;
+    F7 = DM(16, I3);                      // depth (not F1: MD_KNOB uses R0..R2)
+    F9 = F9 * F7;
+    MD_KNOB(F5, _md_cy_mdec, 6);
+    F7 = F7 * F5;
+    DM(16, I3) = F7;
+    R0 = 0x3e800000;
+    F9 = F9 * F0;                         // a quarter: TRUNC's result is shifted back up, so a move past half a turn wraps
+    R0 = DM(2, I1);                       // FB
+    F10 = FLOAT R0;
+    R0 = 0x4599999a;                      // 1.2 / 128 / 256 * 2^31 / 4, a quarter again (shifted back after TRUNC)
+    F10 = F10 * F0;                       // fbk
+    F12 = DM(17, I3);                     // prev
+    I4 = _md_k;
+    R14 = 0x3e800000;
+    LCNTR = DK_BLOCK, DO _my_end UNTIL LCE;
+        F0 = F10 * F12;
+        R11 = TRUNC F0;
+        R11 = LSHIFT R11 BY 2;            // fed
+        R8 = 0;                           // the sum: 0, then each partial added
+        MY_PARTIAL(0);
+        MY_PARTIAL(1);
+        MY_PARTIAL(2);
+        MY_PARTIAL(3);
+        F12 = PASS F8;
+_my_end: DM(I0, M6) = F8;
+    DM(17, I3) = F12;
+    // the level, the high-passes and the soft top
+    MD_KNOB(F11, _md_efm_dec, 1);
+    MD_KNOB(F10, _md_cy_hpf, 3);
+    F13 = DM(18, I3);                     // env
+    F4 = DM(19, I3);                      // low1
+    F5 = DM(20, I3);                      // low2
+    F7 = DM(21, I3);                      // before
+    R9 = 0x3e19999a;                      // 0.15
+    R0 = DM(DK_IN_W_OUT, I2);
+    I1 = R0;
+    LCNTR = DK_BLOCK, DO _my_post_end UNTIL LCE;
+        F0 = DM(0, I1);
+        F0 = F0 * F13;                    // x
+        F13 = F13 * F11;
+        F1 = F0 - F4;
+        F1 = F1 * F10;
+        F4 = F4 + F1;                     // low1
+        F2 = F0 - F4;
+        F2 = F2 - F5;                     // z
+        F3 = F2 * F10;
+        F5 = F5 + F3;                     // low2
+        F3 = F2 - F7;
+        F3 = F3 * F9;
+        F3 = F2 - F3;                     // soft
+        F7 = PASS F2;
+_my_post_end: DM(I1, M6) = F3;
+    DM(18, I3) = F13;
+    DM(19, I3) = F4;
+    DM(20, I3) = F5;
+    DM(21, I3) = F7;
+    R0 = DK_OK;
+    JUMP (M13, I13);
+
 // ---- the shared loop ----
 _md_efm_run:
     CALL _md_efm_loop;
@@ -1039,6 +1212,28 @@ _mh_note_on:
     DM(5, I3) = R0;
     JUMP (M13, I13);
 
+// EFM-CY's note_on: every phase 0, the index's depth 1, the level 0.0785, the filters at rest.
+_my_note_on:
+    I3 = R4;
+    R0 = 0;
+    DM(0, I3) = R0;
+    DM(1, I3) = R0;
+    DM(2, I3) = R0;
+    DM(3, I3) = R0;
+    DM(4, I3) = R0;
+    DM(5, I3) = R0;
+    DM(6, I3) = R0;
+    DM(7, I3) = R0;
+    DM(17, I3) = R0;
+    DM(19, I3) = R0;
+    DM(20, I3) = R0;
+    DM(21, I3) = R0;
+    R0 = 0x3f800000;
+    DM(16, I3) = R0;
+    R0 = 0x3da0c49c;                      // 0.0785
+    DM(18, I3) = R0;
+    JUMP (M13, I13);
+
 .SECTION/DM seg_dmda;
 // dk_machine_desc: magic, contract, n_params, voices, state_bytes, state_clear_bytes, max_cycles_block, max_cycles_note_on,
 // max_call_depth, stack_bytes.
@@ -1119,3 +1314,14 @@ _mh_note_on:
 .VAR _mh_desc7 = 4400;
 .VAR _mh_desc8 = 1;
 .VAR _mh_desc9 = 0;
+.GLOBAL _my_desc;
+.VAR _my_desc = DK_MAGIC;
+.VAR _my_desc1 = DK_MACHINE_V1;
+.VAR _my_desc2 = 8;
+.VAR _my_desc3 = DK_MAX_VOICES;
+.VAR _my_desc4 = MY_STATE;
+.VAR _my_desc5 = MY_CLEAR;
+.VAR _my_desc6 = 9000;
+.VAR _my_desc7 = 4400;
+.VAR _my_desc8 = 0;
+.VAR _my_desc9 = 0;

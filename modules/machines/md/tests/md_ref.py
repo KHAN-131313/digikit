@@ -33,12 +33,11 @@ def i32(x: int) -> int:
 
 
 def trunc(x: np.float32) -> int:
-    """TRUNC: toward zero, saturating at the int32 range."""
+    """TRUNC as the SHARC+ does it without ALUSAT (digikit finding 103): toward zero; out of the int32 range (or not a number)
+    it gives 0xFFFFFFFF."""
     v = float(x)
-    if v >= 2147483647.0:
-        return 2147483647
-    if v <= -2147483648.0:
-        return -2147483648
+    if not (-2147483648.0 <= v < 2147483648.0):
+        return -1
     return int(v)
 
 
@@ -476,6 +475,80 @@ class EfmHh:
             g = g + step
             out[n] = d
         self.xprev = xprev
+        return out, False
+
+    def render(self, pitch: int, params: list[int], blocks: int) -> np.ndarray:
+        return np.concatenate([self.block(pitch, params)[0] for _ in range(blocks)])
+
+
+def h(x: int) -> np.float32:
+    return np.uint32(x).view(np.float32)
+
+
+class EfmCy:
+    """EFM-CY (src/dsp/md.s _my_render): four phase-modulated partials with the sum fed back, then the level, two one-pole
+    high-passes and a soft top."""
+
+    RATIOS = (h(0x3F800000), h(0x3FB47AE1), h(0x3FE66666), h(0x402CCCCD))
+
+    def note_on(self, params: list[int]) -> None:
+        self.ph = [0, 0, 0, 0]
+        self.mph = [0, 0, 0, 0]
+        self.depth = f32(1)
+        self.prev = f32(0)
+        self.env = h(0x3DA0C49C)
+        self.low1 = self.low2 = self.before = f32(0)
+
+    def block(self, pitch: int, params: list[int]) -> tuple[np.ndarray, bool]:
+        if self.env < REST:
+            return np.zeros(BLOCK, np.float32), True
+        base, _ = pitch_coefs("_md_hh_ptch", params[0], pitch)
+        r = f32(params[5]) * h(0x39800000)
+        r = r + f32(0.5)
+        inc, minc = [], []
+        for ratio in self.RATIOS:
+            a = base * ratio
+            inc.append(trunc(clip(a, CLIPV)))
+            minc.append(trunc(clip(a * r, CLIPV)))
+        idx = f32(params[4]) * h(0x4839D118)
+        idx = idx + h(0x4DE42A1E)
+        idx = idx * self.depth
+        idx = idx * f32(0.25)  # a quarter, shifted back after TRUNC: the phase moves wrap instead of overflowing
+        self.depth = self.depth * knob("_md_cy_mdec", params[6])
+        fbk = f32(params[2]) * h(0x4599999A)  # a quarter as well
+        prev = self.prev
+        out = np.empty(BLOCK, np.float32)
+        for n in range(BLOCK):
+            fed = i32(trunc(fbk * prev) << 2)
+            total = f32(0)
+            for k in range(4):
+                m = sine(self.mph[k])
+                self.mph[k] = i32(self.mph[k] + minc[k])
+                mv = i32(trunc(m * idx) << 2)
+                c = self.ph[k]
+                self.ph[k] = i32(c + inc[k])
+                total = total + sine(i32(c + fed + mv))
+            prev = total
+            out[n] = total
+        self.prev = prev
+        dec = knob("_md_efm_dec", params[1])
+        hpc = knob("_md_cy_hpf", params[3])
+        env, low1, low2, before = self.env, self.low1, self.low2, self.before
+        soft = h(0x3E19999A)
+        for n in range(BLOCK):
+            x = out[n] * env
+            env = env * dec
+            d = x - low1
+            d = d * hpc
+            low1 = low1 + d
+            z = x - low1
+            z = z - low2
+            low2 = low2 + z * hpc
+            t = z - before
+            t = t * soft
+            out[n] = z - t
+            before = z
+        self.env, self.low1, self.low2, self.before = env, low1, low2, before
         return out, False
 
     def render(self, pitch: int, params: list[int], blocks: int) -> np.ndarray:

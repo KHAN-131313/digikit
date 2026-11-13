@@ -30,8 +30,9 @@ SYMBOLS = {
     "rs": ("_mr_render", "_mr_note_on", "_mr_desc"),
     "cb": ("_mb_render", "_mb_note_on", "_mb_desc"),
     "hh": ("_mh_render", "_mh_note_on", "_mh_desc"),
+    "cy": ("_my_render", "_my_note_on", "_my_desc"),
 }
-MODELS = {"bd": md_ref.EfmBd, "xt": md_ref.EfmXt, "sd": md_ref.EfmSd, "cp": md_ref.EfmCp, "rs": md_ref.EfmRs, "cb": md_ref.EfmCb, "hh": md_ref.EfmHh}
+MODELS = {"bd": md_ref.EfmBd, "xt": md_ref.EfmXt, "sd": md_ref.EfmSd, "cp": md_ref.EfmCp, "rs": md_ref.EfmRs, "cb": md_ref.EfmCb, "hh": md_ref.EfmHh, "cy": md_ref.EfmCy}
 
 
 def machine_spec(machine: str):
@@ -146,10 +147,18 @@ HH_CASES = {
     "hh-all-max": ((127,) * 8, 96),
     "hh-all-min": ((0,) * 8, 24),
 }
+CY_DEFAULTS = (64, 72, 96, 127, 64, 32, 64, 0)
+CY_CASES = {
+    "cy-defaults": (CY_DEFAULTS, 60),
+    "cy-plain": ((64, 64, 0, 0, 0, 64, 64, 0), 60),
+    "cy-wash-fractional": ((100.5, 110.25, 60.75, 30.5, 127, 127, 3.5, 0), 72),
+    "cy-all-max": ((127,) * 8, 96),
+    "cy-all-min": ((0,) * 8, 24),
+}
 ALL_CASES = {**{k: ("bd", *v) for k, v in CASES.items()}, **{k: ("xt", *v) for k, v in XT_CASES.items()},
              **{k: ("sd", *v) for k, v in SD_CASES.items()}, **{k: ("cp", *v) for k, v in CP_CASES.items()},
              **{k: ("rs", *v) for k, v in RS_CASES.items()}, **{k: ("cb", *v) for k, v in CB_CASES.items()},
-             **{k: ("hh", *v) for k, v in HH_CASES.items()}}
+             **{k: ("hh", *v) for k, v in HH_CASES.items()}, **{k: ("cy", *v) for k, v in CY_CASES.items()}}
 
 
 @pytest.mark.parametrize("name", ALL_CASES)
@@ -188,12 +197,12 @@ def test_knobs_flipping_every_block_stay_finite_and_bounded():
 
 # Instructions a block (the adapter's ~700 included) after the paired-load loop, with about 5% headroom: a change that makes a
 # machine slower fails here (the descriptions' ceilings are looser).
-COST = {"bd": 3050, "xt": 3250, "sd": 3850, "cp": 3550, "rs": 5200, "cb": 5500, "hh": 3500}
+COST = {"bd": 3050, "xt": 3250, "sd": 3850, "cp": 3550, "rs": 5200, "cb": 5500, "hh": 3500, "cy": 8200}
 
 
 def test_cost_per_block():
     for machine, cases in (("bd", CASES), ("xt", XT_CASES), ("sd", SD_CASES), ("cp", CP_CASES), ("rs", RS_CASES),
-                           ("cb", CB_CASES), ("hh", HH_CASES)):
+                           ("cb", CB_CASES), ("hh", HH_CASES), ("cy", CY_CASES)):
         for knobs, note in cases.values():
             _, _, counts = played(knobs, note, blocks=4, machine=machine)
             assert max(counts) < COST[machine], (machine, counts)
@@ -323,11 +332,11 @@ def test_cp_ptch_tunes_as_the_machinedrum(ptch, hz):
     assert abs(np.log2(peak_hz(x, 0.15, 0.4) / hz)) * 1200 < 25  # cents
 
 
-@pytest.mark.parametrize("machine", ["bd", "xt", "sd", "cp", "rs", "cb", "hh"])
+@pytest.mark.parametrize("machine", ["bd", "xt", "sd", "cp", "rs", "cb", "hh", "cy"])
 def test_every_store_stays_in_the_voice_or_its_output(machine):
     """With the rig's store recording on: the routine writes only its own state block and output (and its stack)."""
     knobs = {"bd": DEFAULTS, "xt": XT_DEFAULTS, "sd": SD_DEFAULTS, "cp": CP_DEFAULTS, "rs": RS_DEFAULTS, "cb": CB_DEFAULTS,
-             "hh": HH_DEFAULTS}[
+             "hh": HH_DEFAULTS, "cy": CY_DEFAULTS}[
         machine
     ]
     rig = Rig(machine, record_stores=True)
@@ -390,3 +399,24 @@ def test_hh_tremolo_as_the_machinedrums():
     e = np.array([np.sqrt(np.mean(half[i * w : (i + 1) * w] ** 2)) for i in range(len(half) // w)])
     e0 = np.array([np.sqrt(np.mean(flat[i * w : (i + 1) * w] ** 2)) for i in range(len(flat) // w)])
     assert abs(20 * np.log10(np.min(e / e0)) + 6.0) < 1.0
+
+
+def test_cy_partials_sit_where_the_machinedrums_do():
+    """PTCH 64, MOD 0, MFRQ 64: the original's four partials (580, 818, 1044, 1567 Hz) are the four strongest lines, and its
+    first sidebands (at 3.5 and 5.5 times them) about 11 dB under them."""
+    m = md_ref.EfmCy()
+    k = words((64, 96, 0, 0, 0, 64, 127, 0))
+    m.note_on(k)
+    x = m.render(60 << 8, k, 450).astype(np.float64)[960:13920]
+    spec = np.abs(np.fft.rfft(x * np.hanning(len(x)), 1 << 17))
+    f = np.fft.rfftfreq(1 << 17, 1 / 48000)
+
+    def level(hz):
+        band = np.abs(f - hz) < 8
+        return 20 * np.log10(spec[band].max())
+
+    top = max(level(hz) for hz in (580, 818, 1044, 1567))
+    for hz in (580, 818, 1044, 1567):
+        assert level(hz) > top - 3, hz
+    for hz in (2032, 2865, 3192, 4502):
+        assert -14 < level(hz) - top < -8, (hz, level(hz) - top)
