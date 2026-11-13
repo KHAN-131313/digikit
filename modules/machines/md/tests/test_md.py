@@ -29,8 +29,9 @@ SYMBOLS = {
     "cp": ("_mc_render", "_mc_note_on", "_mc_desc"),
     "rs": ("_mr_render", "_mr_note_on", "_mr_desc"),
     "cb": ("_mb_render", "_mb_note_on", "_mb_desc"),
+    "hh": ("_mh_render", "_mh_note_on", "_mh_desc"),
 }
-MODELS = {"bd": md_ref.EfmBd, "xt": md_ref.EfmXt, "sd": md_ref.EfmSd, "cp": md_ref.EfmCp, "rs": md_ref.EfmRs, "cb": md_ref.EfmCb}
+MODELS = {"bd": md_ref.EfmBd, "xt": md_ref.EfmXt, "sd": md_ref.EfmSd, "cp": md_ref.EfmCp, "rs": md_ref.EfmRs, "cb": md_ref.EfmCb, "hh": md_ref.EfmHh}
 
 
 def machine_spec(machine: str):
@@ -137,9 +138,18 @@ CB_CASES = {
     "cb-all-max": ((127,) * 8, 96),
     "cb-all-min": ((0,) * 8, 24),
 }
+HH_DEFAULTS = (96, 32, 0, 0, 64, 64, 64, 127)
+HH_CASES = {
+    "hh-defaults": (HH_DEFAULTS, 60),
+    "hh-plain-trem": ((64, 96, 127, 64, 0, 64, 64, 0), 60),
+    "hh-trem-fast-fractional": ((30.5, 110.25, 80.75, 127, 40.5, 20.25, 90.5, 30.75), 72),
+    "hh-all-max": ((127,) * 8, 96),
+    "hh-all-min": ((0,) * 8, 24),
+}
 ALL_CASES = {**{k: ("bd", *v) for k, v in CASES.items()}, **{k: ("xt", *v) for k, v in XT_CASES.items()},
              **{k: ("sd", *v) for k, v in SD_CASES.items()}, **{k: ("cp", *v) for k, v in CP_CASES.items()},
-             **{k: ("rs", *v) for k, v in RS_CASES.items()}, **{k: ("cb", *v) for k, v in CB_CASES.items()}}
+             **{k: ("rs", *v) for k, v in RS_CASES.items()}, **{k: ("cb", *v) for k, v in CB_CASES.items()},
+             **{k: ("hh", *v) for k, v in HH_CASES.items()}}
 
 
 @pytest.mark.parametrize("name", ALL_CASES)
@@ -196,6 +206,9 @@ def test_cost_per_block():
     for knobs, note in CB_CASES.values():
         _, _, counts = played(knobs, note, blocks=4, machine="cb")
         assert max(counts) < 8500, counts
+    for knobs, note in HH_CASES.values():
+        _, _, counts = played(knobs, note, blocks=4, machine="hh")
+        assert max(counts) < 5500, counts
 
 
 # ---- likeness to the Machinedrum: figures measured on the original (OS 1.63 DSP2, rendered locally; numbers only) ----
@@ -322,10 +335,11 @@ def test_cp_ptch_tunes_as_the_machinedrum(ptch, hz):
     assert abs(np.log2(peak_hz(x, 0.15, 0.4) / hz)) * 1200 < 25  # cents
 
 
-@pytest.mark.parametrize("machine", ["bd", "xt", "sd", "cp", "rs", "cb"])
+@pytest.mark.parametrize("machine", ["bd", "xt", "sd", "cp", "rs", "cb", "hh"])
 def test_every_store_stays_in_the_voice_or_its_output(machine):
     """With the rig's store recording on: the routine writes only its own state block and output (and its stack)."""
-    knobs = {"bd": DEFAULTS, "xt": XT_DEFAULTS, "sd": SD_DEFAULTS, "cp": CP_DEFAULTS, "rs": RS_DEFAULTS, "cb": CB_DEFAULTS}[
+    knobs = {"bd": DEFAULTS, "xt": XT_DEFAULTS, "sd": SD_DEFAULTS, "cp": CP_DEFAULTS, "rs": RS_DEFAULTS, "cb": CB_DEFAULTS,
+             "hh": HH_DEFAULTS}[
         machine
     ]
     rig = Rig(machine, record_stores=True)
@@ -359,3 +373,32 @@ def test_cb_tones_tune_as_the_machinedrums(ptch, lo, hi):
     b = float(f[np.argmax(spec * (f > 20))])
     got = sorted((a, b))
     assert abs(np.log2(got[0] / lo)) * 1200 < 25 and abs(np.log2(got[1] / hi)) * 1200 < 25, got
+
+
+def hh_audio(knobs, blocks: int) -> np.ndarray:
+    m = md_ref.EfmHh()
+    k = words(knobs)
+    m.note_on(k)
+    return m.render(60 << 8, k, blocks).astype(np.float64)
+
+
+@pytest.mark.parametrize("ptch, hz", [(0, 242.0), (64, 580.6), (127, 1362.0)])
+def test_hh_tunes_as_the_machinedrum(ptch, hz):
+    x = hh_audio((ptch, 96, 0, 64, 0, 64, 64, 0), 320)
+    assert abs(np.log2(peak_hz(x, 0.02, 0.2) / hz)) * 1200 < 25  # cents
+
+
+def test_hh_tremolo_as_the_machinedrums():
+    """TFRQ 64: 7.62 Hz; TREM 127 takes the level to silence once a cycle, TREM 64 6 dB down (the original's, measured)."""
+    x = hh_audio((64, 127, 127, 64, 0, 64, 64, 0), 1500)
+    w = 48
+    env = np.array([np.sqrt(np.mean(x[i * w : (i + 1) * w] ** 2)) for i in range(len(x) // w)])
+    spec = np.abs(np.fft.rfft((env - env.mean()) * np.hanning(len(env)), 1 << 15))
+    f = np.fft.rfftfreq(1 << 15, w / 48000)
+    assert abs(f[np.argmax(spec * (f > 0.5))] - 7.62) < 0.3
+    assert 20 * np.log10(env.min() / env.max()) < -40
+    half = hh_audio((64, 127, 64, 64, 0, 64, 64, 0), 500)
+    flat = hh_audio((64, 127, 0, 64, 0, 64, 64, 0), 500)
+    e = np.array([np.sqrt(np.mean(half[i * w : (i + 1) * w] ** 2)) for i in range(len(half) // w)])
+    e0 = np.array([np.sqrt(np.mean(flat[i * w : (i + 1) * w] ** 2)) for i in range(len(flat) // w)])
+    assert abs(20 * np.log10(np.min(e / e0)) + 6.0) < 1.0

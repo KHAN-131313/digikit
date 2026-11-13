@@ -1,5 +1,5 @@
 // khan/md: Machinedrum-style machines (<dk/machine/machine.h>), one body for both devices.
-// Machines: EFM-BD, EFM-XT, EFM-SD, EFM-CP, EFM-RS and EFM-CB, two sine operators with feedback FM on one shared loop (_md_efm_run).
+// Machines: EFM-BD, EFM-XT, EFM-SD, EFM-CP, EFM-RS, EFM-CB and EFM-HH, two sine operators with feedback FM on one shared loop (_md_efm_run).
 //
 // Based on Digidrum's EFM-BD (soejrd/digidrum, machines/EFM/BD/efm_bd.c, MIT, used with the author's permission),
 // rewritten for the SHARC+: float32, phases as 32-bit integers (2^32 a turn, so they wrap for free), the
@@ -75,6 +75,8 @@
 .GLOBAL _mr_note_on;
 .GLOBAL _mb_render;
 .GLOBAL _mb_note_on;
+.GLOBAL _mh_render;
+.GLOBAL _mh_note_on;
 .EXTERN _md_efm_ptch;
 .EXTERN _md_efm_dec;
 .EXTERN _md_efm_rdec;
@@ -90,6 +92,8 @@
 .EXTERN _md_cp_crate;
 .EXTERN _md_rs_ptch;
 .EXTERN _md_cb_ptch;
+.EXTERN _md_hh_ptch;
+.EXTERN _md_hh_trem;
 
 // MD_KNOB(OUT, TABLE, WORD): OUT = T[k] + (T[k + 1] - T[k]) * f for the 8.8 word k.f of parameter WORD.
 // The adapter clamps the word to 0 .. 0x7f00, so k <= 127 and k + 1 <= 128 are inside the 129 entries.
@@ -480,6 +484,100 @@ _mb_render:
         F8 = F8 * F11;
 _mb_mix_end: DM(I1, M6) = F0;
     DM(27, I3) = F8;
+    JUMP _md_efm_post;
+
+// ---- EFM-HH ----
+// One carrier-fed-back pair (_md_efm_loop_cfb) on _md_hh_ptch (BD's curve at 104 + 5 PTCH / 8) at BD's level: deviation BD's
+// (MOD 2^-12 a word unit), FB the carrier's feedback at BD's MFB scale (FB 65536 a word unit), no modulator feedback; DEC
+// BD's. Then a pass: y = (x - xprev) * 1.402 * g, g the tremolo's gain from the block's start to its end in 32 equal steps:
+// g = 1 - TREM / 127 * (1 - cos(phi)) / 2 at the block's end, phi advancing TRUNC(32 _md_hh_trem) a block (TFRQ).
+// State: the pair 0..17; xprev 20, phi 21, g 22. Knobs: PTCH DEC TREM TFRQ MOD MFRQ MDEC FB. (A short hat does not choke
+// the open ones yet: that needs state across voices.)
+_mh_render:
+    MD_ENTER;
+    M1 = R4;
+    MD_KNOB(F5, _md_hh_ptch, 0);
+    MD_PITCH;
+    MD_DECAYS;
+    R0 = 0;
+    DM(12, I3) = R0;                      // no modulator feedback
+    DM(14, I3) = R0;                      // no high-pass
+    DM(19, I3) = R0;                      // no noise
+    DM(26, I3) = R0;                      // no claps
+    R0 = DM(4, I1);
+    F5 = FLOAT R0;
+    R0 = 0x39800000;                      // 2^-12: MOD / 16, a word unit
+    F5 = F5 * F0;
+    DM(13, I3) = F5;
+    R0 = DM(7, I1);
+    F5 = FLOAT R0;
+    R0 = 0x47800000;                      // 65536: FB / 128 * 2^31, a word unit
+    F5 = F5 * F0;
+    DM(17, I3) = F5;
+    CALL _md_efm_loop_cfb;
+    R4 = M1;
+    I3 = R4;
+    I4 = _md_k;
+    R14 = 0x3e800000;                     // 0.25, for the sine
+    // the tremolo's gain at the block's end
+    MD_KNOB(F5, _md_hh_trem, 3);
+    R0 = 0x42000000;                      // 32.0
+    F5 = F5 * F0;
+    R2 = TRUNC F5;                        // a block's turn
+    R0 = DM(21, I3);
+    R0 = R0 + R2;
+    DM(21, I3) = R0;                      // phi
+    R1 = 0x40000000;
+    R5 = R0 + R1;                         // phi + a quarter turn: the sine is the cosine
+    R1 = DM(K_MASK, I4);
+    R0 = R5 AND R1;
+    R1 = DM(K_M32, I4);
+    F0 = FLOAT R0 BY R1;
+    F1 = ABS F0;
+    F1 = F1 - F14;
+    F1 = ABS F1;
+    F1 = F14 - F1;
+    F2 = F1 * F1;
+    F3 = DM(K_A7, I4);
+    F3 = F3 * F2;
+    F4 = DM(K_A5, I4);
+    F3 = F3 + F4;
+    F3 = F3 * F2;
+    F4 = DM(K_A3, I4);
+    F3 = F3 + F4;
+    F3 = F3 * F2;
+    F4 = DM(K_A1, I4);
+    F3 = F3 + F4;
+    F3 = F3 * F1;
+    F6 = F3 COPYSIGN F0;                  // cos(phi)
+    R0 = DM(2, I1);                       // TREM
+    F7 = FLOAT R0;
+    R0 = 0x38010204;                      // 1 / (127 * 256)
+    F7 = F7 * F0;                         // depth
+    R0 = 0x3f800000;
+    F8 = F0 - F6;                         // 1 - cos
+    R1 = 0x3f000000;
+    F8 = F8 * F1;                         // (1 - cos) / 2
+    F8 = F8 * F7;
+    F9 = F0 - F8;                         // g1
+    F12 = DM(22, I3);                     // g0
+    DM(22, I3) = F9;
+    F13 = F9 - F12;
+    R0 = 0x3d000000;                      // 1/32
+    F13 = F13 * F0;                       // the gain's step
+    F10 = DM(20, I3);                     // xprev
+    R11 = 0x3fb374bc;                     // 1.402
+    R0 = DM(DK_IN_W_OUT, I2);
+    I1 = R0;
+    LCNTR = DK_BLOCK, DO _mh_end UNTIL LCE;
+        F0 = DM(0, I1);
+        F1 = F0 - F10;
+        F10 = PASS F0;
+        F1 = F1 * F11;
+        F1 = F1 * F12;
+        F12 = F12 + F13;
+_mh_end: DM(I1, M6) = F1;
+    DM(20, I3) = F10;
     JUMP _md_efm_post;
 
 // ---- the shared loop ----
@@ -977,6 +1075,24 @@ _mb_note_on:
     DM(5, I5) = R0;
     JUMP (M13, I13);
 
+// EFM-HH's note_on: the pair from phase 0 at BD's level, no ramp, no feedback yet; the tremolo at its peak (g 1, phi 0).
+_mh_note_on:
+    I3 = R4;
+    R0 = 0;
+    DM(0, I3) = R0;
+    DM(1, I3) = R0;
+    DM(2, I3) = R0;
+    DM(3, I3) = R0;
+    DM(16, I3) = R0;                      // m2
+    DM(20, I3) = R0;                      // xprev
+    DM(21, I3) = R0;                      // phi
+    R0 = 0x3f800000;
+    DM(4, I3) = R0;
+    DM(22, I3) = R0;                      // g
+    R0 = 0x3ea18666;
+    DM(5, I3) = R0;
+    JUMP (M13, I13);
+
 .SECTION/DM seg_dmda;
 // dk_machine_desc: magic, contract, n_params, voices, state_bytes, state_clear_bytes, max_cycles_block, max_cycles_note_on,
 // max_call_depth, stack_bytes.
@@ -1046,3 +1162,14 @@ _mb_note_on:
 .VAR _mb_desc7 = 4400;
 .VAR _mb_desc8 = 1;
 .VAR _mb_desc9 = 0;
+.GLOBAL _mh_desc;
+.VAR _mh_desc = DK_MAGIC;
+.VAR _mh_desc1 = DK_MACHINE_V1;
+.VAR _mh_desc2 = 8;
+.VAR _mh_desc3 = DK_MAX_VOICES;
+.VAR _mh_desc4 = MD_STATE;
+.VAR _mh_desc5 = MD_CLEAR;
+.VAR _mh_desc6 = 5500;
+.VAR _mh_desc7 = 4400;
+.VAR _mh_desc8 = 1;
+.VAR _mh_desc9 = 0;

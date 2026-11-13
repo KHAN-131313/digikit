@@ -36,6 +36,11 @@ def cp_space(k: np.ndarray) -> np.ndarray:
     return np.exp(np.interp(k, CP_SPACE_KNOBS, np.log(CP_SPACE)))
 
 
+# EFM-HH's tremolo rates in Hz at these TFRQ knobs (OP-XY-MNMD's, MIT: Q32 turns at 44.1 kHz; checked against the original)
+HH_TREM_KNOBS = [0, 16, 32, 48, 64, 80, 96, 112, 127, 128]
+HH_TREM_HZ = [r / 2.0**32 * 44100.0 for r in (92522, 155826, 262957, 438262, 749915, 1246612, 2093918, 3535313, 5746101, 5746101)]
+
+
 def tables() -> dict[str, np.ndarray]:
     k = np.arange(129, dtype=np.float64)
     return {
@@ -61,6 +66,10 @@ def tables() -> dict[str, np.ndarray]:
         "_md_rs_ptch": (0.000581 * 2.0 ** ((104 + k) / 32.0) * R).astype(np.float32),
         # EFM-CB (research/fit_efm_cb.py): the low tone's PTCH on BD's pitch curve at 88 + 5 PTCH / 8
         "_md_cb_ptch": (0.000581 * 2.0 ** ((88 + 5 * k / 8) / 32.0) * R).astype(np.float32),
+        # EFM-HH (research/fit_efm_hh.py): PTCH on BD's pitch curve at 104 + 5 PTCH / 8; TFRQ's tremolo rate, 2^32-turn units
+        # a sample at 48 kHz (OP-XY-MNMD's rates, 0.95 Hz to 59 Hz, interpolated in log)
+        "_md_hh_ptch": (0.000581 * 2.0 ** ((104 + 5 * k / 8) / 32.0) * R).astype(np.float32),
+        "_md_hh_trem": (np.exp(np.interp(k, HH_TREM_KNOBS, np.log(HH_TREM_HZ))) / 48000.0 * 2.0**32).astype(np.float32),
         # the note's transposition, 2^(s/12) for s = -48..+48
         "_md_semis": (2.0 ** (np.arange(-48, 49) / 12.0)).astype(np.float32),
     }

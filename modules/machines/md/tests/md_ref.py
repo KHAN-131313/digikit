@@ -427,3 +427,56 @@ class EfmCb:
 
     def render(self, pitch: int, params: list[int], blocks: int) -> np.ndarray:
         return np.concatenate([self.block(pitch, params)[0] for _ in range(blocks)])
+
+
+class EfmHh:
+    """EFM-HH (src/dsp/md.s _mh_render): one carrier-fed-back pair, then y = (x - xprev) * 1.402 * g, the tremolo's gain g
+    stepping linearly over the block to 1 - TREM / 127 * (1 - cos(phi)) / 2 at its end."""
+
+    GAIN = np.uint32(0x3FB374BC).view(np.float32)
+    DEPTH_K = np.uint32(0x38010204).view(np.float32)
+
+    def note_on(self, params: list[int]) -> None:
+        self.p = Pair(0)
+        self.p.m2 = 0
+        self.xprev = f32(0)
+        self.phi = 0
+        self.g = f32(1)
+
+    def block(self, pitch: int, params: list[int]) -> tuple[np.ndarray, bool]:
+        if not self.p.fbg >= REST:
+            return np.zeros(BLOCK, np.float32), True
+        ptch, ptch8 = pitch_coefs("_md_hh_ptch", params[0], pitch)
+        step1 = f32(params[5]) * f32(1 / 256)
+        step1 = max(step1, f32(1)) * f32(1 / 128)
+        step1 = f32(8) * step1
+        modamt = f32(params[4]) * f32(2.0**-12)
+        cfb = f32(params[7]) * f32(65536)
+        out = run_pair(self.p, ptch, ptch8, knob("_md_efm_rdec", params[3]), knob("_md_efm_mdec", params[6]),
+                       knob("_md_efm_dec", params[1]), step1, f32(0), modamt, cfb)
+        inc = trunc(knob("_md_hh_trem", params[3]) * f32(32))
+        self.phi = i32(self.phi + inc)
+        c = sine(i32(self.phi + 0x40000000))
+        depth = f32(params[2]) * self.DEPTH_K
+        t = f32(1) - c
+        t = t * f32(0.5)
+        t = t * depth
+        g1 = f32(1) - t
+        g = self.g
+        self.g = g1
+        step = g1 - g
+        step = step * f32(1 / 32)
+        xprev = self.xprev
+        for n in range(BLOCK):
+            x = out[n]
+            d = x - xprev
+            xprev = x
+            d = d * self.GAIN
+            d = d * g
+            g = g + step
+            out[n] = d
+        self.xprev = xprev
+        return out, False
+
+    def render(self, pitch: int, params: list[int], blocks: int) -> np.ndarray:
+        return np.concatenate([self.block(pitch, params)[0] for _ in range(blocks)])
