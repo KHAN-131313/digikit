@@ -1,0 +1,30 @@
+[module]
+id = "khan/md"
+version = "0.1.0"
+name = "MD"
+category = "machines"
+type = "machine"
+author = "khan"
+status = "experimental"
+summary = "Machinedrum-style drum machines, starting with EFM-BD: an FM kick with pitch ramp and feedback."
+dynamic = true
+ports = ["dn2-1.12"]
+requires = []
+conflicts = []
+
+[targets]
+"dn2-1.12" = "experimental"
+
+# `patchkit pack khan/md --device dt2|dn2 -o md.dkm` makes the .dkm; the digikit runtime sends the DSP object to the DSP and
+# publishes the voice row and the machine row.
+# The machine declaration (DK_MACHINE, DK_PARAM and DK_PAGE in src/module.c). It holds only .dk.desc records; patchkit pack reads them
+# and leaves them out of the .dkm.
+[[object]]
+path = "build/md-cf.dko.json"
+sources = ["src/module.c"]
+place = "cf.expansion"
+
+[[object]]
+path = "build/md-dsp.dko.json"
+sources = ["src/dsp/md.s"]
+place = "dsp.l2"
