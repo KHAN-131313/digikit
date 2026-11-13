@@ -105,3 +105,47 @@ def test_cost_per_block():
     for knobs, note in CASES.values():
         _, _, counts = played(knobs, note, blocks=4)
         assert max(counts) < 4000, counts
+
+
+# ---- likeness to the Machinedrum: figures measured on the original (OS 1.63 DSP2, rendered locally; numbers only) ----
+# Each is a knob sweep that isolates one control, as OP-XY-MNMD's reference/fit_efm_bd.py lays them out.
+
+
+def model_audio(knobs, seconds: float) -> np.ndarray:
+    m = md_ref.EfmBd()
+    m.note_on(words(knobs))
+    return m.render(60 << 8, words(knobs), int(seconds * 48000 / 32) + 1).astype(np.float64)
+
+
+def peak_hz(x: np.ndarray, t0: float = 0.1, t1: float = 0.3) -> float:
+    s = x[int(t0 * 48000) : int(t1 * 48000)]
+    s = s * np.hanning(len(s))
+    spec = np.abs(np.fft.rfft(s, 1 << 17))
+    f = np.fft.rfftfreq(1 << 17, 1 / 48000)
+    return float(f[f > 10][np.argmax(spec[f > 10])])
+
+
+@pytest.mark.parametrize(
+    "ptch, hz", [(48, 72.5), (64, 102.5), (96, 205.1), (127, 401.4)]
+)
+def test_ptch_tunes_as_the_machinedrum(ptch, hz):
+    x = model_audio((ptch, 96, 16, 64, 0, 64, 64, 0), 0.32)
+    assert abs(np.log2(peak_hz(x) / hz)) * 1200 < 25  # cents
+
+
+# From MFB 32 the feedback turns chaotic: ours is 0.75 semitone high at 32, and from 48 about 2.5-3 semitones brighter
+# (spectral centroid) than the original. Smoothing the fed-back sine or scaling it did not close that without breaking 16..48.
+@pytest.mark.parametrize("mfb, hz, st", [(0, 102.5, 0.1), (16, 86.4, 0.5), (32, 31.9, 1.0)])
+def test_feedback_pulls_the_pitch_down_as_the_machinedrums_does(mfb, hz, st):
+    x = model_audio((64, 96, 16, 64, 64, 64, 127, mfb), 0.32)
+    assert abs(np.log2(peak_hz(x) / hz)) * 12 < st
+
+
+@pytest.mark.parametrize(
+    "dec, at, db", [(32, 0.05, -39.9), (64, 0.05, -10.1), (64, 0.2, -30.3), (96, 0.2, -8.3), (96, 0.5, -16.1)]
+)
+def test_dec_falls_as_the_machinedrums_does(dec, at, db):
+    x = model_audio((64, dec, 16, 64, 0, 64, 64, 0), at + 0.02)
+    x = x / np.max(np.abs(x))
+    seg = x[int(at * 48000) : int(at * 48000) + 480]
+    assert abs(10 * np.log10(np.mean(seg**2)) - db) < 1.5
