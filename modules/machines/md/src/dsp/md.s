@@ -714,86 +714,60 @@ _md_efm_loop:
     R15 = 0x4effffff;                     // 2147483520.0, the increment's clip
     I4 = _md_k;
 
+    F1 = DM(7, I3);                       // ptch8, for the first sample (each sample loads the next's)
     LCNTR = DK_BLOCK, DO _md_efm_end UNTIL LCE;
-        // y1 = ptch8 * op1 + ptch; op1 = op1 * rdec
-        F0 = DM(7, I3);
-        F7 = F0 * F11;
-        F0 = DM(6, I3);
-        F7 = F7 + F0;
-        F0 = DM(8, I3);
-        F11 = F11 * F0;
-        // s1 = sin(ph1 + m + m)
-        R5 = R8 + R10;
-        R5 = R5 + R10;
-        R1 = DM(K_MASK, I4);
+        // Each memory access rides with an unrelated compute (the same operations, in the same order, as tests/md_ref.py).
+        F7 = F1 * F11, F0 = DM(6, I3);    // ptch8 * op1; ptch
+        F7 = F7 + F0, F0 = DM(8, I3);     // y1; rdec
+        F11 = F11 * F0, R1 = DM(K_MASK, I4);  // op1 = op1 * rdec
+        R5 = R8 + R10, R2 = DM(K_M32, I4);
+        R5 = R5 + R10;                    // ph1 + m + m
         R0 = R5 AND R1;
-        R1 = DM(K_M32, I4);
-        F0 = FLOAT R0 BY R1;              // u
-        F1 = ABS F0;
+        F0 = FLOAT R0 BY R2;              // u
+        F1 = ABS F0, F3 = DM(K_A7, I4);
         F1 = F1 - F14;
         F1 = ABS F1;
-        F1 = F14 - F1;                    // w
+        F1 = F14 - F1, F4 = DM(K_A5, I4); // w
         F2 = F1 * F1;                     // w2
-        F3 = DM(K_A7, I4);
         F3 = F3 * F2;
-        F4 = DM(K_A5, I4);
-        F3 = F3 + F4;
+        F3 = F3 + F4, F4 = DM(K_A3, I4);
         F3 = F3 * F2;
-        F4 = DM(K_A3, I4);
-        F3 = F3 + F4;
+        F3 = F3 + F4, F4 = DM(K_A1, I4);
         F3 = F3 * F2;
-        F4 = DM(K_A1, I4);
-        F3 = F3 + F4;
+        F3 = F3 + F4, F4 = DM(11, I3);    // step1
         F3 = F3 * F1;
         F6 = F3 COPYSIGN F0;              // s1
-        // ph1 += inc(step1 * y1); m = trunc(fbamt * s1)
-        F0 = DM(11, I3);
-        F0 = F0 * F7;
+        F0 = F4 * F7, F4 = DM(12, I3);    // step1 * y1; fbamt
         F0 = CLIP F0 BY F15;
         R0 = TRUNC F0;
-        R8 = R8 + R0;
-        F0 = DM(12, I3);
-        F0 = F0 * F6;
-        R10 = TRUNC F0;
-        // x = op2 * s1 * y1; op2 = op2 * mdec
+        R8 = R8 + R0;                     // ph1 += inc(step1 * y1)
+        F0 = F4 * F6, F4 = DM(9, I3);     // fbamt * s1; mdec
+        R10 = TRUNC F0;                   // m
         F5 = F12 * F6;
-        F5 = F5 * F7;
-        F0 = DM(9, I3);
-        F12 = F12 * F0;
-        // s2 = sin(ph2)
-        R1 = DM(K_MASK, I4);
-        R0 = R9 AND R1;
-        R1 = DM(K_M32, I4);
-        F0 = FLOAT R0 BY R1;
-        F1 = ABS F0;
+        F5 = F5 * F7;                     // x = op2 * s1 * y1
+        F12 = F12 * F4, R1 = DM(K_MASK, I4);  // op2 = op2 * mdec
+        R0 = R9 AND R1, R2 = DM(K_M32, I4);
+        F0 = FLOAT R0 BY R2;
+        F1 = ABS F0, F3 = DM(K_A7, I4);
         F1 = F1 - F14;
         F1 = ABS F1;
-        F1 = F14 - F1;
+        F1 = F14 - F1, F4 = DM(K_A5, I4);
         F2 = F1 * F1;
-        F3 = DM(K_A7, I4);
         F3 = F3 * F2;
-        F4 = DM(K_A5, I4);
-        F3 = F3 + F4;
+        F3 = F3 + F4, F4 = DM(K_A3, I4);
         F3 = F3 * F2;
-        F4 = DM(K_A3, I4);
-        F3 = F3 + F4;
+        F3 = F3 + F4, F4 = DM(K_A1, I4);
         F3 = F3 * F2;
-        F4 = DM(K_A1, I4);
         F3 = F3 + F4;
         F3 = F3 * F1;
-        F6 = F3 COPYSIGN F0;              // s2
-        // ph2 += inc(modamt * x + y1)
-        F0 = DM(13, I3);
-        F0 = F0 * F5;
+        F6 = F3 COPYSIGN F0, F4 = DM(13, I3);  // s2; modamt
+        F0 = F4 * F5, F4 = DM(10, I3);    // modamt * x; dec
         F0 = F0 + F7;
         F0 = CLIP F0 BY F15;
         R0 = TRUNC F0;
-        R9 = R9 + R0;
-        // out = fbg * s2; fbg = fbg * dec
-        F0 = F13 * F6;
-        DM(I0, M6) = F0;
-        F0 = DM(10, I3);
-_md_efm_end: F13 = F13 * F0;
+        R9 = R9 + R0;                     // ph2 += inc(modamt * x + y1)
+        F0 = F13 * F6, F1 = DM(7, I3);    // out = fbg * s2; the next sample's ptch8
+_md_efm_end: F13 = F13 * F4, DM(I0, M6) = F0;   // fbg = fbg * dec
 
     DM(0, I3) = R8;
     DM(1, I3) = R9;
@@ -823,93 +797,65 @@ _md_efm_loop_cfb:
     R15 = 0x4effffff;                     // 2147483520.0, the increment's clip
     I4 = _md_k;
 
+    F1 = DM(7, I3);                       // ptch8, for the first sample (each sample loads the next's)
     LCNTR = DK_BLOCK, DO _md_cfb_end UNTIL LCE;
-        // y1 = ptch8 * op1 + ptch; op1 = op1 * rdec
-        F0 = DM(7, I3);
-        F7 = F0 * F11;
-        F0 = DM(6, I3);
-        F7 = F7 + F0;
-        F0 = DM(8, I3);
-        F11 = F11 * F0;
-        // s1 = sin(ph1 + m + m)
-        R5 = R8 + R10;
-        R5 = R5 + R10;
-        R1 = DM(K_MASK, I4);
+        // Each memory access rides with an unrelated compute (the same operations, in the same order, as tests/md_ref.py).
+        F7 = F1 * F11, F0 = DM(6, I3);    // ptch8 * op1; ptch
+        F7 = F7 + F0, F0 = DM(8, I3);     // y1; rdec
+        F11 = F11 * F0, R1 = DM(K_MASK, I4);  // op1 = op1 * rdec
+        R5 = R8 + R10, R2 = DM(K_M32, I4);
+        R5 = R5 + R10;                    // ph1 + m + m
         R0 = R5 AND R1;
-        R1 = DM(K_M32, I4);
-        F0 = FLOAT R0 BY R1;              // u
-        F1 = ABS F0;
+        F0 = FLOAT R0 BY R2;              // u
+        F1 = ABS F0, F3 = DM(K_A7, I4);
         F1 = F1 - F14;
         F1 = ABS F1;
-        F1 = F14 - F1;                    // w
+        F1 = F14 - F1, F4 = DM(K_A5, I4); // w
         F2 = F1 * F1;                     // w2
-        F3 = DM(K_A7, I4);
         F3 = F3 * F2;
-        F4 = DM(K_A5, I4);
-        F3 = F3 + F4;
+        F3 = F3 + F4, F4 = DM(K_A3, I4);
         F3 = F3 * F2;
-        F4 = DM(K_A3, I4);
-        F3 = F3 + F4;
+        F3 = F3 + F4, F4 = DM(K_A1, I4);
         F3 = F3 * F2;
-        F4 = DM(K_A1, I4);
-        F3 = F3 + F4;
+        F3 = F3 + F4, F4 = DM(11, I3);    // step1
         F3 = F3 * F1;
         F6 = F3 COPYSIGN F0;              // s1
-        // ph1 += inc(step1 * y1); m = trunc(fbamt * s1)
-        F0 = DM(11, I3);
-        F0 = F0 * F7;
+        F0 = F4 * F7, F4 = DM(12, I3);    // step1 * y1; fbamt
         F0 = CLIP F0 BY F15;
         R0 = TRUNC F0;
-        R8 = R8 + R0;
-        F0 = DM(12, I3);
-        F0 = F0 * F6;
-        R10 = TRUNC F0;
-        // x = op2 * s1 * y1; op2 = op2 * mdec
+        R8 = R8 + R0;                     // ph1 += inc(step1 * y1)
+        F0 = F4 * F6, F4 = DM(9, I3);     // fbamt * s1; mdec
+        R10 = TRUNC F0;                   // m
         F5 = F12 * F6;
-        F5 = F5 * F7;
-        F0 = DM(9, I3);
-        F12 = F12 * F0;
-        // s2 = sin(ph2 + m2 + m2): the carrier fed back one sample late (m2 pair word 16, cfb word 17)
-        R1 = DM(16, I3);                  // (not R5: F5 holds x)
-        R0 = R9 + R1;
-        R0 = R0 + R1;
-        R1 = DM(K_MASK, I4);
-        R0 = R0 AND R1;
-        R1 = DM(K_M32, I4);
-        F0 = FLOAT R0 BY R1;
-        F1 = ABS F0;
+        F5 = F5 * F7;                     // x = op2 * s1 * y1
+        F12 = F12 * F4, R1 = DM(16, I3);      // op2 = op2 * mdec; m2
+        R0 = R9 + R1, R2 = DM(K_M32, I4);
+        R0 = R0 + R1, R1 = DM(K_MASK, I4);
+        R0 = R0 AND R1;                   // ph2 + m2 + m2, the sine's index
+        F0 = FLOAT R0 BY R2;
+        F1 = ABS F0, F3 = DM(K_A7, I4);
         F1 = F1 - F14;
         F1 = ABS F1;
-        F1 = F14 - F1;
+        F1 = F14 - F1, F4 = DM(K_A5, I4);
         F2 = F1 * F1;
-        F3 = DM(K_A7, I4);
         F3 = F3 * F2;
-        F4 = DM(K_A5, I4);
-        F3 = F3 + F4;
+        F3 = F3 + F4, F4 = DM(K_A3, I4);
         F3 = F3 * F2;
-        F4 = DM(K_A3, I4);
-        F3 = F3 + F4;
+        F3 = F3 + F4, F4 = DM(K_A1, I4);
         F3 = F3 * F2;
-        F4 = DM(K_A1, I4);
         F3 = F3 + F4;
         F3 = F3 * F1;
-        F6 = F3 COPYSIGN F0;              // s2
-        F0 = DM(17, I3);
-        F0 = F0 * F6;
+        F6 = F3 COPYSIGN F0, F4 = DM(17, I3);  // s2; cfb
+        F0 = F4 * F6, F4 = DM(13, I3);    // cfb * s2; modamt
         R0 = TRUNC F0;
         DM(16, I3) = R0;                  // m2 = trunc(cfb * s2)
-        // ph2 += inc(modamt * x + y1)
-        F0 = DM(13, I3);
-        F0 = F0 * F5;
+        F0 = F4 * F5, F4 = DM(10, I3);    // modamt * x; dec
         F0 = F0 + F7;
         F0 = CLIP F0 BY F15;
         R0 = TRUNC F0;
-        R9 = R9 + R0;
-        // out = fbg * s2; fbg = fbg * dec
-        F0 = F13 * F6;
-        DM(I0, M6) = F0;
-        F0 = DM(10, I3);
-_md_cfb_end: F13 = F13 * F0;
+        R9 = R9 + R0;                     // ph2 += inc(modamt * x + y1)
+        F0 = F13 * F6, F1 = DM(7, I3);    // out = fbg * s2; the next sample's ptch8
+_md_cfb_end: F13 = F13 * F4, DM(I0, M6) = F0;   // fbg = fbg * dec
 
     DM(0, I3) = R8;
     DM(1, I3) = R9;

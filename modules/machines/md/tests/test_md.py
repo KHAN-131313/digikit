@@ -186,29 +186,17 @@ def test_knobs_flipping_every_block_stay_finite_and_bounded():
         assert np.all(np.abs(y) <= 1.0)
 
 
+# Instructions a block (the adapter's ~700 included) after the paired-load loop, with about 5% headroom: a change that makes a
+# machine slower fails here (the descriptions' ceilings are looser).
+COST = {"bd": 3050, "xt": 3250, "sd": 3850, "cp": 3550, "rs": 5200, "cb": 5500, "hh": 3500}
+
+
 def test_cost_per_block():
-    """The ceilings the descriptions declare (BD 4000, XT 4400 a block, the adapter included) hold for every knob case."""
-    for knobs, note in CASES.values():
-        _, _, counts = played(knobs, note, blocks=4)
-        assert max(counts) < 4000, counts
-    for knobs, note in XT_CASES.values():
-        _, _, counts = played(knobs, note, blocks=4, machine="xt")
-        assert max(counts) < 4400, counts
-    for knobs, note in SD_CASES.values():
-        _, _, counts = played(knobs, note, blocks=4, machine="sd")
-        assert max(counts) < 5000, counts
-    for knobs, note in CP_CASES.values():
-        _, _, counts = played(knobs, note, blocks=4, machine="cp")
-        assert max(counts) < 5000, counts
-    for knobs, note in RS_CASES.values():
-        _, _, counts = played(knobs, note, blocks=4, machine="rs")
-        assert max(counts) < 8000, counts
-    for knobs, note in CB_CASES.values():
-        _, _, counts = played(knobs, note, blocks=4, machine="cb")
-        assert max(counts) < 8500, counts
-    for knobs, note in HH_CASES.values():
-        _, _, counts = played(knobs, note, blocks=4, machine="hh")
-        assert max(counts) < 5500, counts
+    for machine, cases in (("bd", CASES), ("xt", XT_CASES), ("sd", SD_CASES), ("cp", CP_CASES), ("rs", RS_CASES),
+                           ("cb", CB_CASES), ("hh", HH_CASES)):
+        for knobs, note in cases.values():
+            _, _, counts = played(knobs, note, blocks=4, machine=machine)
+            assert max(counts) < COST[machine], (machine, counts)
 
 
 # ---- likeness to the Machinedrum: figures measured on the original (OS 1.63 DSP2, rendered locally; numbers only) ----
