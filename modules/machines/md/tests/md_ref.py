@@ -66,6 +66,45 @@ def knob(table: str, word: int) -> np.float32:
     return t[k] + (t[k + 1] - t[k]) * fr
 
 
+def run_pair(p, ptch, ptch8, rdec, mdec, dec, step1, fbamt, modamt) -> np.ndarray:
+    """md.s _md_efm_loop: one FM pair's block on p's state (ph1 ph2 m op1 op2 fbg)."""
+    op1, op2, fbg = p.op1, p.op2, p.fbg
+    if abs(op1) < TINY:
+        op1 = f32(0)
+    if abs(op2) < TINY:
+        op2 = f32(0)
+    ph1, ph2, m = p.ph1, p.ph2, p.m
+    out = np.empty(BLOCK, np.float32)
+    for n in range(BLOCK):
+        y1 = ptch8 * op1
+        y1 = y1 + ptch
+        op1 = op1 * rdec
+        s1 = sine(i32(ph1 + m + m))
+        ph1 = i32(ph1 + trunc(clip(step1 * y1, CLIPV)))
+        m = trunc(fbamt * s1)
+        x = op2 * s1
+        x = x * y1
+        op2 = op2 * mdec
+        s2 = sine(ph2)
+        v = modamt * x
+        v = v + y1
+        ph2 = i32(ph2 + trunc(clip(v, CLIPV)))
+        out[n] = fbg * s2
+        fbg = fbg * dec
+    p.ph1, p.ph2, p.m = ph1, ph2, m
+    p.op1, p.op2, p.fbg = op1, op2, fbg
+    return out
+
+
+def pitch_coefs(table: str, word: int, pitch: int) -> tuple[np.float32, np.float32]:
+    """md.s MD_PITCH: ptch and ptch8 for the note."""
+    ptch = knob(table, word)
+    s = min(max((pitch >> 8) - 12, 0), 96)
+    ptch = ptch * T["_md_semis"][s]
+    ptch = ptch * f32(2.0**32)
+    return ptch, f32(8) * ptch
+
+
 class EfmBd:
     """One voice. `params` are the eight 8.8 words PTCH DEC RAMP RDEC MOD MFRQ MDEC MFB; `pitch` the voice's 8.8 note word."""
 
@@ -121,31 +160,7 @@ class EfmBd:
         step1 = f32(8) * step1
         fbamt = self.feedback(params)
         modamt = self.deviation(params)
-        op1, op2, fbg = self.op1, self.op2, self.fbg
-        if abs(op1) < TINY:
-            op1 = f32(0)
-        if abs(op2) < TINY:
-            op2 = f32(0)
-        ph1, ph2, m = self.ph1, self.ph2, self.m
-        out = np.empty(BLOCK, np.float32)
-        for n in range(BLOCK):
-            y1 = ptch8 * op1
-            y1 = y1 + ptch
-            op1 = op1 * rdec
-            s1 = sine(i32(ph1 + m + m))
-            ph1 = i32(ph1 + trunc(clip(step1 * y1, CLIPV)))
-            m = trunc(fbamt * s1)
-            x = op2 * s1
-            x = x * y1
-            op2 = op2 * mdec
-            s2 = sine(ph2)
-            v = modamt * x
-            v = v + y1
-            ph2 = i32(ph2 + trunc(clip(v, CLIPV)))
-            out[n] = fbg * s2
-            fbg = fbg * dec
-        self.ph1, self.ph2, self.m = ph1, ph2, m
-        self.op1, self.op2, self.fbg = op1, op2, fbg
+        out = run_pair(self, ptch, ptch8, rdec, mdec, dec, step1, fbamt, modamt)
         self.noise(out, params)
         hpc = self.hp(params)
         if hpc:
@@ -301,3 +316,56 @@ class EfmCp(EfmSd):
             self.left -= 1
             if self.left == 0:
                 self.until = BIG
+
+
+class Pair:
+    def __init__(self, phase: int) -> None:
+        self.ph1 = self.ph2 = phase
+        self.m = 0
+        self.op1 = f32(0)
+        self.op2 = f32(1)
+        self.fbg = np.uint32(0x3EA18666).view(np.float32)
+
+
+class EfmRs:
+    """EFM-RS: the rim (PTCH on _md_rs_ptch, DEC, MOD at 2^-15 a word unit) and the snare (SPTC on _md_sd_ptch, SDEC, SMOD at
+    (9/16) / 16 / 256) pairs, ratio 4, no modulation envelope, full feedback; the snare mixed in at SNAR / (127 * 256) a word
+    unit; SD's HPF (src/dsp/md.s _mr_render)."""
+
+    SNAR_K = np.uint32(0x38010204).view(np.float32)
+
+    def note_on(self, params: list[int]) -> None:
+        self.rim = Pair(0x40000000)
+        self.snare = Pair(472446403)
+        self.low = f32(0)
+
+    def block(self, pitch: int, params: list[int]) -> tuple[np.ndarray, bool]:
+        if max(self.rim.fbg, self.snare.fbg) < REST:
+            return np.zeros(BLOCK, np.float32), True
+
+        def coefs(table, pw, dw, mw, mk):
+            ptch, ptch8 = pitch_coefs(table, params[pw], pitch)
+            dec = knob("_md_efm_dec", params[dw])
+            modamt = f32(params[mw]) * mk
+            return ptch, ptch8, f32(0), f32(1), dec, f32(4), f32(2.0**31), modamt
+
+        rim = coefs("_md_rs_ptch", 0, 1, 2, np.uint32(0x38000000).view(np.float32))
+        snare = coefs("_md_sd_ptch", 5, 6, 7, np.uint32(0x39100000).view(np.float32))
+        scratch = run_pair(self.snare, *snare)
+        out = run_pair(self.rim, *rim)
+        g = f32(params[4]) * self.SNAR_K
+        for n in range(BLOCK):
+            out[n] = out[n] + scratch[n] * g
+        hpc = knob("_md_sd_hpf", params[3])
+        if hpc:
+            low = self.low
+            for n in range(BLOCK):
+                d = out[n] - low
+                d = d * hpc
+                low = low + d
+                out[n] = out[n] - low
+            self.low = low
+        return out, False
+
+    def render(self, pitch: int, params: list[int], blocks: int) -> np.ndarray:
+        return np.concatenate([self.block(pitch, params)[0] for _ in range(blocks)])

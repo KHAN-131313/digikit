@@ -1,5 +1,5 @@
 // khan/md: Machinedrum-style machines (<dk/machine/machine.h>), one body for both devices.
-// Machines: EFM-BD, EFM-XT, EFM-SD and EFM-CP, two sine operators with feedback FM on one shared loop (_md_efm_run).
+// Machines: EFM-BD, EFM-XT, EFM-SD, EFM-CP and EFM-RS, two sine operators with feedback FM on one shared loop (_md_efm_run).
 //
 // Based on Digidrum's EFM-BD (soejrd/digidrum, machines/EFM/BD/efm_bd.c, MIT, used with the author's permission),
 // rewritten for the SHARC+: float32, phases as 32-bit integers (2^32 a turn, so they wrap for free), the
@@ -40,8 +40,13 @@
 #include "dk_machine.inc"
 #include "tables.inc"
 
+// state bytes: BD and XT use words 0..15, SD 0..20, CP 0..26; RS adds the snare's pair (28..41) and a scratch block (44..75)
 #define MD_STATE 112
 #define MD_CLEAR 112
+#define MR_STATE 304
+#define MR_CLEAR 176
+#define MR_PAIR 112
+#define MR_SCRATCH 176
 // EFM-XT's start level: 0.839 * 0.315478504
 #define MX_LEVEL 0x3e8784fc
 
@@ -62,6 +67,8 @@
 .GLOBAL _ms_note_on;
 .GLOBAL _mc_render;
 .GLOBAL _mc_note_on;
+.GLOBAL _mr_render;
+.GLOBAL _mr_note_on;
 .EXTERN _md_efm_ptch;
 .EXTERN _md_efm_dec;
 .EXTERN _md_efm_rdec;
@@ -75,6 +82,7 @@
 .EXTERN _md_cp_ptch;
 .EXTERN _md_cp_space;
 .EXTERN _md_cp_crate;
+.EXTERN _md_rs_ptch;
 
 // MD_KNOB(OUT, TABLE, WORD): OUT = T[k] + (T[k + 1] - T[k]) * f for the 8.8 word k.f of parameter WORD.
 // The adapter clamps the word to 0 .. 0x7f00, so k <= 127 and k + 1 <= 128 are inside the 129 entries.
@@ -298,114 +306,91 @@ _mc_live:
     DM(26, I3) = R0;                      // claps
     JUMP _md_efm_run;
 
+// ---- EFM-RS ----
+// Two fed-back pairs, ratio 4, no modulation envelope, BD's level: the rim (PTCH on _md_rs_ptch, BD's curve at 104 + PTCH;
+// DEC; MOD (1/8) / 16) and the snare (SPTC on _md_sd_ptch; SDEC; SMOD (9/16) / 16) in a scratch block, mixed in at SNAR / 127;
+// then SD's HPF. Knobs: PTCH DEC MOD HPF SNAR SPTC SDEC SMOD. Rests when both pairs' levels are under 2^-22.
+#define MR_PAIR_COEFS(PTAB, PW, DW, MW, MK) \
+    MD_KNOB(F5, PTAB, PW); \
+    MD_PITCH; \
+    MD_KNOB(F5, _md_efm_dec, DW); \
+    DM(10, I3) = F5; \
+    R0 = 0; \
+    DM(8, I3) = R0; \
+    R0 = 0x3f800000; \
+    DM(9, I3) = R0; \
+    R0 = 0x40800000; \
+    DM(11, I3) = R0; \
+    R0 = 0x4f000000; \
+    DM(12, I3) = R0; \
+    R0 = DM(MW, I1); \
+    F5 = FLOAT R0; \
+    R0 = MK; \
+    F5 = F5 * F0; \
+    DM(13, I3) = F5
+
+_mr_render:
+    I3 = R4;
+    M1 = R4;                              // the state's base, kept over the loop's calls (they clobber R0..R15)
+    I2 = R8;
+    I1 = R12;
+    R0 = DM(DK_IN_W_OUT, I2);
+    I0 = R0;
+    F13 = DM(5, I3);
+    R0 = MR_PAIR;
+    R0 = R4 + R0;
+    I5 = R0;
+    F1 = DM(5, I5);
+    F13 = MAX(F13, F1);
+    R0 = 0x34800000;
+    COMP(F13, F0);
+    IF LT JUMP _md_rest;
+    MR_PAIR_COEFS(_md_rs_ptch, 0, 1, 2, 0x38000000);      // the rim: (1/8) / 16 / 256 = 2^-15
+    MD_KNOB(F5, _md_sd_hpf, 3);
+    DM(14, I3) = F5;                      // hpc
+    R0 = 0;
+    DM(19, I3) = R0;                      // no noise
+    DM(26, I3) = R0;                      // no claps
+    R4 = M1;                              // (MD_KNOB uses F4)
+    R0 = MR_PAIR;
+    R0 = R4 + R0;
+    I3 = R0;
+    MR_PAIR_COEFS(_md_sd_ptch, 5, 6, 7, 0x39100000);      // the snare: (9/16) / 16 / 256
+    // the snare's pair into the scratch block, then the rim's into the output
+    R4 = M1;
+    R0 = MR_SCRATCH;
+    R0 = R4 + R0;
+    I0 = R0;
+    CALL _md_efm_loop;
+    R4 = M1;
+    I3 = R4;
+    R0 = DM(DK_IN_W_OUT, I2);
+    I0 = R0;
+    CALL _md_efm_loop;
+    R4 = M1;
+    I3 = R4;
+    // out = out + scratch * SNAR / 127
+    R0 = DM(4, I1);
+    F2 = FLOAT R0;
+    R0 = 0x38010204;                      // 1 / (127 * 256)
+    F2 = F2 * F0;
+    R0 = MR_SCRATCH;
+    R0 = R4 + R0;
+    I5 = R0;
+    R0 = DM(DK_IN_W_OUT, I2);
+    I1 = R0;
+    LCNTR = DK_BLOCK, DO _mr_mix_end UNTIL LCE;
+        F1 = DM(I5, M6);
+        F1 = F1 * F2;
+        F0 = DM(0, I1);
+        F0 = F0 + F1;
+_mr_mix_end: DM(I1, M6) = F0;
+    JUMP _md_efm_post;
+
 // ---- the shared loop ----
 _md_efm_run:
-    F13 = DM(5, I3);                      // fbg (every entry's own check may have read it, or not)
-    // ---- the voice's state into registers; envelopes under 1e-30 are 0 (no denormals) ----
-    R8 = DM(0, I3);
-    R9 = DM(1, I3);
-    R10 = DM(2, I3);
-    F11 = DM(3, I3);
-    F12 = DM(4, I3);
-    R1 = 0x0da24260;                      // 1e-30
-    F0 = ABS F11;
-    COMP(F0, F1);
-    IF LT F11 = F1 - F1;
-    F0 = ABS F12;
-    COMP(F0, F1);
-    IF LT F12 = F1 - F1;
-    R14 = 0x3e800000;                     // 0.25
-    R15 = 0x4effffff;                     // 2147483520.0, the increment's clip
-    I4 = _md_k;
-
-    LCNTR = DK_BLOCK, DO _md_efm_end UNTIL LCE;
-        // y1 = ptch8 * op1 + ptch; op1 = op1 * rdec
-        F0 = DM(7, I3);
-        F7 = F0 * F11;
-        F0 = DM(6, I3);
-        F7 = F7 + F0;
-        F0 = DM(8, I3);
-        F11 = F11 * F0;
-        // s1 = sin(ph1 + m + m)
-        R5 = R8 + R10;
-        R5 = R5 + R10;
-        R1 = DM(K_MASK, I4);
-        R0 = R5 AND R1;
-        R1 = DM(K_M32, I4);
-        F0 = FLOAT R0 BY R1;              // u
-        F1 = ABS F0;
-        F1 = F1 - F14;
-        F1 = ABS F1;
-        F1 = F14 - F1;                    // w
-        F2 = F1 * F1;                     // w2
-        F3 = DM(K_A7, I4);
-        F3 = F3 * F2;
-        F4 = DM(K_A5, I4);
-        F3 = F3 + F4;
-        F3 = F3 * F2;
-        F4 = DM(K_A3, I4);
-        F3 = F3 + F4;
-        F3 = F3 * F2;
-        F4 = DM(K_A1, I4);
-        F3 = F3 + F4;
-        F3 = F3 * F1;
-        F6 = F3 COPYSIGN F0;              // s1
-        // ph1 += inc(step1 * y1); m = trunc(fbamt * s1)
-        F0 = DM(11, I3);
-        F0 = F0 * F7;
-        F0 = CLIP F0 BY F15;
-        R0 = TRUNC F0;
-        R8 = R8 + R0;
-        F0 = DM(12, I3);
-        F0 = F0 * F6;
-        R10 = TRUNC F0;
-        // x = op2 * s1 * y1; op2 = op2 * mdec
-        F5 = F12 * F6;
-        F5 = F5 * F7;
-        F0 = DM(9, I3);
-        F12 = F12 * F0;
-        // s2 = sin(ph2)
-        R1 = DM(K_MASK, I4);
-        R0 = R9 AND R1;
-        R1 = DM(K_M32, I4);
-        F0 = FLOAT R0 BY R1;
-        F1 = ABS F0;
-        F1 = F1 - F14;
-        F1 = ABS F1;
-        F1 = F14 - F1;
-        F2 = F1 * F1;
-        F3 = DM(K_A7, I4);
-        F3 = F3 * F2;
-        F4 = DM(K_A5, I4);
-        F3 = F3 + F4;
-        F3 = F3 * F2;
-        F4 = DM(K_A3, I4);
-        F3 = F3 + F4;
-        F3 = F3 * F2;
-        F4 = DM(K_A1, I4);
-        F3 = F3 + F4;
-        F3 = F3 * F1;
-        F6 = F3 COPYSIGN F0;              // s2
-        // ph2 += inc(modamt * x + y1)
-        F0 = DM(13, I3);
-        F0 = F0 * F5;
-        F0 = F0 + F7;
-        F0 = CLIP F0 BY F15;
-        R0 = TRUNC F0;
-        R9 = R9 + R0;
-        // out = fbg * s2; fbg = fbg * dec
-        F0 = F13 * F6;
-        DM(I0, M6) = F0;
-        F0 = DM(10, I3);
-_md_efm_end: F13 = F13 * F0;
-
-    DM(0, I3) = R8;
-    DM(1, I3) = R9;
-    DM(2, I3) = R10;
-    DM(3, I3) = F11;
-    DM(4, I3) = F12;
-    DM(5, I3) = F13;
-
+    CALL _md_efm_loop;
+_md_efm_post:
     // the noise, when the machine has some
     R3 = DM(19, I3);
     R3 = PASS R3;
@@ -516,6 +501,115 @@ _md_rest_end: DM(I0, M6) = R0;
     R0 = DK_DONE;
     JUMP (M13, I13);
 
+// _md_efm_loop: one FM pair's block. I3 its state (words 0..13), I0 its output (32 floats); clobbers R0..R15, I0, I4, I5.
+_md_efm_loop:
+    F13 = DM(5, I3);                      // fbg (every entry's own check may have read it, or not)
+    // ---- the voice's state into registers; envelopes under 1e-30 are 0 (no denormals) ----
+    R8 = DM(0, I3);
+    R9 = DM(1, I3);
+    R10 = DM(2, I3);
+    F11 = DM(3, I3);
+    F12 = DM(4, I3);
+    R1 = 0x0da24260;                      // 1e-30
+    F0 = ABS F11;
+    COMP(F0, F1);
+    IF LT F11 = F1 - F1;
+    F0 = ABS F12;
+    COMP(F0, F1);
+    IF LT F12 = F1 - F1;
+    R14 = 0x3e800000;                     // 0.25
+    R15 = 0x4effffff;                     // 2147483520.0, the increment's clip
+    I4 = _md_k;
+
+    LCNTR = DK_BLOCK, DO _md_efm_end UNTIL LCE;
+        // y1 = ptch8 * op1 + ptch; op1 = op1 * rdec
+        F0 = DM(7, I3);
+        F7 = F0 * F11;
+        F0 = DM(6, I3);
+        F7 = F7 + F0;
+        F0 = DM(8, I3);
+        F11 = F11 * F0;
+        // s1 = sin(ph1 + m + m)
+        R5 = R8 + R10;
+        R5 = R5 + R10;
+        R1 = DM(K_MASK, I4);
+        R0 = R5 AND R1;
+        R1 = DM(K_M32, I4);
+        F0 = FLOAT R0 BY R1;              // u
+        F1 = ABS F0;
+        F1 = F1 - F14;
+        F1 = ABS F1;
+        F1 = F14 - F1;                    // w
+        F2 = F1 * F1;                     // w2
+        F3 = DM(K_A7, I4);
+        F3 = F3 * F2;
+        F4 = DM(K_A5, I4);
+        F3 = F3 + F4;
+        F3 = F3 * F2;
+        F4 = DM(K_A3, I4);
+        F3 = F3 + F4;
+        F3 = F3 * F2;
+        F4 = DM(K_A1, I4);
+        F3 = F3 + F4;
+        F3 = F3 * F1;
+        F6 = F3 COPYSIGN F0;              // s1
+        // ph1 += inc(step1 * y1); m = trunc(fbamt * s1)
+        F0 = DM(11, I3);
+        F0 = F0 * F7;
+        F0 = CLIP F0 BY F15;
+        R0 = TRUNC F0;
+        R8 = R8 + R0;
+        F0 = DM(12, I3);
+        F0 = F0 * F6;
+        R10 = TRUNC F0;
+        // x = op2 * s1 * y1; op2 = op2 * mdec
+        F5 = F12 * F6;
+        F5 = F5 * F7;
+        F0 = DM(9, I3);
+        F12 = F12 * F0;
+        // s2 = sin(ph2)
+        R1 = DM(K_MASK, I4);
+        R0 = R9 AND R1;
+        R1 = DM(K_M32, I4);
+        F0 = FLOAT R0 BY R1;
+        F1 = ABS F0;
+        F1 = F1 - F14;
+        F1 = ABS F1;
+        F1 = F14 - F1;
+        F2 = F1 * F1;
+        F3 = DM(K_A7, I4);
+        F3 = F3 * F2;
+        F4 = DM(K_A5, I4);
+        F3 = F3 + F4;
+        F3 = F3 * F2;
+        F4 = DM(K_A3, I4);
+        F3 = F3 + F4;
+        F3 = F3 * F2;
+        F4 = DM(K_A1, I4);
+        F3 = F3 + F4;
+        F3 = F3 * F1;
+        F6 = F3 COPYSIGN F0;              // s2
+        // ph2 += inc(modamt * x + y1)
+        F0 = DM(13, I3);
+        F0 = F0 * F5;
+        F0 = F0 + F7;
+        F0 = CLIP F0 BY F15;
+        R0 = TRUNC F0;
+        R9 = R9 + R0;
+        // out = fbg * s2; fbg = fbg * dec
+        F0 = F13 * F6;
+        DM(I0, M6) = F0;
+        F0 = DM(10, I3);
+_md_efm_end: F13 = F13 * F0;
+
+    DM(0, I3) = R8;
+    DM(1, I3) = R9;
+    DM(2, I3) = R10;
+    DM(3, I3) = F11;
+    DM(4, I3) = F12;
+    DM(5, I3) = F13;
+    RTS;
+
 // note_on (not at offset 0 of the image: an offset of 0 reads as "no note_on")
 //   op1 = (RAMP / 256 - 16) / 128; op2 = 1; fbg = 0.630957 * 0.5; ph1 = ph2 = 4000/32768 of a turn; m = 0
 _md_note_on:
@@ -619,6 +713,32 @@ _mc_note_on:
     DM(23, I3) = R9;
     JUMP (M13, I13);
 
+// EFM-RS's note_on: the rim a quarter cycle in (its peak), the snare 0.11 cycle in; no ramps; BD's level for both.
+_mr_note_on:
+    I3 = R4;
+    R0 = MR_PAIR;
+    R0 = R4 + R0;
+    I5 = R0;
+    R0 = 0;
+    DM(2, I3) = R0;                       // m
+    DM(3, I3) = R0;                       // op1
+    DM(15, I3) = R0;                      // low
+    DM(2, I5) = R0;
+    DM(3, I5) = R0;
+    R0 = 0x3f800000;
+    DM(4, I3) = R0;                       // op2
+    DM(4, I5) = R0;
+    R0 = 0x3ea18666;
+    DM(5, I3) = R0;                       // fbg
+    DM(5, I5) = R0;
+    R0 = 0x40000000;
+    DM(0, I3) = R0;                       // the rim's phases
+    DM(1, I3) = R0;
+    R0 = 472446403;
+    DM(0, I5) = R0;                       // the snare's
+    DM(1, I5) = R0;
+    JUMP (M13, I13);
+
 .SECTION/DM seg_dmda;
 // dk_machine_desc: magic, contract, n_params, voices, state_bytes, state_clear_bytes, max_cycles_block, max_cycles_note_on,
 // max_call_depth, stack_bytes.
@@ -631,7 +751,7 @@ _mc_note_on:
 .VAR _md_desc5 = MD_CLEAR;
 .VAR _md_desc6 = 4000;
 .VAR _md_desc7 = 4400;
-.VAR _md_desc8 = 0;
+.VAR _md_desc8 = 1;
 .VAR _md_desc9 = 0;
 .GLOBAL _mx_desc;
 .VAR _mx_desc = DK_MAGIC;
@@ -642,7 +762,7 @@ _mc_note_on:
 .VAR _mx_desc5 = MD_CLEAR;
 .VAR _mx_desc6 = 4400;
 .VAR _mx_desc7 = 4400;
-.VAR _mx_desc8 = 0;
+.VAR _mx_desc8 = 1;
 .VAR _mx_desc9 = 0;
 .GLOBAL _ms_desc;
 .VAR _ms_desc = DK_MAGIC;
@@ -653,7 +773,7 @@ _mc_note_on:
 .VAR _ms_desc5 = MD_CLEAR;
 .VAR _ms_desc6 = 5000;
 .VAR _ms_desc7 = 4400;
-.VAR _ms_desc8 = 0;
+.VAR _ms_desc8 = 1;
 .VAR _ms_desc9 = 0;
 .GLOBAL _mc_desc;
 .VAR _mc_desc = DK_MAGIC;
@@ -664,5 +784,16 @@ _mc_note_on:
 .VAR _mc_desc5 = MD_CLEAR;
 .VAR _mc_desc6 = 5000;
 .VAR _mc_desc7 = 4400;
-.VAR _mc_desc8 = 0;
+.VAR _mc_desc8 = 1;
 .VAR _mc_desc9 = 0;
+.GLOBAL _mr_desc;
+.VAR _mr_desc = DK_MAGIC;
+.VAR _mr_desc1 = DK_MACHINE_V1;
+.VAR _mr_desc2 = 8;
+.VAR _mr_desc3 = DK_MAX_VOICES;
+.VAR _mr_desc4 = MR_STATE;
+.VAR _mr_desc5 = MR_CLEAR;
+.VAR _mr_desc6 = 8000;
+.VAR _mr_desc7 = 4400;
+.VAR _mr_desc8 = 1;
+.VAR _mr_desc9 = 0;

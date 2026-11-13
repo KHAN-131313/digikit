@@ -27,8 +27,9 @@ SYMBOLS = {
     "xt": ("_mx_render", "_mx_note_on", "_mx_desc"),
     "sd": ("_ms_render", "_ms_note_on", "_ms_desc"),
     "cp": ("_mc_render", "_mc_note_on", "_mc_desc"),
+    "rs": ("_mr_render", "_mr_note_on", "_mr_desc"),
 }
-MODELS = {"bd": md_ref.EfmBd, "xt": md_ref.EfmXt, "sd": md_ref.EfmSd, "cp": md_ref.EfmCp}
+MODELS = {"bd": md_ref.EfmBd, "xt": md_ref.EfmXt, "sd": md_ref.EfmSd, "cp": md_ref.EfmCp, "rs": md_ref.EfmRs}
 
 
 def machine_spec(machine: str):
@@ -47,8 +48,10 @@ def xt_spec():
 
 
 class Rig(MachineRig):
-    def __init__(self, machine: str = "bd") -> None:
-        super().__init__("khan/md", "dn2", spec=None if machine == "bd" else machine_spec(machine))
+    def __init__(self, machine: str = "bd", record_stores: bool = False) -> None:
+        super().__init__(
+            "khan/md", "dn2", spec=None if machine == "bd" else machine_spec(machine), record_stores=record_stores
+        )
 
     def play(self, note: float, vel: int, knobs) -> None:
         self.set_note(note, vel)
@@ -117,8 +120,17 @@ CP_CASES = {
     "cp-many-slow-fractional": ((20.5, 90.25, 127, 100.75, 100, 30, 80.5, 64.25), 72),
     "cp-all-min": ((0,) * 8, 24),
 }
+RS_DEFAULTS = (64, 32, 64, 32, 64, 64, 44, 64)
+RS_CASES = {
+    "rs-defaults": (RS_DEFAULTS, 60),
+    "rs-rim-only": ((40, 80, 100, 0, 0, 64, 64, 0), 60),
+    "rs-snare-loud-fractional": ((90.5, 10.25, 30.75, 64.5, 127, 100.5, 96.25, 127), 72),
+    "rs-all-max": ((127,) * 8, 96),
+    "rs-all-min": ((0,) * 8, 24),
+}
 ALL_CASES = {**{k: ("bd", *v) for k, v in CASES.items()}, **{k: ("xt", *v) for k, v in XT_CASES.items()},
-             **{k: ("sd", *v) for k, v in SD_CASES.items()}, **{k: ("cp", *v) for k, v in CP_CASES.items()}}
+             **{k: ("sd", *v) for k, v in SD_CASES.items()}, **{k: ("cp", *v) for k, v in CP_CASES.items()},
+             **{k: ("rs", *v) for k, v in RS_CASES.items()}}
 
 
 @pytest.mark.parametrize("name", ALL_CASES)
@@ -169,6 +181,9 @@ def test_cost_per_block():
     for knobs, note in CP_CASES.values():
         _, _, counts = played(knobs, note, blocks=4, machine="cp")
         assert max(counts) < 5000, counts
+    for knobs, note in RS_CASES.values():
+        _, _, counts = played(knobs, note, blocks=4, machine="rs")
+        assert max(counts) < 8000, counts
 
 
 # ---- likeness to the Machinedrum: figures measured on the original (OS 1.63 DSP2, rendered locally; numbers only) ----
@@ -293,3 +308,24 @@ def test_cp_strikes_clps_over_8_claps_as_the_machinedrum(clps, claps):
 def test_cp_ptch_tunes_as_the_machinedrum(ptch, hz):
     x = cp_audio((ptch, 127, 0, 64, 0, 64, 64, 0), 0.42)
     assert abs(np.log2(peak_hz(x, 0.15, 0.4) / hz)) * 1200 < 25  # cents
+
+
+@pytest.mark.parametrize("machine", ["bd", "xt", "sd", "cp", "rs"])
+def test_every_store_stays_in_the_voice_or_its_output(machine):
+    """With the rig's store recording on: the routine writes only its own state block and output (and its stack)."""
+    knobs = {"bd": DEFAULTS, "xt": XT_DEFAULTS, "sd": SD_DEFAULTS, "cp": CP_DEFAULTS, "rs": RS_DEFAULTS}[machine]
+    rig = Rig(machine, record_stores=True)
+    rig.play(60, 100, knobs)
+    for _ in range(6):
+        b = rig.block()
+        assert b.returned, b.halt
+        assert not b.foreign, b.foreign[:5]
+
+
+@pytest.mark.parametrize("ptch, hz", [(0, 243.9), (64, 975.6), (127, 3819.6)])
+def test_rs_rim_tunes_as_the_machinedrum(ptch, hz):
+    m = md_ref.EfmRs()
+    k = words((ptch, 64, 0, 0, 0, 64, 64, 0))
+    m.note_on(k)
+    x = m.render(60 << 8, k, 120).astype(np.float64)
+    assert abs(np.log2(peak_hz(x, 0.02, 0.08) / hz)) * 1200 < 25  # cents
