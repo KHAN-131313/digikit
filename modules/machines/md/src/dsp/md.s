@@ -1,5 +1,5 @@
 // khan/md: Machinedrum-style machines (<dk/machine/machine.h>), one body for both devices.
-// Machines: EFM-BD, EFM-XT, EFM-SD, EFM-CP and EFM-RS, two sine operators with feedback FM on one shared loop (_md_efm_run).
+// Machines: EFM-BD, EFM-XT, EFM-SD, EFM-CP, EFM-RS and EFM-CB, two sine operators with feedback FM on one shared loop (_md_efm_run).
 //
 // Based on Digidrum's EFM-BD (soejrd/digidrum, machines/EFM/BD/efm_bd.c, MIT, used with the author's permission),
 // rewritten for the SHARC+: float32, phases as 32-bit integers (2^32 a turn, so they wrap for free), the
@@ -47,6 +47,10 @@
 #define MR_CLEAR 176
 #define MR_PAIR 112
 #define MR_SCRATCH 176
+// EFM-CB: pair A words 0..17 (m2 16, cfb 17), the snap's level 27, pair B at word 28 (its m2 44, cfb 45), scratch 48..79
+#define MB_STATE 320
+#define MB_CLEAR 184
+#define MB_SCRATCH 192
 // EFM-XT's start level: 0.839 * 0.315478504
 #define MX_LEVEL 0x3e8784fc
 
@@ -69,6 +73,8 @@
 .GLOBAL _mc_note_on;
 .GLOBAL _mr_render;
 .GLOBAL _mr_note_on;
+.GLOBAL _mb_render;
+.GLOBAL _mb_note_on;
 .EXTERN _md_efm_ptch;
 .EXTERN _md_efm_dec;
 .EXTERN _md_efm_rdec;
@@ -83,6 +89,7 @@
 .EXTERN _md_cp_space;
 .EXTERN _md_cp_crate;
 .EXTERN _md_rs_ptch;
+.EXTERN _md_cb_ptch;
 
 // MD_KNOB(OUT, TABLE, WORD): OUT = T[k] + (T[k + 1] - T[k]) * f for the 8.8 word k.f of parameter WORD.
 // The adapter clamps the word to 0 .. 0x7f00, so k <= 127 and k + 1 <= 128 are inside the 129 entries.
@@ -387,6 +394,94 @@ _mr_render:
 _mr_mix_end: DM(I1, M6) = F0;
     JUMP _md_efm_post;
 
+// ---- EFM-CB ----
+// Two tones of level 0.177, the low on _md_cb_ptch (BD's curve at 88 + 5 PTCH / 8), the high 1.4808 times it; each its own
+// modulator at MFRQ / 16 with MDEC's envelope and half BD's deviation (MOD 2^-13 a word unit), no modulator feedback; each
+// carrier fed back on itself at (3/8) FB / 128 (_md_efm_loop_cfb). DEC the level's decay; SNAP takes 0.8 SNAP / 127 of the
+// level away, -60 dB in 80 ms: out = (lo + hi) * (snap * share + 1 - share). Knobs: PTCH DEC SNAP FB MOD MFRQ MDEC -.
+#define MB_PAIR_COEFS \
+    MD_PITCH; \
+    MD_DECAYS; \
+    R0 = 0; \
+    DM(12, I3) = R0; \
+    R0 = DM(4, I1); \
+    F5 = FLOAT R0; \
+    R0 = 0x39000000; \
+    F5 = F5 * F0; \
+    DM(13, I3) = F5; \
+    R0 = DM(3, I1); \
+    F5 = FLOAT R0; \
+    R0 = 0x46c00000; \
+    F5 = F5 * F0; \
+    DM(17, I3) = F5
+
+_mb_render:
+    I3 = R4;
+    M1 = R4;
+    I2 = R8;
+    I1 = R12;
+    R0 = DM(DK_IN_W_OUT, I2);
+    I0 = R0;
+    F13 = DM(5, I3);
+    R0 = MR_PAIR;
+    R0 = R4 + R0;
+    I5 = R0;
+    F1 = DM(5, I5);
+    F13 = MAX(F13, F1);
+    R0 = 0x34800000;
+    COMP(F13, F0);
+    IF LT JUMP _md_rest;
+    MD_KNOB(F5, _md_cb_ptch, 0);
+    MB_PAIR_COEFS;
+    R0 = 0;
+    DM(14, I3) = R0;                      // no high-pass
+    DM(19, I3) = R0;                      // no noise
+    DM(26, I3) = R0;                      // no claps
+    R4 = M1;
+    R0 = MR_PAIR;
+    R0 = R4 + R0;
+    I3 = R0;
+    MD_KNOB(F5, _md_cb_ptch, 0);
+    R0 = 0x3fbd8adb;                      // 1.4808
+    F5 = F5 * F0;
+    MB_PAIR_COEFS;
+    R4 = M1;
+    R0 = MB_SCRATCH;
+    R0 = R4 + R0;
+    I0 = R0;
+    CALL _md_efm_loop_cfb;
+    R4 = M1;
+    I3 = R4;
+    R0 = DM(DK_IN_W_OUT, I2);
+    I0 = R0;
+    CALL _md_efm_loop_cfb;
+    R4 = M1;
+    I3 = R4;
+    R0 = DM(2, I1);                       // SNAP
+    F9 = FLOAT R0;
+    R0 = 0x37ce69a0;                      // 0.8 / 127 / 256
+    F9 = F9 * F0;                         // share
+    R0 = 0x3f800000;
+    F10 = F0 - F9;                        // 1 - share
+    R11 = 0x3f7f8a37;                     // the snap's fall a sample
+    F8 = DM(27, I3);
+    R0 = MB_SCRATCH;
+    R0 = R4 + R0;
+    I5 = R0;
+    R0 = DM(DK_IN_W_OUT, I2);
+    I1 = R0;
+    LCNTR = DK_BLOCK, DO _mb_mix_end UNTIL LCE;
+        F1 = DM(I5, M6);
+        F0 = DM(0, I1);
+        F0 = F0 + F1;
+        F2 = F8 * F9;
+        F2 = F2 + F10;
+        F0 = F0 * F2;
+        F8 = F8 * F11;
+_mb_mix_end: DM(I1, M6) = F0;
+    DM(27, I3) = F8;
+    JUMP _md_efm_post;
+
 // ---- the shared loop ----
 _md_efm_run:
     CALL _md_efm_loop;
@@ -610,6 +705,122 @@ _md_efm_end: F13 = F13 * F0;
     DM(5, I3) = F13;
     RTS;
 
+// _md_efm_loop_cfb: _md_efm_loop with the carrier fed back too (EFM-CB): its phase ph2 + m2 + m2.
+_md_efm_loop_cfb:
+    F13 = DM(5, I3);                      // fbg (every entry's own check may have read it, or not)
+    // ---- the voice's state into registers; envelopes under 1e-30 are 0 (no denormals) ----
+    R8 = DM(0, I3);
+    R9 = DM(1, I3);
+    R10 = DM(2, I3);
+    F11 = DM(3, I3);
+    F12 = DM(4, I3);
+    R1 = 0x0da24260;                      // 1e-30
+    F0 = ABS F11;
+    COMP(F0, F1);
+    IF LT F11 = F1 - F1;
+    F0 = ABS F12;
+    COMP(F0, F1);
+    IF LT F12 = F1 - F1;
+    R14 = 0x3e800000;                     // 0.25
+    R15 = 0x4effffff;                     // 2147483520.0, the increment's clip
+    I4 = _md_k;
+
+    LCNTR = DK_BLOCK, DO _md_cfb_end UNTIL LCE;
+        // y1 = ptch8 * op1 + ptch; op1 = op1 * rdec
+        F0 = DM(7, I3);
+        F7 = F0 * F11;
+        F0 = DM(6, I3);
+        F7 = F7 + F0;
+        F0 = DM(8, I3);
+        F11 = F11 * F0;
+        // s1 = sin(ph1 + m + m)
+        R5 = R8 + R10;
+        R5 = R5 + R10;
+        R1 = DM(K_MASK, I4);
+        R0 = R5 AND R1;
+        R1 = DM(K_M32, I4);
+        F0 = FLOAT R0 BY R1;              // u
+        F1 = ABS F0;
+        F1 = F1 - F14;
+        F1 = ABS F1;
+        F1 = F14 - F1;                    // w
+        F2 = F1 * F1;                     // w2
+        F3 = DM(K_A7, I4);
+        F3 = F3 * F2;
+        F4 = DM(K_A5, I4);
+        F3 = F3 + F4;
+        F3 = F3 * F2;
+        F4 = DM(K_A3, I4);
+        F3 = F3 + F4;
+        F3 = F3 * F2;
+        F4 = DM(K_A1, I4);
+        F3 = F3 + F4;
+        F3 = F3 * F1;
+        F6 = F3 COPYSIGN F0;              // s1
+        // ph1 += inc(step1 * y1); m = trunc(fbamt * s1)
+        F0 = DM(11, I3);
+        F0 = F0 * F7;
+        F0 = CLIP F0 BY F15;
+        R0 = TRUNC F0;
+        R8 = R8 + R0;
+        F0 = DM(12, I3);
+        F0 = F0 * F6;
+        R10 = TRUNC F0;
+        // x = op2 * s1 * y1; op2 = op2 * mdec
+        F5 = F12 * F6;
+        F5 = F5 * F7;
+        F0 = DM(9, I3);
+        F12 = F12 * F0;
+        // s2 = sin(ph2 + m2 + m2): the carrier fed back one sample late (m2 pair word 16, cfb word 17)
+        R1 = DM(16, I3);                  // (not R5: F5 holds x)
+        R0 = R9 + R1;
+        R0 = R0 + R1;
+        R1 = DM(K_MASK, I4);
+        R0 = R0 AND R1;
+        R1 = DM(K_M32, I4);
+        F0 = FLOAT R0 BY R1;
+        F1 = ABS F0;
+        F1 = F1 - F14;
+        F1 = ABS F1;
+        F1 = F14 - F1;
+        F2 = F1 * F1;
+        F3 = DM(K_A7, I4);
+        F3 = F3 * F2;
+        F4 = DM(K_A5, I4);
+        F3 = F3 + F4;
+        F3 = F3 * F2;
+        F4 = DM(K_A3, I4);
+        F3 = F3 + F4;
+        F3 = F3 * F2;
+        F4 = DM(K_A1, I4);
+        F3 = F3 + F4;
+        F3 = F3 * F1;
+        F6 = F3 COPYSIGN F0;              // s2
+        F0 = DM(17, I3);
+        F0 = F0 * F6;
+        R0 = TRUNC F0;
+        DM(16, I3) = R0;                  // m2 = trunc(cfb * s2)
+        // ph2 += inc(modamt * x + y1)
+        F0 = DM(13, I3);
+        F0 = F0 * F5;
+        F0 = F0 + F7;
+        F0 = CLIP F0 BY F15;
+        R0 = TRUNC F0;
+        R9 = R9 + R0;
+        // out = fbg * s2; fbg = fbg * dec
+        F0 = F13 * F6;
+        DM(I0, M6) = F0;
+        F0 = DM(10, I3);
+_md_cfb_end: F13 = F13 * F0;
+
+    DM(0, I3) = R8;
+    DM(1, I3) = R9;
+    DM(2, I3) = R10;
+    DM(3, I3) = F11;
+    DM(4, I3) = F12;
+    DM(5, I3) = F13;
+    RTS;
+
 // note_on (not at offset 0 of the image: an offset of 0 reads as "no note_on")
 //   op1 = (RAMP / 256 - 16) / 128; op2 = 1; fbg = 0.630957 * 0.5; ph1 = ph2 = 4000/32768 of a turn; m = 0
 _md_note_on:
@@ -739,6 +950,33 @@ _mr_note_on:
     DM(1, I5) = R0;
     JUMP (M13, I13);
 
+// EFM-CB's note_on: both tones from phase 0 at 0.177, no ramps, no feedback yet; the snap's level 1.
+_mb_note_on:
+    I3 = R4;
+    R0 = MR_PAIR;
+    R0 = R4 + R0;
+    I5 = R0;
+    R0 = 0;
+    DM(0, I3) = R0;
+    DM(1, I3) = R0;
+    DM(2, I3) = R0;
+    DM(3, I3) = R0;
+    DM(15, I3) = R0;
+    DM(16, I3) = R0;
+    DM(0, I5) = R0;
+    DM(1, I5) = R0;
+    DM(2, I5) = R0;
+    DM(3, I5) = R0;
+    DM(16, I5) = R0;
+    R0 = 0x3f800000;
+    DM(4, I3) = R0;
+    DM(4, I5) = R0;
+    DM(27, I3) = R0;                      // the snap's level
+    R0 = 0x3e353f7d;                      // 0.177
+    DM(5, I3) = R0;
+    DM(5, I5) = R0;
+    JUMP (M13, I13);
+
 .SECTION/DM seg_dmda;
 // dk_machine_desc: magic, contract, n_params, voices, state_bytes, state_clear_bytes, max_cycles_block, max_cycles_note_on,
 // max_call_depth, stack_bytes.
@@ -797,3 +1035,14 @@ _mr_note_on:
 .VAR _mr_desc7 = 4400;
 .VAR _mr_desc8 = 1;
 .VAR _mr_desc9 = 0;
+.GLOBAL _mb_desc;
+.VAR _mb_desc = DK_MAGIC;
+.VAR _mb_desc1 = DK_MACHINE_V1;
+.VAR _mb_desc2 = 8;
+.VAR _mb_desc3 = DK_MAX_VOICES;
+.VAR _mb_desc4 = MB_STATE;
+.VAR _mb_desc5 = MB_CLEAR;
+.VAR _mb_desc6 = 8500;
+.VAR _mb_desc7 = 4400;
+.VAR _mb_desc8 = 1;
+.VAR _mb_desc9 = 0;

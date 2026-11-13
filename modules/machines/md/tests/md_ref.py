@@ -66,8 +66,9 @@ def knob(table: str, word: int) -> np.float32:
     return t[k] + (t[k + 1] - t[k]) * fr
 
 
-def run_pair(p, ptch, ptch8, rdec, mdec, dec, step1, fbamt, modamt) -> np.ndarray:
-    """md.s _md_efm_loop: one FM pair's block on p's state (ph1 ph2 m op1 op2 fbg)."""
+def run_pair(p, ptch, ptch8, rdec, mdec, dec, step1, fbamt, modamt, cfb=None) -> np.ndarray:
+    """md.s _md_efm_loop: one FM pair's block on p's state (ph1 ph2 m op1 op2 fbg); with cfb, _md_efm_loop_cfb (the carrier
+    fed back too: p.m2)."""
     op1, op2, fbg = p.op1, p.op2, p.fbg
     if abs(op1) < TINY:
         op1 = f32(0)
@@ -85,7 +86,11 @@ def run_pair(p, ptch, ptch8, rdec, mdec, dec, step1, fbamt, modamt) -> np.ndarra
         x = op2 * s1
         x = x * y1
         op2 = op2 * mdec
-        s2 = sine(ph2)
+        if cfb is None:
+            s2 = sine(ph2)
+        else:
+            s2 = sine(i32(ph2 + p.m2 + p.m2))
+            p.m2 = trunc(cfb * s2)
         v = modamt * x
         v = v + y1
         ph2 = i32(ph2 + trunc(clip(v, CLIPV)))
@@ -365,6 +370,59 @@ class EfmRs:
                 low = low + d
                 out[n] = out[n] - low
             self.low = low
+        return out, False
+
+    def render(self, pitch: int, params: list[int], blocks: int) -> np.ndarray:
+        return np.concatenate([self.block(pitch, params)[0] for _ in range(blocks)])
+
+
+class EfmCb:
+    """EFM-CB (src/dsp/md.s _mb_render): two carrier-fed-back pairs, the high 1.4808 times the low, mixed and times the snap."""
+
+    LEVEL = np.uint32(0x3E353F7D).view(np.float32)
+
+    def note_on(self, params: list[int]) -> None:
+        self.lo, self.hi = Pair(0), Pair(0)
+        for p in (self.lo, self.hi):
+            p.fbg = self.LEVEL
+            p.m2 = 0
+        self.snap = f32(1)
+
+    def block(self, pitch: int, params: list[int]) -> tuple[np.ndarray, bool]:
+        if max(self.lo.fbg, self.hi.fbg) < REST:
+            return np.zeros(BLOCK, np.float32), True
+
+        def coefs(ratio):
+            k = knob("_md_cb_ptch", params[0])
+            if ratio is not None:
+                k = k * ratio
+            s = min(max((pitch >> 8) - 12, 0), 96)
+            ptch = k * T["_md_semis"][s]
+            ptch = ptch * f32(2.0**32)
+            ptch8 = f32(8) * ptch
+            step1 = f32(params[5]) * f32(1 / 256)
+            step1 = max(step1, f32(1)) * f32(1 / 128)
+            step1 = f32(8) * step1
+            modamt = f32(params[4]) * np.uint32(0x39000000).view(np.float32)
+            cfb = f32(params[3]) * f32(24576)
+            return (ptch, ptch8, knob("_md_efm_rdec", params[3]), knob("_md_efm_mdec", params[6]),
+                    knob("_md_efm_dec", params[1]), step1, f32(0), modamt, cfb)
+
+        lo = coefs(None)
+        hi = coefs(np.uint32(0x3FBD8ADB).view(np.float32))
+        scratch = run_pair(self.hi, *hi)
+        out = run_pair(self.lo, *lo)
+        share = f32(params[2]) * np.uint32(0x37CE69A0).view(np.float32)
+        oms = f32(1) - share
+        srate = np.uint32(0x3F7F8A37).view(np.float32)
+        snap = self.snap
+        for n in range(BLOCK):
+            o = out[n] + scratch[n]
+            e = snap * share
+            e = e + oms
+            out[n] = o * e
+            snap = snap * srate
+        self.snap = snap
         return out, False
 
     def render(self, pitch: int, params: list[int], blocks: int) -> np.ndarray:

@@ -59,6 +59,8 @@ def tables() -> dict[str, np.ndarray]:
         "_md_cp_crate": (10.0 ** (-22.0 / 20.0 / cp_space(k))).astype(np.float32),
         # EFM-RS (research/fit_efm_rs.py): the rim's PTCH on BD's pitch curve at 104 + PTCH (the snare's is EFM-SD's)
         "_md_rs_ptch": (0.000581 * 2.0 ** ((104 + k) / 32.0) * R).astype(np.float32),
+        # EFM-CB (research/fit_efm_cb.py): the low tone's PTCH on BD's pitch curve at 88 + 5 PTCH / 8
+        "_md_cb_ptch": (0.000581 * 2.0 ** ((88 + 5 * k / 8) / 32.0) * R).astype(np.float32),
         # the note's transposition, 2^(s/12) for s = -48..+48
         "_md_semis": (2.0 ** (np.arange(-48, 49) / 12.0)).astype(np.float32),
     }
