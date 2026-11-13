@@ -23,6 +23,21 @@ def words(knobs) -> list[int]:
     return [round(k * 256) for k in knobs]
 
 
+SYMBOLS = {
+    "xt": ("_mx_render", "_mx_note_on", "_mx_desc"),
+    "sd": ("_ms_render", "_ms_note_on", "_ms_desc"),
+}
+MODELS = {"bd": md_ref.EfmBd, "xt": md_ref.EfmXt, "sd": md_ref.EfmSd}
+
+
+def machine_spec(machine: str):
+    """A machine of md.s by its symbols: pk_conform.spec reads only a module's first machine (and khan/md declares only BD
+    and XT: 16 parameters a module), so the others are BD's spec with their symbols; the knobs sit in the same positions."""
+    entry, note_on, desc = SYMBOLS[machine]
+    base = pk_conform.spec("khan/md", "dn2")
+    return dataclasses.replace(base, entry=entry, note_on=note_on, desc=desc)
+
+
 def xt_spec():
     """EFM-XT, the module's second machine: pk_conform.spec reads only the first, so XT is BD's spec with XT's symbols
     (both machines' knobs sit in the same positions)."""
@@ -32,7 +47,7 @@ def xt_spec():
 
 class Rig(MachineRig):
     def __init__(self, machine: str = "bd") -> None:
-        super().__init__("khan/md", "dn2", spec=xt_spec() if machine == "xt" else None)
+        super().__init__("khan/md", "dn2", spec=None if machine == "bd" else machine_spec(machine))
 
     def play(self, note: float, vel: int, knobs) -> None:
         self.set_note(note, vel)
@@ -59,7 +74,7 @@ def played(knobs, note: int = 60, vel: int = 100, blocks: int = 60, machine: str
     rig = Rig(machine)
     rig.play(note, vel, knobs)
     y, counts = rig.run(blocks + 1)
-    m = md_ref.EfmXt() if machine == "xt" else md_ref.EfmBd()
+    m = MODELS[machine]()
     m.note_on(words(knobs))
     return y[32:], m.render(note << 8, words(knobs), blocks), counts[1:]
 
@@ -85,12 +100,23 @@ XT_CASES = {
 }
 
 
-@pytest.mark.parametrize("name", list(CASES) + list(XT_CASES))
+SD_DEFAULTS = (64, 55, 64, 64, 64, 32, 44, 16)
+SD_CASES = {
+    "sd-defaults": (SD_DEFAULTS, 60),
+    "sd-tone-only": ((30, 90, 0, 64, 40, 64, 64, 0), 48),
+    "sd-noise-only": ((64, 0, 127, 100, 0, 64, 64, 0), 60),
+    "sd-hpf-fractional": ((100.5, 40.25, 80.75, 30.5, 127, 127, 10.5, 127), 84),
+    "sd-all-min": ((0,) * 8, 24),
+}
+ALL_CASES = {**{k: ("bd", *v) for k, v in CASES.items()}, **{k: ("xt", *v) for k, v in XT_CASES.items()},
+             **{k: ("sd", *v) for k, v in SD_CASES.items()}}
+
+
+@pytest.mark.parametrize("name", ALL_CASES)
 def test_the_routine_matches_the_model(name):
-    machine = "xt" if name in XT_CASES else "bd"
-    knobs, note = (XT_CASES if machine == "xt" else CASES)[name]
+    machine, knobs, note = ALL_CASES[name]
     got, want, _ = played(knobs, note, machine=machine)
-    assert np.max(np.abs(want)) > (5e-4 if machine == "xt" else 0.05)  # XT's high-pass takes the lowest notes away
+    assert np.max(np.abs(want)) > (0.05 if machine == "bd" else 5e-4)  # high-passes take the lowest notes away
     np.testing.assert_array_equal(got, want)
 
 
@@ -128,6 +154,9 @@ def test_cost_per_block():
     for knobs, note in XT_CASES.values():
         _, _, counts = played(knobs, note, blocks=4, machine="xt")
         assert max(counts) < 4400, counts
+    for knobs, note in SD_CASES.values():
+        _, _, counts = played(knobs, note, blocks=4, machine="sd")
+        assert max(counts) < 5000, counts
 
 
 # ---- likeness to the Machinedrum: figures measured on the original (OS 1.63 DSP2, rendered locally; numbers only) ----
@@ -181,3 +210,37 @@ def test_xt_ptch_tunes_as_the_machinedrum(ptch, hz):
     m.note_on(words(k))
     x = m.render(60 << 8, words(k), 300).astype(np.float64)
     assert abs(np.log2(peak_hz(x) / hz)) * 1200 < 25  # cents
+
+
+def test_sd_rests_after_its_noise_and_tone_have_died():
+    """The noise can outlast the tone (DEC 0, NDEC 40): the voice sounds until both are under 2^-22, then rests cheaply;
+    with NOIS 0 the noise's level does not hold it."""
+    for knobs in ((64, 0, 127, 40, 0, 64, 64, 0), (64, 20, 0, 127, 0, 64, 64, 0)):
+        got, want, counts = played(knobs, blocks=300, machine="sd")
+        np.testing.assert_array_equal(got, want)
+        quiet = [k for k in range(300) if not np.any(want[32 * k : 32 * k + 32])]
+        assert quiet, "the voice never rested"
+        assert max(counts[quiet[0] + 1 :] or [0]) < 600
+
+
+def sd_audio(knobs, seconds: float) -> np.ndarray:
+    m = md_ref.EfmSd()
+    m.note_on(words(knobs))
+    return m.render(60 << 8, words(knobs), int(seconds * 48000 / 32) + 1).astype(np.float64)
+
+
+@pytest.mark.parametrize("ptch, hz", [(0, 121.9), (64, 290.4), (127, 679.7)])
+def test_sd_ptch_tunes_as_the_machinedrum(ptch, hz):
+    x = sd_audio((ptch, 96, 0, 64, 0, 64, 64, 0), 0.22)
+    assert abs(np.log2(peak_hz(x, 0.05, 0.2) / hz)) * 1200 < 25  # cents
+
+
+@pytest.mark.parametrize("hpf, db", [(16, -5.34), (64, -16.87), (127, -24.07)])
+def test_sd_hpf_takes_the_tone_down_as_the_machinedrums_does(hpf, db):
+    """The tone's level 50-100 ms against HPF 0 (PTCH 64, MOD 0), as measured on the original."""
+
+    def level(h):
+        x = sd_audio((64, 96, 0, 64, 0, 64, 64, h), 0.1)[2400:4800]
+        return 10 * np.log10(np.mean(x**2))
+
+    assert abs(level(hpf) - level(0) - db) < 0.5

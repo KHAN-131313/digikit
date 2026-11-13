@@ -22,6 +22,11 @@ R = 44100.0 / 48000.0
 OUT = Path(__file__).with_name("tables.inc")
 
 
+# EFM-SD's HPF: the one-pole coefficient that gives the Machinedrum's tone level at these knobs (MOD 0, PTCH 64)
+SD_HPF_KNOBS = [0, 4, 8, 12, 16, 24, 32, 48, 64, 80, 96, 112, 127, 128]
+SD_HPF = [0, 0.01279, 0.02735, 0.0409, 0.0547, 0.0818, 0.10697, 0.15643, 0.20456, 0.25015, 0.29253, 0.33452, 0.37409, 0.37409]
+
+
 def tables() -> dict[str, np.ndarray]:
     k = np.arange(129, dtype=np.float64)
     return {
@@ -33,6 +38,11 @@ def tables() -> dict[str, np.ndarray]:
         "_md_efm_mdec": ((1.0 - 0.009474 * 2.0 ** (-k / 11.52)) ** R).astype(np.float32),
         # EFM-XT's deviation scale: (3/8) / 16 of BD's pitch at PTCH over XT's (BD's table at 24 + PTCH / 2)
         "_md_xt_dev": (0.375 / 16 * 2.0 ** (k / 64.0 - 0.75)).astype(np.float32),
+        # EFM-SD (research/fit_efm_sd.py): PTCH on BD's pitch curve at 72 + 5 PTCH / 8; NDEC on BD's decay curve at
+        # 1.6 + 0.72 NDEC; HPF's one-pole coefficient, measured at 13 knobs and interpolated (0: off)
+        "_md_sd_ptch": (0.000581 * 2.0 ** ((72 + 5 * k / 8) / 32.0) * R).astype(np.float32),
+        "_md_sd_ndec": ((1.0 - 0.009469 * 2.0 ** (-(1.6 + 0.72 * k) / 13.5)) ** R).astype(np.float32),
+        "_md_sd_hpf": np.interp(k, SD_HPF_KNOBS, SD_HPF).astype(np.float32),
         # the note's transposition, 2^(s/12) for s = -48..+48
         "_md_semis": (2.0 ** (np.arange(-48, 49) / 12.0)).astype(np.float32),
     }

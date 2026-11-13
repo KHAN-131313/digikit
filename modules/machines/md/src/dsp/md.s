@@ -1,5 +1,5 @@
 // khan/md: Machinedrum-style machines (<dk/machine/machine.h>), one body for both devices.
-// Machines: EFM-BD and EFM-XT, two sine operators with feedback FM on one shared loop (_md_efm_run).
+// Machines: EFM-BD, EFM-XT and EFM-SD, two sine operators with feedback FM on one shared loop (_md_efm_run).
 //
 // Based on Digidrum's EFM-BD (soejrd/digidrum, machines/EFM/BD/efm_bd.c, MIT, used with the author's permission),
 // rewritten for the SHARC+: float32, phases as 32-bit integers (2^32 a turn, so they wrap for free), the
@@ -23,6 +23,10 @@
 // State per voice (MD_STATE bytes; the first 6 words are set at note-on, the coefficients each block):
 //   0 ph1  1 ph2  2 m  3 op1  4 op2  5 fbg  |  6 ptch  7 ptch8  8 rdec  9 mdec  10 dec  11 step1  12 fbamt  13 modamt
 //   14 hpc (the high-pass's coefficient, 0: none)  15 low (its state)
+//   16 seed  17 nl  18 hiss (the noise: xorshift32 state, its one-pole high-pass, its level)  |  19 namt (0: no noise)  20 ndec
+// Noise, per sample after the loop and before the high-pass: seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5;
+//   w = FLOAT(seed) * 2^-31; d = w - nl; d = d * NC; nl = nl + d; o = w - nl; t = o * hiss; t = t * namt; out = out + t;
+//   hiss = hiss * ndec.
 // High-pass, per sample after the loop: d = s - low; d = d * hpc; low = low + d; out = s - low.
 // A voice whose level fbg is under 2^-22 has died away: it writes zeros and returns DK_DONE (it costs nothing more).
 //
@@ -32,8 +36,8 @@
 #include "dk_machine.inc"
 #include "tables.inc"
 
-#define MD_STATE 64
-#define MD_CLEAR 64
+#define MD_STATE 96
+#define MD_CLEAR 96
 // EFM-XT's start level: 0.839 * 0.315478504
 #define MX_LEVEL 0x3e8784fc
 
@@ -50,6 +54,8 @@
 .GLOBAL _md_note_on;
 .GLOBAL _mx_render;
 .GLOBAL _mx_note_on;
+.GLOBAL _ms_render;
+.GLOBAL _ms_note_on;
 .EXTERN _md_efm_ptch;
 .EXTERN _md_efm_dec;
 .EXTERN _md_efm_rdec;
@@ -57,6 +63,9 @@
 .EXTERN _md_semis;
 .EXTERN _md_k;
 .EXTERN _md_xt_dev;
+.EXTERN _md_sd_ptch;
+.EXTERN _md_sd_ndec;
+.EXTERN _md_sd_hpf;
 
 // MD_KNOB(OUT, TABLE, WORD): OUT = T[k] + (T[k + 1] - T[k]) * f for the 8.8 word k.f of parameter WORD.
 // The adapter clamps the word to 0 .. 0x7f00, so k <= 127 and k + 1 <= 128 are inside the 129 entries.
@@ -166,6 +175,7 @@ _md_render:
     DM(13, I3) = F5;                      // modamt = 8 MOD / 128
     R0 = 0;
     DM(14, I3) = R0;                      // no high-pass
+    DM(19, I3) = R0;                      // no noise
     JUMP _md_efm_run;
 
 // ---- EFM-XT ----
@@ -190,6 +200,48 @@ _mx_render:
     DM(13, I3) = F5;                      // modamt
     R0 = 0x3c84f35c;                      // 1 - exp(-2 pi 125 / 48000)
     DM(14, I3) = R0;
+    R0 = 0;
+    DM(19, I3) = R0;                      // no noise
+    JUMP _md_efm_run;
+
+// ---- EFM-SD ----
+// No pitch ramp (op1 is 0); PTCH on _md_sd_ptch (BD's curve at 72 + 5 PTCH / 8); the modulator fed back at full; the deviation
+// (9/16) MOD / 16; NOIS's noise (0.1755 NOIS / 127 at the start) decaying on _md_sd_ndec; the high-pass on _md_sd_hpf (off at 0).
+// The voice rests when both the tone's level and the noise's (hiss * namt) are under 2^-22.
+_ms_render:
+    I3 = R4;
+    I2 = R8;
+    I1 = R12;
+    R0 = DM(DK_IN_W_OUT, I2);
+    I0 = R0;
+    R0 = DM(2, I1);                       // NOIS
+    F0 = FLOAT R0;
+    R1 = 0x36b52087;                      // 0.1755 / 127 / 256
+    F0 = F0 * F1;
+    DM(19, I3) = F0;                      // namt
+    F1 = DM(18, I3);
+    F0 = F0 * F1;                         // the noise's level
+    F13 = DM(5, I3);
+    F0 = MAX(F0, F13);
+    R1 = 0x34800000;
+    COMP(F0, F1);
+    IF LT JUMP _md_rest;
+    MD_KNOB(F5, _md_sd_ptch, 0);
+    MD_PITCH;
+    MD_DECAYS;
+    MD_KNOB(F5, _md_sd_ndec, 3);
+    DM(20, I3) = F5;                      // ndec
+    R0 = 0x4f000000;                      // 2^31: full feedback
+    DM(12, I3) = R0;
+    R0 = DM(4, I1);                       // MOD
+    F5 = FLOAT R0;
+    R0 = 0x3b800000;
+    F5 = F5 * F0;
+    R0 = 0x3d100000;                      // 9/256: (9/16) / 16
+    F5 = F5 * F0;
+    DM(13, I3) = F5;                      // modamt
+    MD_KNOB(F5, _md_sd_hpf, 7);
+    DM(14, I3) = F5;                      // hpc
     JUMP _md_efm_run;
 
 // ---- the shared loop ----
@@ -299,6 +351,42 @@ _md_efm_end: F13 = F13 * F0;
     DM(4, I3) = F12;
     DM(5, I3) = F13;
 
+    // the noise, when the machine has some
+    R3 = DM(19, I3);
+    R3 = PASS R3;
+    IF EQ JUMP _md_no_noise;
+    R0 = DM(16, I3);                      // seed
+    R2 = -17;
+    F4 = DM(17, I3);                      // nl
+    F5 = DM(18, I3);                      // hiss
+    F6 = R3;                              // namt
+    F7 = DM(20, I3);                      // ndec
+    R3 = 0x3ea64801;                      // NC = 1 - exp(-2 pi 3000 / 48000)
+    R11 = -31;
+    R12 = DM(DK_IN_W_OUT, I2);
+    I1 = R12;
+    LCNTR = DK_BLOCK, DO _md_noise_end UNTIL LCE;
+        R1 = LSHIFT R0 BY 13;
+        R0 = R0 XOR R1;
+        R1 = LSHIFT R0 BY R2;
+        R0 = R0 XOR R1;
+        R1 = LSHIFT R0 BY 5;
+        R0 = R0 XOR R1;
+        F8 = FLOAT R0 BY R11;             // w
+        F9 = F8 - F4;
+        F9 = F9 * F3;
+        F4 = F4 + F9;
+        F8 = F8 - F4;                     // o
+        F8 = F8 * F5;
+        F8 = F8 * F6;
+        F10 = DM(0, I1);
+        F10 = F10 + F8;
+        F5 = F5 * F7;
+_md_noise_end: DM(I1, M6) = F10;
+    DM(16, I3) = R0;
+    DM(17, I3) = F4;
+    DM(18, I3) = F5;
+_md_no_noise:
     // the high-pass, when the machine has one
     R3 = DM(14, I3);
     R3 = PASS R3;
@@ -380,6 +468,26 @@ _mx_note_on:
     DM(15, I3) = R0;                      // low
     JUMP (M13, I13);
 
+// EFM-SD's note_on: the pair 0.0153 cycle in, no ramp, BD's level, the noise at full and its filters at rest.
+_ms_note_on:
+    I3 = R4;
+    R0 = 0;
+    DM(3, I3) = R0;                       // op1: no ramp
+    DM(2, I3) = R0;                       // m
+    DM(15, I3) = R0;                      // low
+    DM(17, I3) = R0;                      // nl
+    R0 = 0x3f800000;
+    DM(4, I3) = R0;                       // op2 = 1
+    DM(18, I3) = R0;                      // hiss = 1
+    R0 = 0x3ea18666;
+    DM(5, I3) = R0;                       // fbg
+    R0 = 65754096;
+    DM(0, I3) = R0;                       // ph1
+    DM(1, I3) = R0;                       // ph2
+    R0 = 0x2545f491;
+    DM(16, I3) = R0;                      // seed
+    JUMP (M13, I13);
+
 .SECTION/DM seg_dmda;
 // dk_machine_desc: magic, contract, n_params, voices, state_bytes, state_clear_bytes, max_cycles_block, max_cycles_note_on,
 // max_call_depth, stack_bytes.
@@ -405,3 +513,14 @@ _mx_note_on:
 .VAR _mx_desc7 = 4400;
 .VAR _mx_desc8 = 0;
 .VAR _mx_desc9 = 0;
+.GLOBAL _ms_desc;
+.VAR _ms_desc = DK_MAGIC;
+.VAR _ms_desc1 = DK_MACHINE_V1;
+.VAR _ms_desc2 = 8;
+.VAR _ms_desc3 = DK_MAX_VOICES;
+.VAR _ms_desc4 = MD_STATE;
+.VAR _ms_desc5 = MD_CLEAR;
+.VAR _ms_desc6 = 5000;
+.VAR _ms_desc7 = 4400;
+.VAR _ms_desc8 = 0;
+.VAR _ms_desc9 = 0;

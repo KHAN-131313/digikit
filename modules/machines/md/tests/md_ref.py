@@ -90,12 +90,22 @@ class EfmBd:
         return f32(8) * (f32(params[4]) * f32(1 / 256) * f32(1 / 128))
 
     hpc = f32(0)
+    ptch_table = "_md_efm_ptch"
+
+    def hp(self, params: list[int]) -> np.float32:
+        return self.hpc
+
+    def resting(self, params: list[int]) -> bool:
+        return not self.fbg >= REST  # NaN rests too
+
+    def noise(self, out: np.ndarray, params: list[int]) -> None:
+        pass
 
     def block(self, pitch: int, params: list[int]) -> tuple[np.ndarray, bool]:
         """One block: the samples and whether the voice is done (DK_DONE)."""
-        if not self.fbg >= REST:  # NaN rests too
+        if self.resting(params):
             return np.zeros(BLOCK, np.float32), True
-        ptch = knob("_md_efm_ptch", self.ptch_word(params))
+        ptch = knob(self.ptch_table, self.ptch_word(params))
         s = min(max((pitch >> 8) - 12, 0), 96)
         ptch = ptch * T["_md_semis"][s]
         ptch = ptch * f32(2.0**32)
@@ -133,11 +143,13 @@ class EfmBd:
             fbg = fbg * dec
         self.ph1, self.ph2, self.m = ph1, ph2, m
         self.op1, self.op2, self.fbg = op1, op2, fbg
-        if self.hpc:
+        self.noise(out, params)
+        hpc = self.hp(params)
+        if hpc:
             low = self.low
             for n in range(BLOCK):
                 d = out[n] - low
-                d = d * self.hpc
+                d = d * hpc
                 low = low + d
                 out[n] = out[n] - low
             self.low = low
@@ -171,3 +183,64 @@ class EfmXt(EfmBd):
 
     def deviation(self, params: list[int]) -> np.float32:
         return f32(params[4]) * f32(1 / 256) * knob("_md_xt_dev", params[0])
+
+
+NAMT_K = np.uint32(0x36B52087).view(np.float32)  # 0.1755 / 127 / 256
+NC = np.uint32(0x3EA64801).view(np.float32)  # 1 - exp(-2 pi 3000 / 48000)
+
+
+class EfmSd(EfmBd):
+    """EFM-SD: no ramp, PTCH on _md_sd_ptch, full feedback, the deviation (9/16) MOD / 16, NOIS's noise through a one-pole
+    high-pass at 3 kHz decaying on _md_sd_ndec, and the HPF high-pass on _md_sd_hpf (src/dsp/md.s)."""
+
+    ptch_table = "_md_sd_ptch"
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.low = self.nl = self.hiss = f32(0)
+        self.seed = 0
+
+    def note_on(self, params: list[int]) -> None:
+        self.op1 = f32(0)
+        self.m = 0
+        self.low = self.nl = f32(0)
+        self.op2 = self.hiss = f32(1)
+        self.fbg = np.uint32(0x3EA18666).view(np.float32)
+        self.ph1 = self.ph2 = 65754096
+        self.seed = 0x2545F491
+
+    def feedback(self, params: list[int]) -> np.float32:
+        return f32(2.0**31)
+
+    def deviation(self, params: list[int]) -> np.float32:
+        return f32(params[4]) * f32(1 / 256) * f32(9 / 256)
+
+    def hp(self, params: list[int]) -> np.float32:
+        return knob("_md_sd_hpf", params[7])
+
+    def namt(self, params: list[int]) -> np.float32:
+        return f32(params[2]) * NAMT_K
+
+    def resting(self, params: list[int]) -> bool:
+        return max(self.namt(params) * self.hiss, self.fbg) < REST
+
+    def noise(self, out: np.ndarray, params: list[int]) -> None:
+        namt = self.namt(params)
+        if not namt:
+            return
+        ndec = knob("_md_sd_ndec", params[3])
+        seed, nl, hiss = self.seed, self.nl, self.hiss
+        for n in range(BLOCK):
+            seed ^= (seed << 13) & 0xFFFFFFFF
+            seed ^= seed >> 17
+            seed ^= (seed << 5) & 0xFFFFFFFF
+            w = f32(i32(seed)) * f32(2.0**-31)
+            d = w - nl
+            d = d * NC
+            nl = nl + d
+            o = w - nl
+            t = o * hiss
+            t = t * namt
+            out[n] = out[n] + t
+            hiss = hiss * ndec
+        self.seed, self.nl, self.hiss = seed, nl, hiss
