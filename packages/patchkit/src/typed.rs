@@ -538,7 +538,16 @@ pub fn resolve(m: &Manifest, models: &Models) -> Result<Vec<DevResolved>> {
     if m.machine.is_empty() {
         return Ok(out);
     }
+    // `ports` is the only device restriction of a module (main.rs): a device it is not built for places nothing
+    let ports = &m.module.ports;
     for (dev, model) in &models.by_device {
+        if !ports.is_empty()
+            && !ports
+                .iter()
+                .any(|p| p.split('-').next() == Some(dev.as_str()))
+        {
+            continue;
+        }
         let kn = &model.knobs;
         if kn.to != "machine" && kn.to != "page" {
             return Err(err!(
