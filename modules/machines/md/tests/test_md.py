@@ -26,8 +26,9 @@ def words(knobs) -> list[int]:
 SYMBOLS = {
     "xt": ("_mx_render", "_mx_note_on", "_mx_desc"),
     "sd": ("_ms_render", "_ms_note_on", "_ms_desc"),
+    "cp": ("_mc_render", "_mc_note_on", "_mc_desc"),
 }
-MODELS = {"bd": md_ref.EfmBd, "xt": md_ref.EfmXt, "sd": md_ref.EfmSd}
+MODELS = {"bd": md_ref.EfmBd, "xt": md_ref.EfmXt, "sd": md_ref.EfmSd, "cp": md_ref.EfmCp}
 
 
 def machine_spec(machine: str):
@@ -108,8 +109,16 @@ SD_CASES = {
     "sd-hpf-fractional": ((100.5, 40.25, 80.75, 30.5, 127, 127, 10.5, 127), 84),
     "sd-all-min": ((0,) * 8, 24),
 }
+CP_DEFAULTS = (83, 41, 64, 36, 32, 64, 127, 32)
+CP_CASES = {
+    "cp-defaults": (CP_DEFAULTS, 60),
+    "cp-no-claps": ((64, 64, 7, 64, 0, 64, 64, 0), 60),
+    "cp-one-clap-fast": ((64, 50, 8, 0, 64, 64, 64, 0), 48),
+    "cp-many-slow-fractional": ((20.5, 90.25, 127, 100.75, 100, 30, 80.5, 64.25), 72),
+    "cp-all-min": ((0,) * 8, 24),
+}
 ALL_CASES = {**{k: ("bd", *v) for k, v in CASES.items()}, **{k: ("xt", *v) for k, v in XT_CASES.items()},
-             **{k: ("sd", *v) for k, v in SD_CASES.items()}}
+             **{k: ("sd", *v) for k, v in SD_CASES.items()}, **{k: ("cp", *v) for k, v in CP_CASES.items()}}
 
 
 @pytest.mark.parametrize("name", ALL_CASES)
@@ -156,6 +165,9 @@ def test_cost_per_block():
         assert max(counts) < 4400, counts
     for knobs, note in SD_CASES.values():
         _, _, counts = played(knobs, note, blocks=4, machine="sd")
+        assert max(counts) < 5000, counts
+    for knobs, note in CP_CASES.values():
+        _, _, counts = played(knobs, note, blocks=4, machine="cp")
         assert max(counts) < 5000, counts
 
 
@@ -244,3 +256,40 @@ def test_sd_hpf_takes_the_tone_down_as_the_machinedrums_does(hpf, db):
         return 10 * np.log10(np.mean(x**2))
 
     assert abs(level(hpf) - level(0) - db) < 0.5
+
+
+
+def test_cp_rests_when_the_train_is_over_and_quiet():
+    got, want, counts = played((64, 10, 24, 20, 0, 64, 64, 0), blocks=200, machine="cp")
+    np.testing.assert_array_equal(got, want)
+    quiet = [k for k in range(200) if not np.any(want[32 * k : 32 * k + 32])]
+    assert quiet, "the voice never rested"
+    assert max(counts[quiet[0] + 1 :] or [0]) < 600
+
+
+def cp_audio(knobs, seconds: float) -> np.ndarray:
+    m = md_ref.EfmCp()
+    m.note_on(words(knobs))
+    return m.render(60 << 8, words(knobs), int(seconds * 48000 / 32) + 1).astype(np.float64)
+
+
+@pytest.mark.parametrize("clps, claps", [(0, 0), (7, 0), (8, 1), (13, 1), (16, 2), (64, 8), (127, 15)])
+def test_cp_strikes_clps_over_8_claps_as_the_machinedrum(clps, claps):
+    """Restarts of the gain (claps after the first, and the tail's start) at CDEC 64, 317 samples apart: as many as the
+    original's at these CLPS values."""
+    m = md_ref.EfmCp()
+    k = words((64, 64, clps, 64, 0, 64, 64, 0))
+    m.note_on(k)
+    gains = []
+    for _ in range(200):
+        env = m.env
+        m.block(60 << 8, k)
+        gains.append(env)
+    restarts = sum(1 for a, b in zip(gains, gains[1:]) if b > a * 1.5)
+    assert restarts == claps
+
+
+@pytest.mark.parametrize("ptch, hz", [(0, 121.9), (64, 819.9), (127, 5349.6)])
+def test_cp_ptch_tunes_as_the_machinedrum(ptch, hz):
+    x = cp_audio((ptch, 127, 0, 64, 0, 64, 64, 0), 0.42)
+    assert abs(np.log2(peak_hz(x, 0.15, 0.4) / hz)) * 1200 < 25  # cents

@@ -98,6 +98,9 @@ class EfmBd:
     def resting(self, params: list[int]) -> bool:
         return not self.fbg >= REST  # NaN rests too
 
+    def tone_dec(self, params: list[int]) -> np.float32:
+        return knob("_md_efm_dec", params[1])
+
     def noise(self, out: np.ndarray, params: list[int]) -> None:
         pass
 
@@ -110,7 +113,7 @@ class EfmBd:
         ptch = ptch * T["_md_semis"][s]
         ptch = ptch * f32(2.0**32)
         ptch8 = f32(8) * ptch
-        dec = knob("_md_efm_dec", params[1])
+        dec = self.tone_dec(params)
         rdec = knob("_md_efm_rdec", params[3])
         mdec = knob("_md_efm_mdec", params[6])
         step1 = f32(params[5]) * f32(1 / 256)
@@ -244,3 +247,57 @@ class EfmSd(EfmBd):
             out[n] = out[n] + t
             hiss = hiss * ndec
         self.seed, self.nl, self.hiss = seed, nl, hiss
+
+
+BIG = 0x40000000
+
+
+class EfmCp(EfmSd):
+    """EFM-CP: EFM-SD's tone (no noise) on _md_cp_ptch at a constant level, times the clap train: CLPS >> 3 claps
+    TRUNC(_md_cp_space) samples apart, each falling at _md_cp_crate, then the tail at DEC's rate (src/dsp/md.s)."""
+
+    ptch_table = "_md_cp_ptch"
+
+    def note_on(self, params: list[int]) -> None:
+        self.ph1 = self.ph2 = self.m = 0
+        self.op1 = self.low = f32(0)
+        self.op2 = self.env = f32(1)
+        self.fbg = np.uint32(0x3EA18666).view(np.float32)
+        self.left = params[2] >> 11
+        self.until = trunc(knob("_md_cp_space", params[3])) if self.left else BIG
+
+    def tone_dec(self, params: list[int]) -> np.float32:
+        return f32(1)
+
+    def namt(self, params: list[int]) -> np.float32:
+        return f32(0)
+
+    def resting(self, params: list[int]) -> bool:
+        return self.left == 0 and self.env < REST
+
+    def noise(self, out: np.ndarray, params: list[int]) -> None:
+        """The clap train (md.s runs it where the noise pass would be)."""
+        crate = knob("_md_cp_crate", params[3])
+        tdec = knob("_md_efm_dec", params[1])
+        space = trunc(knob("_md_cp_space", params[3]))
+        rate = crate if self.left else tdec
+        cnt, nxt = 0, tdec
+        if self.until < 32:
+            cnt = self.until + 1
+            if self.left - 1 != 0:
+                nxt = crate
+        flag = cnt
+        env = self.env
+        for n in range(BLOCK):
+            cnt -= 1
+            if cnt == 0:
+                env, rate = f32(1), nxt
+            out[n] = out[n] * env
+            env = env * rate
+        self.env = env
+        self.until -= 32
+        if flag:
+            self.until += space
+            self.left -= 1
+            if self.left == 0:
+                self.until = BIG

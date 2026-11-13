@@ -27,6 +27,15 @@ SD_HPF_KNOBS = [0, 4, 8, 12, 16, 24, 32, 48, 64, 80, 96, 112, 127, 128]
 SD_HPF = [0, 0.01279, 0.02735, 0.0409, 0.0547, 0.0818, 0.10697, 0.15643, 0.20456, 0.25015, 0.29253, 0.33452, 0.37409, 0.37409]
 
 
+# EFM-CP's clap spacing at 48 kHz, samples, at these CDEC knobs
+CP_SPACE_KNOBS = [0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 127, 128]
+CP_SPACE = [55, 61, 77, 99, 124, 157, 199, 251, 317, 401, 507, 640, 809, 1022, 1291, 1631, 1979, 1979]
+
+
+def cp_space(k: np.ndarray) -> np.ndarray:
+    return np.exp(np.interp(k, CP_SPACE_KNOBS, np.log(CP_SPACE)))
+
+
 def tables() -> dict[str, np.ndarray]:
     k = np.arange(129, dtype=np.float64)
     return {
@@ -43,6 +52,11 @@ def tables() -> dict[str, np.ndarray]:
         "_md_sd_ptch": (0.000581 * 2.0 ** ((72 + 5 * k / 8) / 32.0) * R).astype(np.float32),
         "_md_sd_ndec": ((1.0 - 0.009469 * 2.0 ** (-(1.6 + 0.72 * k) / 13.5)) ** R).astype(np.float32),
         "_md_sd_hpf": np.interp(k, SD_HPF_KNOBS, SD_HPF).astype(np.float32),
+        # EFM-CP (research/fit_efm_cp.py): PTCH on BD's pitch curve at 72 + 11 PTCH / 8; CDEC's clap spacing in samples
+        # (measured at 17 knobs, interpolated in log) and the claps' fall a sample, 22 dB a spacing
+        "_md_cp_ptch": (0.000581 * 2.0 ** ((72 + 11 * k / 8) / 32.0) * R).astype(np.float32),
+        "_md_cp_space": cp_space(k).astype(np.float32),
+        "_md_cp_crate": (10.0 ** (-22.0 / 20.0 / cp_space(k))).astype(np.float32),
         # the note's transposition, 2^(s/12) for s = -48..+48
         "_md_semis": (2.0 ** (np.arange(-48, 49) / 12.0)).astype(np.float32),
     }

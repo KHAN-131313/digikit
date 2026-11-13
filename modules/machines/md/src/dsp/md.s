@@ -1,5 +1,5 @@
 // khan/md: Machinedrum-style machines (<dk/machine/machine.h>), one body for both devices.
-// Machines: EFM-BD, EFM-XT and EFM-SD, two sine operators with feedback FM on one shared loop (_md_efm_run).
+// Machines: EFM-BD, EFM-XT, EFM-SD and EFM-CP, two sine operators with feedback FM on one shared loop (_md_efm_run).
 //
 // Based on Digidrum's EFM-BD (soejrd/digidrum, machines/EFM/BD/efm_bd.c, MIT, used with the author's permission),
 // rewritten for the SHARC+: float32, phases as 32-bit integers (2^32 a turn, so they wrap for free), the
@@ -27,6 +27,10 @@
 // Noise, per sample after the loop and before the high-pass: seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5;
 //   w = FLOAT(seed) * 2^-31; d = w - nl; d = d * NC; nl = nl + d; o = w - nl; t = o * hiss; t = t * namt; out = out + t;
 //   hiss = hiss * ndec.
+//   21 env  22 left  23 until  |  26 claps (0: none)   (EFM-CP's clap train: its gain, the boundaries left -- the claps after
+//   the first, then the tail's start -- and the samples from the block's start to the next one)
+// Claps, per sample after the noise: cnt = cnt - 1; if cnt == 0: env = 1, rate = next; out = out * env; env = env * rate.
+//   A boundary at sample b of the block starts cnt at b + 1 (0: none in this block; the spacing is never under 32 samples).
 // High-pass, per sample after the loop: d = s - low; d = d * hpc; low = low + d; out = s - low.
 // A voice whose level fbg is under 2^-22 has died away: it writes zeros and returns DK_DONE (it costs nothing more).
 //
@@ -36,8 +40,8 @@
 #include "dk_machine.inc"
 #include "tables.inc"
 
-#define MD_STATE 96
-#define MD_CLEAR 96
+#define MD_STATE 112
+#define MD_CLEAR 112
 // EFM-XT's start level: 0.839 * 0.315478504
 #define MX_LEVEL 0x3e8784fc
 
@@ -56,6 +60,8 @@
 .GLOBAL _mx_note_on;
 .GLOBAL _ms_render;
 .GLOBAL _ms_note_on;
+.GLOBAL _mc_render;
+.GLOBAL _mc_note_on;
 .EXTERN _md_efm_ptch;
 .EXTERN _md_efm_dec;
 .EXTERN _md_efm_rdec;
@@ -66,6 +72,9 @@
 .EXTERN _md_sd_ptch;
 .EXTERN _md_sd_ndec;
 .EXTERN _md_sd_hpf;
+.EXTERN _md_cp_ptch;
+.EXTERN _md_cp_space;
+.EXTERN _md_cp_crate;
 
 // MD_KNOB(OUT, TABLE, WORD): OUT = T[k] + (T[k + 1] - T[k]) * f for the 8.8 word k.f of parameter WORD.
 // The adapter clamps the word to 0 .. 0x7f00, so k <= 127 and k + 1 <= 128 are inside the 129 entries.
@@ -176,6 +185,7 @@ _md_render:
     R0 = 0;
     DM(14, I3) = R0;                      // no high-pass
     DM(19, I3) = R0;                      // no noise
+    DM(26, I3) = R0;                      // no claps
     JUMP _md_efm_run;
 
 // ---- EFM-XT ----
@@ -202,6 +212,7 @@ _mx_render:
     DM(14, I3) = R0;
     R0 = 0;
     DM(19, I3) = R0;                      // no noise
+    DM(26, I3) = R0;                      // no claps
     JUMP _md_efm_run;
 
 // ---- EFM-SD ----
@@ -242,10 +253,54 @@ _ms_render:
     DM(13, I3) = F5;                      // modamt
     MD_KNOB(F5, _md_sd_hpf, 7);
     DM(14, I3) = F5;                      // hpc
+    R0 = 0;
+    DM(26, I3) = R0;                      // no claps
+    JUMP _md_efm_run;
+
+// ---- EFM-CP ----
+// EFM-SD's tone (no ramp, full feedback, (9/16) MOD / 16, SD's HPF) on _md_cp_ptch (BD's curve at 72 + 11 PTCH / 8), at a
+// constant level (fbg BD's start level, dec 1), times the clap train: CLPS >> 3 claps (none: the tail alone) TRUNC
+// _md_cp_space samples apart (CDEC), each from 1 falling 22 dB a spacing (_md_cp_crate), then the tail from 1 at DEC's rate.
+// The voice rests when the train is over (left 0) and its gain is under 2^-22.
+_mc_render:
+    I3 = R4;
+    I2 = R8;
+    I1 = R12;
+    R0 = DM(DK_IN_W_OUT, I2);
+    I0 = R0;
+    R0 = DM(22, I3);                      // left
+    R0 = PASS R0;
+    IF NE JUMP _mc_live;
+    F0 = DM(21, I3);                      // env
+    R1 = 0x34800000;
+    COMP(F0, F1);
+    IF LT JUMP _md_rest;
+_mc_live:
+    MD_KNOB(F5, _md_cp_ptch, 0);
+    MD_PITCH;
+    MD_DECAYS;
+    R0 = 0x3f800000;
+    DM(10, I3) = R0;                      // the tone at a constant level: the train is the envelope
+    R0 = 0x4f000000;
+    DM(12, I3) = R0;                      // full feedback
+    R0 = DM(4, I1);                       // MOD
+    F5 = FLOAT R0;
+    R0 = 0x3b800000;
+    F5 = F5 * F0;
+    R0 = 0x3d100000;
+    F5 = F5 * F0;
+    DM(13, I3) = F5;                      // modamt
+    MD_KNOB(F5, _md_sd_hpf, 7);
+    DM(14, I3) = F5;                      // hpc
+    R0 = 0;
+    DM(19, I3) = R0;                      // no noise
+    R0 = 1;
+    DM(26, I3) = R0;                      // claps
     JUMP _md_efm_run;
 
 // ---- the shared loop ----
 _md_efm_run:
+    F13 = DM(5, I3);                      // fbg (every entry's own check may have read it, or not)
     // ---- the voice's state into registers; envelopes under 1e-30 are 0 (no denormals) ----
     R8 = DM(0, I3);
     R9 = DM(1, I3);
@@ -387,6 +442,54 @@ _md_noise_end: DM(I1, M6) = F10;
     DM(17, I3) = F4;
     DM(18, I3) = F5;
 _md_no_noise:
+    // the clap train, when the machine has one (EFM-CP)
+    R3 = DM(26, I3);
+    R3 = PASS R3;
+    IF EQ JUMP _md_no_claps;
+    MD_KNOB(F13, _md_cp_crate, 3);        // (I1 still holds the parameter words: CP has no noise pass)        // the claps' fall a sample
+    MD_KNOB(F11, _md_efm_dec, 1);         // the tail's
+    MD_KNOB(F4, _md_cp_space, 3);
+    R10 = TRUNC F4;                       // the spacing, samples
+    R8 = DM(22, I3);                      // left
+    R9 = DM(23, I3);                      // until
+    F6 = F11;
+    R8 = PASS R8;
+    IF NE F6 = PASS F13;                  // the rate now: the claps' while boundaries are left
+    R7 = 0;                               // no boundary in this block
+    F12 = F11;
+    R0 = 32;
+    COMP(R9, R0);
+    IF GE JUMP _md_cp_set;
+    R7 = R9 + 1;                          // the boundary at sample `until`
+    R0 = R8 - 1;
+    IF NE F12 = PASS F13;                 // the rate after it: the claps' if more are left
+_md_cp_set:
+    R4 = PASS R7;                         // 0: no boundary in this block
+    F5 = DM(21, I3);                      // env
+    R14 = 0x3f800000;                     // 1.0, a clap's start
+    R0 = DM(DK_IN_W_OUT, I2);
+    I1 = R0;
+    LCNTR = DK_BLOCK, DO _md_cp_end UNTIL LCE;
+        R7 = R7 - 1;
+        IF EQ F5 = PASS F14, R6 = R12;
+        F0 = DM(0, I1);
+        F0 = F0 * F5;
+        F5 = F5 * F6;
+_md_cp_end: DM(I1, M6) = F0;
+    DM(21, I3) = F5;
+    // the next boundary: after one in this block, a spacing on (none after the tail's start); else 32 samples nearer
+    R0 = 32;
+    R9 = R9 - R0;
+    R4 = PASS R4;
+    IF EQ JUMP _md_cp_store;              // no boundary in this block
+    R9 = R9 + R10;
+    R8 = R8 - 1;
+    IF NE JUMP _md_cp_store;
+    R9 = 0x40000000;                      // the tail has started: no more boundaries
+_md_cp_store:
+    DM(22, I3) = R8;
+    DM(23, I3) = R9;
+_md_no_claps:
     // the high-pass, when the machine has one
     R3 = DM(14, I3);
     R3 = PASS R3;
@@ -488,6 +591,34 @@ _ms_note_on:
     DM(16, I3) = R0;                      // seed
     JUMP (M13, I13);
 
+// EFM-CP's note_on: the tone from phase 0 at BD's level, no ramp; CLPS >> 3 claps: left = that many boundaries, the first a
+// spacing away (none: the tail now); the train's gain 1.
+_mc_note_on:
+    I3 = R4;
+    I1 = R12;
+    R0 = 0;
+    DM(0, I3) = R0;                       // ph1
+    DM(1, I3) = R0;                       // ph2
+    DM(2, I3) = R0;                       // m
+    DM(3, I3) = R0;                       // op1: no ramp
+    DM(15, I3) = R0;                      // low
+    R0 = 0x3f800000;
+    DM(4, I3) = R0;                       // op2
+    DM(21, I3) = R0;                      // env
+    R0 = 0x3ea18666;
+    DM(5, I3) = R0;                       // fbg, constant
+    R0 = DM(2, I1);                       // CLPS
+    R2 = -11;
+    R8 = LSHIFT R0 BY R2;                 // claps
+    DM(22, I3) = R8;
+    MD_KNOB(F4, _md_cp_space, 3);
+    R9 = TRUNC F4;                        // the first boundary, a spacing away
+    R0 = 0x40000000;                      // none (0 claps: the tail from the start)
+    R8 = PASS R8;
+    IF EQ R9 = PASS R0;
+    DM(23, I3) = R9;
+    JUMP (M13, I13);
+
 .SECTION/DM seg_dmda;
 // dk_machine_desc: magic, contract, n_params, voices, state_bytes, state_clear_bytes, max_cycles_block, max_cycles_note_on,
 // max_call_depth, stack_bytes.
@@ -524,3 +655,14 @@ _ms_note_on:
 .VAR _ms_desc7 = 4400;
 .VAR _ms_desc8 = 0;
 .VAR _ms_desc9 = 0;
+.GLOBAL _mc_desc;
+.VAR _mc_desc = DK_MAGIC;
+.VAR _mc_desc1 = DK_MACHINE_V1;
+.VAR _mc_desc2 = 8;
+.VAR _mc_desc3 = DK_MAX_VOICES;
+.VAR _mc_desc4 = MD_STATE;
+.VAR _mc_desc5 = MD_CLEAR;
+.VAR _mc_desc6 = 5000;
+.VAR _mc_desc7 = 4400;
+.VAR _mc_desc8 = 0;
+.VAR _mc_desc9 = 0;
