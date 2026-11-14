@@ -5,11 +5,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include "dk_fw_string.h"
 
 /* cf.machine.fn.current_track_type: no sig yet */
 /* cf.machine.fn.dispatch: no sig yet */
 /* cf.machine.fn.list.entry: no sig yet */
-/* cf.machine.fn.name.long: no sig yet */
+/* Long-name accessor of the machine name table: core/machines raises its bound (moveq at +1) and repoints the table pointer literal at +0x12 to the copied table. */
+const char * dk_fw_machine_name_long(int32_t machine) __asm__("cf.machine.fn.name.long");
 /* cf.machine.fn.permit: no sig yet */
 /* cf.machine.fn.type_page.count: no sig yet */
 /* cf.machine.fn.type_reader: no sig yet */
@@ -21,5 +23,7 @@ extern const uint8_t dk_fw_machine_name_table __asm__("cf.machine.data.name.tabl
 extern const uint8_t dk_fw_machine_permit_table __asm__("cf.machine.data.permit.table");
 /* DT2 only: a 7-byte per-type byte table (cd d6 df e8 f1 00 fb) read behind a type bound by six firmware functions; what the bytes mean is not known. */
 extern const uint8_t dk_fw_machine_pertype_table __asm__("cf.machine.data.pertype.table");
+/* The push of the Machine Selection view: the target becomes a function that shows digikit's machine list (or calls the stock push). */
+typedef uint32_t dk_fw_machine_sel_open_push_hook(uint32_t manager, const shared_ptr *sp, uint32_t replace);
 
 #endif

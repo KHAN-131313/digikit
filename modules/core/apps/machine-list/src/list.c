@@ -15,16 +15,10 @@
 #include <stddef.h>
 #include <dk/platform/ui.h>
 #include <dk_ui_core.h>
+#include <dk_fw_machine.h>
 #include <dk_fw_page.h>
 #include <dk_fw_project.h>
 #include <dk_fw_view.h>
-
-/* SPIKE: declared here, not through `sig` in devices/fw, so that the generated Rust bindings (and with them the committed core
-   objects) stay as they are. The real module declares them in devices/fw. */
-const char *dk_fw_machine_name_long(int32_t type) __asm__("cf.machine.fn.name.long");
-void dk_fw_project_set_track_type(uint32_t kit, int32_t track, int32_t type, int32_t a, int32_t b)
-    __asm__("cf.project.fn.set_track_type");
-uint32_t dk_fw_view_push_shared(uint32_t manager, const shared_ptr *sp, uint32_t replace) __asm__("cf.view.fn.push_shared");
 
 #define ML_TYPES 24
 

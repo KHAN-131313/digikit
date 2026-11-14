@@ -115,9 +115,8 @@ doc = "Converting copy `shared_ptr<View>(const shared_ptr<Derived> &)` for a cla
 [[fn]]
 name = "cf.view.fn.push_shared"
 cpu = "cf"
-devices = ["dn2"]
+sig = "u32 (u32 manager, const shared_ptr *sp, u32 replace)"
 rule = { kind = "cf_func", hash = "eb95920e294052481d22fcadb4449176", offset = 0x0, len = 6 }
 mark = "D"
 users = ["core/machine-list"]
-doc = "DN2: the push the main view's key handler uses for the views it opens: `f(ViewController *, shared_ptr<View> *, replace)` (finding 131)."
-
+doc = "The push the main view's key handler uses for the views it opens: `f(ViewController *, shared_ptr<View> *, replace)` (finding 131)."

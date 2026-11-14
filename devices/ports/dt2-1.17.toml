@@ -563,6 +563,16 @@ mark = "D"
 rule = "fw/machine:cf_func"
 
 [[anchor]]
+name = "cf.machine.site.sel.open_push"
+cpu = "cf"
+kind = "code"
+addr = 0x40065ce0
+len = 6
+sha256 = "7bee98e0595c544d85cc77a069e1776a967d840186a67717976b1bfeff90d305"
+mark = "D"
+rule = "fw/machine:cf_func"
+
+[[anchor]]
 name = "cf.machine.site.sound_load_type_bound"
 cpu = "cf"
 kind = "code"
@@ -2307,6 +2317,16 @@ mark = "D"
 rule = "fw/project:cf_func"
 
 [[anchor]]
+name = "cf.project.fn.set_track_type"
+cpu = "cf"
+kind = "code"
+addr = 0x40036798
+len = 6
+sha256 = "1dd5d3e4d79287970508c65e78215ba5453a6ff846817b5e78d83c5840544d41"
+mark = "D"
+rule = "fw/project:cf_func"
+
+[[anchor]]
 name = "cf.project.fn.settings"
 cpu = "cf"
 kind = "code"
@@ -3279,6 +3299,16 @@ mark = "D"
 rule = "fw/view:cf_func"
 
 [[anchor]]
+name = "cf.view.fn.push_shared"
+cpu = "cf"
+kind = "code"
+addr = 0x4011cd58
+len = 6
+sha256 = "e9d60872ea7020d0804f90b9477f8c7e1ea2b32c7033fe80a3ac22ad84f1a646"
+mark = "D"
+rule = "fw/view:cf_func"
+
+[[anchor]]
 name = "cf.view.fn.shared_ptr_as_view"
 cpu = "cf"
 kind = "code"
@@ -3778,6 +3808,11 @@ mode = "before"
 name = "cf.machine.hook.param_code.args"
 site = "cf.machine.site.param_code.args"
 mode = "before"
+
+[[hook]]
+name = "cf.machine.hook.sel.open_push"
+site = "cf.machine.site.sel.open_push"
+mode = "retarget"
 
 [[hook]]
 name = "cf.machine.hook.srcpage"

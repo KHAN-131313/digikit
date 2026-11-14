@@ -84,7 +84,11 @@ pub mod machine {
 
     // cf.machine.fn.list.entry: no sig yet
 
-    // cf.machine.fn.name.long: no sig yet
+    unsafe extern "C" {
+        /// Long-name accessor of the machine name table: core/machines raises its bound (moveq at +1) and repoints the table pointer literal at +0x12 to the copied table.
+        #[link_name = "cf.machine.fn.name.long"]
+        pub fn name_long(machine: i32) -> *const u8;
+    }
 
     // cf.machine.fn.permit: no sig yet
 
@@ -115,6 +119,9 @@ pub mod machine {
         #[link_name = "cf.machine.data.pertype.table"]
         pub static PERTYPE_TABLE: u8;
     }
+
+    /// The push of the Machine Selection view: the target becomes a function that shows digikit's machine list (or calls the stock push).
+    pub type SelOpenPushHook = unsafe extern "C" fn(manager: u32, sp: *const crate::string::shared_ptr, replace: u32) -> u32;
 }
 
 pub mod mem {
@@ -510,7 +517,11 @@ pub mod project {
         pub fn serialize() -> i32;
     }
 
-    // cf.project.fn.set_track_type: no sig yet
+    unsafe extern "C" {
+        /// `f(Kit *, int track, int type, 1, 1)`: sets a track's machine type as the Machine Selection view does on YES (finding 131). The meaning of the last two arguments is not known; the view passes 1, 1.
+        #[link_name = "cf.project.fn.set_track_type"]
+        pub fn set_track_type(kit: u32, track: i32, machine: i32, a: i32, b: i32);
+    }
 
     unsafe extern "C" {
         /// `ProjectSettings *f(Project *)`: project + 0x30. Pass it to `cf.page.fn.view_track` to get the selected track.
@@ -1066,7 +1077,11 @@ pub mod view {
         pub fn invalidate(view: *mut u8);
     }
 
-    // cf.view.fn.push_shared: no sig yet
+    unsafe extern "C" {
+        /// The push the main view's key handler uses for the views it opens: `f(ViewController *, shared_ptr<View> *, replace)` (finding 131).
+        #[link_name = "cf.view.fn.push_shared"]
+        pub fn push_shared(manager: u32, sp: *const crate::string::shared_ptr, replace: u32) -> u32;
+    }
 
     unsafe extern "C" {
         /// Converting copy `shared_ptr<View>(const shared_ptr<Derived> &)` for a class with its View sub-object at +0x38 (the Menu views): out.ptr = src.ptr + 0x38 (0 stays 0), out.ctl = src.ctl, and the use count of the control block is incremented. It does not make a new control block; a raw pointer cannot be wrapped with it. The caller releases `out` afterwards.

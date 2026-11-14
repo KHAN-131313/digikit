@@ -61,9 +61,9 @@ doc = "`int f(Kit *, int track)`: the machine type of a track of a kit, -1 when 
 [[fn]]
 name = "cf.project.fn.set_track_type"
 cpu = "cf"
-devices = ["dn2"]
-rule = { kind = "cf_func", hash = "42f12722dd5b838c1c8d8563e44870a3", offset = 0x0, len = 6 }
+sig = "void (u32 kit, i32 track, i32 machine, i32 a, i32 b)"
+rule.dt2 = { kind = "cf_func", hash = "32441e7a8a2c46c0561dcb6063bdac45", offset = 0x0, len = 6 }
+rule.dn2 = { kind = "cf_func", hash = "42f12722dd5b838c1c8d8563e44870a3", offset = 0x0, len = 6 }
 mark = "D"
 users = ["core/machine-list"]
-doc = "DN2: `f(Kit *, int track, int type, 1, 1)`: sets a track's machine type as the Machine Selection view does on YES (finding 131). The meaning of the last two arguments is not known; the view passes 1, 1."
-
+doc = "`f(Kit *, int track, int type, 1, 1)`: sets a track's machine type as the Machine Selection view does on YES (finding 131). The meaning of the last two arguments is not known; the view passes 1, 1."

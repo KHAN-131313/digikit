@@ -26,7 +26,8 @@ void dk_fw_view_brain_push(uint8_t *menu, const shared_ptr *sp) __asm__("cf.view
 uint8_t * dk_fw_view_brain_view_manager(uint8_t *brain) __asm__("cf.view.fn.brain.view_manager");
 /* `View::invalidate(View *)`: asks for a redraw of the view. */
 void dk_fw_view_invalidate(uint8_t *view) __asm__("cf.view.fn.invalidate");
-/* cf.view.fn.push_shared: no sig yet */
+/* The push the main view's key handler uses for the views it opens: `f(ViewController *, shared_ptr<View> *, replace)` (finding 131). */
+uint32_t dk_fw_view_push_shared(uint32_t manager, const shared_ptr *sp, uint32_t replace) __asm__("cf.view.fn.push_shared");
 /* Converting copy `shared_ptr<View>(const shared_ptr<Derived> &)` for a class with its View sub-object at +0x38 (the Menu views): out.ptr = src.ptr + 0x38 (0 stays 0), out.ctl = src.ctl, and the use count of the control block is incremented. It does not make a new control block; a raw pointer cannot be wrapped with it. The caller releases `out` afterwards. */
 void dk_fw_view_shared_ptr_as_view(shared_ptr *out, const shared_ptr *src) __asm__("cf.view.fn.shared_ptr_as_view");
 /* `ViewController::push(mgr, shared_ptr<View> *, exclusive)`. */
