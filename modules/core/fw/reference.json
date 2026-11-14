@@ -1424,7 +1424,8 @@
       },
       "subsystem": "machine",
       "users": [
-        "core/machines"
+        "core/machines",
+        "core/machine-list"
       ],
       "was": [
         "cf.machine.fn.name.0",
@@ -2193,6 +2194,41 @@
       "subsystem": "machine",
       "users": [
         "core/machines"
+      ],
+      "was": []
+    },
+    {
+      "at": {
+        "dn2-1.12": [
+          {
+            "addr": "0x40060230"
+          }
+        ]
+      },
+      "cpu": "cf",
+      "devices": [
+        "dn2"
+      ],
+      "doc": "The push of the Machine Selection view: the target becomes a function that shows digikit's machine list (or calls the stock push).",
+      "file": "devices/fw/machine.toml",
+      "kind": "hook",
+      "mark": "D",
+      "mode": "retarget",
+      "name": "cf.machine.hook.sel.open_push",
+      "regs": {
+        "clobbers": [
+          "d0",
+          "d1",
+          "a0",
+          "a1",
+          "ccr"
+        ],
+        "in": []
+      },
+      "site": "cf.machine.site.sel.open_push",
+      "subsystem": "machine",
+      "users": [
+        "core/machine-list"
       ],
       "was": []
     },
@@ -3488,6 +3524,37 @@
       "was": [
         "cf.machines.pertype.5"
       ]
+    },
+    {
+      "at": {
+        "dn2-1.12": [
+          {
+            "addr": "0x40060230",
+            "len": 6
+          }
+        ]
+      },
+      "cpu": "cf",
+      "devices": [
+        "dn2"
+      ],
+      "doc": "DN2: the `jsr push(manager, shared_ptr *, 1)` (absolute, 6 bytes) with which the main view's key handler shows the Machine Selection view on FUNC + SYN (finding 131).",
+      "file": "devices/fw/machine.toml",
+      "kind": "site",
+      "mark": "D",
+      "name": "cf.machine.site.sel.open_push",
+      "rule": {
+        "dn2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 5406
+        }
+      },
+      "subsystem": "machine",
+      "users": [
+        "core/machine-list"
+      ],
+      "was": []
     },
     {
       "at": {
@@ -9522,6 +9589,41 @@
     },
     {
       "at": {
+        "dn2-1.12": [
+          {
+            "addr": "0x40031880",
+            "len": 6
+          }
+        ]
+      },
+      "bindings": {
+        "c": "dk_fw_project_set_track_type",
+        "rust": "dkfw::project::set_track_type"
+      },
+      "cpu": "cf",
+      "devices": [
+        "dn2"
+      ],
+      "doc": "DN2: `f(Kit *, int track, int type, 1, 1)`: sets a track's machine type as the Machine Selection view does on YES (finding 131). The meaning of the last two arguments is not known; the view passes 1, 1.",
+      "file": "devices/fw/project.toml",
+      "kind": "fn",
+      "mark": "D",
+      "name": "cf.project.fn.set_track_type",
+      "rule": {
+        "dn2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        }
+      },
+      "subsystem": "project",
+      "users": [
+        "core/machine-list"
+      ],
+      "was": []
+    },
+    {
+      "at": {
         "dn2-1.11": [
           {
             "addr": "0x4003e40e",
@@ -14161,6 +14263,41 @@
       "was": [
         "cf.menu.fn.invalidate"
       ]
+    },
+    {
+      "at": {
+        "dn2-1.12": [
+          {
+            "addr": "0x4011e6cc",
+            "len": 6
+          }
+        ]
+      },
+      "bindings": {
+        "c": "dk_fw_view_push_shared",
+        "rust": "dkfw::view::push_shared"
+      },
+      "cpu": "cf",
+      "devices": [
+        "dn2"
+      ],
+      "doc": "DN2: the push the main view's key handler uses for the views it opens: `f(ViewController *, shared_ptr<View> *, replace)` (finding 131).",
+      "file": "devices/fw/view.toml",
+      "kind": "fn",
+      "mark": "D",
+      "name": "cf.view.fn.push_shared",
+      "rule": {
+        "dn2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        }
+      },
+      "subsystem": "view",
+      "users": [
+        "core/machine-list"
+      ],
+      "was": []
     },
     {
       "at": {
@@ -19579,7 +19716,7 @@
       "name": "link"
     },
     {
-      "count": 78,
+      "count": 80,
       "cpu": "cf",
       "file": "devices/fw/machine.toml",
       "meaning": "the machine framework: dispatch, names, per-type tables, the run-time registry",
@@ -19621,7 +19758,7 @@
       "name": "param"
     },
     {
-      "count": 5,
+      "count": 6,
       "cpu": "cf",
       "file": "devices/fw/project.toml",
       "meaning": "the project object, kits, tracks, serialisation",
@@ -19677,7 +19814,7 @@
       "name": "usb"
     },
     {
-      "count": 11,
+      "count": 12,
       "cpu": "cf",
       "file": "devices/fw/view.toml",
       "meaning": "Brain, ViewController, View, redraw, the UI loop",

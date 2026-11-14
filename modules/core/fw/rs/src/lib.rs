@@ -510,6 +510,8 @@ pub mod project {
         pub fn serialize() -> i32;
     }
 
+    // cf.project.fn.set_track_type: no sig yet
+
     unsafe extern "C" {
         /// `ProjectSettings *f(Project *)`: project + 0x30. Pass it to `cf.page.fn.view_track` to get the selected track.
         #[link_name = "cf.project.fn.settings"]
@@ -1063,6 +1065,8 @@ pub mod view {
         #[link_name = "cf.view.fn.invalidate"]
         pub fn invalidate(view: *mut u8);
     }
+
+    // cf.view.fn.push_shared: no sig yet
 
     unsafe extern "C" {
         /// Converting copy `shared_ptr<View>(const shared_ptr<Derived> &)` for a class with its View sub-object at +0x38 (the Menu views): out.ptr = src.ptr + 0x38 (0 stays 0), out.ctl = src.ctl, and the use count of the control block is incremented. It does not make a new control block; a raw pointer cannot be wrapped with it. The caller releases `out` afterwards.

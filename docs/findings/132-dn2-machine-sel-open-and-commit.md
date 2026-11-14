@@ -54,7 +54,26 @@ The first three and the singleton already have anchors in `devices/ports/dn2-1.1
 not. Nothing in the YES path reads the view besides its cursor and marker (finding 131), so the commits can be called from
 other UI-task code with the same arguments. Not run yet **[O]**.
 
+## Spike: a digikit list in place of the view
+
+**[V] run here (emulator, DN2 1.12, 2026-11-14; no second byte check yet).** `modules/core/apps/machine-list` retargets the call
+at `0x40060230` (`cf.machine.hook.sel.open_push`) to a C function with the same arguments. It opens a core/ui menu filled with
+the named machine types and does not push the stock view; a row's action calls `cf.project.fn.set_track_type(kit, track, type,
+1, 1)` with the kit and track from the project singleton. Run with `mise run dk:dev -- <the emulator set>,core/machine-list
+--device dn2` and a key script:
+
+- FUNC + SYN shows the list `MACHINES` (FM Tone, WaveTone, FM Drum, Swarmer, MIDI: type order) and not `MACHINE SEL`.
+- DOWN, then YES on WaveTone: the list closes and the track's SYN page is WaveTone's (TUN1, WAV1, PD1, LEV1 ...). So the commit
+  works when called from outside the stock view.
+- FUNC + SYN again shows the list again; NO closes it.
+
+Both declarations resolve from the cfdb built here (Ghidra 12.2 with the ColdfireEMAC language): regenerating
+`devices/ports/dn2-1.12.toml` with `tools.patchkit.port_resolve` gave the committed file plus only the new anchors and the hook.
+
 ## Open
+
+- The spike declares its three firmware functions in its C file. With `sig` in `devices/fw` the generated Rust bindings change
+  and the committed core Rust objects need a rebuild (the codegen-gcc toolchain).
 
 - Which of the two tests at `0x4005f3d4` and `0x4005f3e0` is FUNC + SYN, and what the other is.
 - The meaning of the two `1` arguments of the commits.

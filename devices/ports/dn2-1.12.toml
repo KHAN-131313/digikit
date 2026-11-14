@@ -402,6 +402,16 @@ mark = "D"
 rule = "fw/machine:cf_func"
 
 [[anchor]]
+name = "cf.machine.site.sel.open_push"
+cpu = "cf"
+kind = "code"
+addr = 0x40060230
+len = 6
+sha256 = "7c5f0e9f307eed8c863832e14b81baa1b59735c6d2a31716fdcb746704a537e6"
+mark = "D"
+rule = "fw/machine:cf_func"
+
+[[anchor]]
 name = "cf.machine.site.sound_load_type_bound"
 cpu = "cf"
 kind = "code"
@@ -2266,6 +2276,16 @@ mark = "D"
 rule = "fw/project:cf_func"
 
 [[anchor]]
+name = "cf.project.fn.set_track_type"
+cpu = "cf"
+kind = "code"
+addr = 0x40031880
+len = 6
+sha256 = "8d7f8aa3127812cc3cf757e0ea4c2554f43e834164b021aefc1d4c04b127cc51"
+mark = "D"
+rule = "fw/project:cf_func"
+
+[[anchor]]
 name = "cf.project.fn.settings"
 cpu = "cf"
 kind = "code"
@@ -2814,6 +2834,16 @@ kind = "code"
 addr = 0x4011ca9a
 len = 4
 sha256 = "1f6b50a3616f922607a92f5ea30e249ecfae4035c48517445d22acbd059dd2ec"
+mark = "D"
+rule = "fw/view:cf_func"
+
+[[anchor]]
+name = "cf.view.fn.push_shared"
+cpu = "cf"
+kind = "code"
+addr = 0x4011e6cc
+len = 6
+sha256 = "e9d60872ea7020d0804f90b9477f8c7e1ea2b32c7033fe80a3ac22ad84f1a646"
 mark = "D"
 rule = "fw/view:cf_func"
 
@@ -3753,6 +3783,11 @@ mode = "replace"
 name = "cf.machine.hook.param_code.map"
 site = "cf.machine.site.param_code.map"
 mode = "before"
+
+[[hook]]
+name = "cf.machine.hook.sel.open_push"
+site = "cf.machine.site.sel.open_push"
+mode = "retarget"
 
 [[hook]]
 name = "cf.machine.hook.type_page.count"

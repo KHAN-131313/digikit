@@ -81,7 +81,7 @@ cpu = "cf"
 rule.dt2 = { kind = "cf_func", hash = "5fd4ff30eda1da21d9c57e4c68b890fe", offset = 0x0, len = 24 }
 rule.dn2 = { kind = "cf_func", hash = "feed4ccea8848444496f10f25c10b1bc", offset = 0x0, len = 24 }
 mark = "D"
-users = ["core/machines"]
+users = ["core/machines", "core/machine-list"]
 doc = "Long-name accessor of the machine name table: core/machines raises its bound (moveq at +1) and repoints the table pointer literal at +0x12 to the copied table."
 
 [[fn]]
@@ -812,3 +812,24 @@ devices = ["dn2"]
 mark = "D"
 users = ["core/dynreg"]
 doc = "The getter's `jsr (A3); move.l D0,(4,A2)` (6 bytes; a2 = the vector being returned); both are replaced by a routine that copies without unfilled reserved machine types."
+
+# ---- the Machine Selection view (Digitone II; docs/findings/130 and 131) ---------------------------------------------
+[[site]]
+name = "cf.machine.site.sel.open_push"
+cpu = "cf"
+devices = ["dn2"]
+rule = { kind = "cf_func", hash = "71c32ba1a7bf0da12a16a0f159d02dba", offset = 0x151e, len = 6 }
+mark = "D"
+users = ["core/machine-list"]
+doc = "DN2: the `jsr push(manager, shared_ptr *, 1)` (absolute, 6 bytes) with which the main view's key handler shows the Machine Selection view on FUNC + SYN (finding 131)."
+
+[[hook]]
+name = "cf.machine.hook.sel.open_push"
+site = "cf.machine.site.sel.open_push"
+cpu = "cf"
+mode = "retarget"
+regs = { in = [], clobbers = ["d0", "d1", "a0", "a1", "ccr"] }
+devices = ["dn2"]
+mark = "D"
+users = ["core/machine-list"]
+doc = "The push of the Machine Selection view: the target becomes a function that shows digikit's machine list (or calls the stock push)."

@@ -57,3 +57,13 @@ rule.dn2 = { kind = "cf_func", hash = "7f68bc71629aaed41f2ffa075e03c222", offset
 mark = "D"
 users = ["core/runtime"]
 doc = "`int f(Kit *, int track)`: the machine type of a track of a kit, -1 when the track does not exist. core/runtime uses it for the machine-change watch."
+
+[[fn]]
+name = "cf.project.fn.set_track_type"
+cpu = "cf"
+devices = ["dn2"]
+rule = { kind = "cf_func", hash = "42f12722dd5b838c1c8d8563e44870a3", offset = 0x0, len = 6 }
+mark = "D"
+users = ["core/machine-list"]
+doc = "DN2: `f(Kit *, int track, int type, 1, 1)`: sets a track's machine type as the Machine Selection view does on YES (finding 131). The meaning of the last two arguments is not known; the view passes 1, 1."
+

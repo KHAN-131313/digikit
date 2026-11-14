@@ -10,6 +10,7 @@
 uint32_t dk_fw_project_active_kit(uint32_t project) __asm__("cf.project.fn.active_kit");
 /* The firmware's "serialize the live project into the persistent arena" (FUN_40030c9c on DT2, FUN_4002c694 on DN2: `int f(void)`, returns 1). The same hash on all four images. */
 int32_t dk_fw_project_serialize(void) __asm__("cf.project.fn.serialize");
+/* cf.project.fn.set_track_type: no sig yet */
 /* `ProjectSettings *f(Project *)`: project + 0x30. Pass it to `cf.page.fn.view_track` to get the selected track. */
 uint32_t dk_fw_project_settings(uint32_t project) __asm__("cf.project.fn.settings");
 /* The Project singleton getter `Project *f(void)`; its code differs per image. core/runtime reads it for the machine-change watch. */

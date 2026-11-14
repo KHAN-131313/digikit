@@ -1,0 +1,32 @@
+[module]
+id = "core/machine-list"
+version = "0.0.1"
+name = "Machine list (spike)"
+category = "core"
+role = "app"
+type = "framework"
+author = "khan"
+status = "experimental"
+summary = "SPIKE: FUNC + SYN opens a digikit list of the machines instead of the firmware's Machine Selection view; YES sets the track's machine. Digitone II 1.12 only."
+requires = ["core/runtime", "core/ui", "core/machines"]
+conflicts = []
+ports = ["dn2-1.12"]
+
+[targets]
+"dn2-1.12" = "experimental"
+
+# One C source on <dk/platform/ui.h> (core/ui draws it with the firmware's own views). Facts: docs/findings/130 and 131.
+[[object]]
+path = "build/machine-list.dko.json"
+sources = ["src/list.c"]
+place = "cf.expansion"
+
+# The one call that shows the stock view on FUNC + SYN (finding 131): its target becomes ml_push, with the same arguments.
+[[op]]
+op = "hook"
+hook = "cf.machine.hook.sel.open_push"
+to = "ml_push"
+devices = ["dn2"]
+
+[[claim]]
+resource = "cf.machine.site.sel.open_push"

@@ -1,0 +1,412 @@
+{
+ "arch": "cf",
+ "format": 1,
+ "relocs": [
+  {
+   "addend": 0,
+   "offset": 12,
+   "section": ".text.fill",
+   "symbol": "dk_ui_menu_add_action",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 20,
+   "section": ".text.fill",
+   "symbol": "cf.machine.fn.name.long",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 42,
+   "section": ".text.fill",
+   "symbol": ".sec..text.pick",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 58,
+   "section": ".text.pick",
+   "symbol": ".sec..data.ML_LAST",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 12,
+   "section": ".text.pick",
+   "symbol": "cf.project.fn.singleton",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 22,
+   "section": ".text.pick",
+   "symbol": "cf.project.fn.active_kit",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 34,
+   "section": ".text.pick",
+   "symbol": "cf.project.fn.settings",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 42,
+   "section": ".text.pick",
+   "symbol": "cf.page.fn.view_track",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 70,
+   "section": ".text.pick",
+   "symbol": "cf.project.fn.set_track_type",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 80,
+   "section": ".text.pick",
+   "symbol": ".sec..bss.g_menu",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 96,
+   "section": ".text.pick",
+   "symbol": "dk_ui_menu_close",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 22,
+   "section": ".text.ml_push",
+   "symbol": ".sec..bss.ML_OPENS",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 62,
+   "section": ".text.ml_push",
+   "symbol": ".sec..bss.g_menu",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 28,
+   "section": ".text.ml_push",
+   "symbol": ".sec..bss.g_menu",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 36,
+   "section": ".text.ml_push",
+   "symbol": "dk_ui_core_handle",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 46,
+   "section": ".text.ml_push",
+   "symbol": ".sec..rodata.desc",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 54,
+   "section": ".text.ml_push",
+   "symbol": "dk_ui_menu_new",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 68,
+   "section": ".text.ml_push",
+   "symbol": ".sec..bss.g_menu",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 98,
+   "section": ".text.ml_push",
+   "symbol": "cf.view.fn.push_shared",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 106,
+   "section": ".text.ml_push",
+   "symbol": "dk_ui_menu_refresh",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 112,
+   "section": ".text.ml_push",
+   "symbol": ".sec..bss.g_menu",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 118,
+   "section": ".text.ml_push",
+   "symbol": "dk_ui_menu_open",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 0,
+   "section": ".rodata.desc",
+   "symbol": ".sec..rodata.str1.1",
+   "type": "cf.32"
+  },
+  {
+   "addend": 12,
+   "offset": 4,
+   "section": ".rodata.desc",
+   "symbol": ".sec..rodata.str1.1",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 12,
+   "section": ".rodata.desc",
+   "symbol": ".sec..text.fill",
+   "type": "cf.32"
+  }
+ ],
+ "sections": [
+  {
+   "align": 2,
+   "hex": "4feffff448d70c04428247f9000000002f024eb900000000588f20404a80671a4a1067162f0242a74879000000002f002f2f00204e934fef001452827018b08266ce4cd70c044fef000c4e75",
+   "kind": "text",
+   "name": ".text.fill",
+   "size": 76
+  },
+  {
+   "align": 2,
+   "hex": "598f2f032f02262f00144eb9000000002f0024004eb9000000002f40000c2f024eb9000000002f004eb90000000048780001487800012f0323c3000000002f002f2f00244eb9000000004fef002041f9000000002f500010241f261f588f4ef900000000",
+   "kind": "text",
+   "name": ".text.pick",
+   "size": 100
+  },
+  {
+   "align": 2,
+   "hex": "4feffff42eaf00102f6f001400042f6f0018000852b9000000004ab90000000066204eb9000000004a8067164879000000002f004eb900000000508f23c0000000002039000000004a80661a2f6f000800182f6f000400142f5700104fef000c4ef9000000002f004eb9000000002f39000000004eb90000000070014fef00144e75",
+   "kind": "text",
+   "name": ".text.ml_push",
+   "size": 130
+  },
+  {
+   "align": 1,
+   "hex": "4d616368696e654c697374004d414348494e455300",
+   "kind": "data",
+   "name": ".rodata.str1.1",
+   "size": 21
+  },
+  {
+   "align": 2,
+   "hex": "000000000000000000000000000000000000000000000000000000000000000000000000",
+   "kind": "data",
+   "name": ".rodata.desc",
+   "size": 36
+  },
+  {
+   "align": 2,
+   "hex": "",
+   "kind": "bss",
+   "name": ".bss.g_menu",
+   "size": 4
+  },
+  {
+   "align": 2,
+   "hex": "ffffffff",
+   "kind": "data",
+   "name": ".data.ML_LAST",
+   "size": 4
+  },
+  {
+   "align": 2,
+   "hex": "",
+   "kind": "bss",
+   "name": ".bss.ML_OPENS",
+   "size": 4
+  }
+ ],
+ "source_sha256": "ee552ee0736b1617c73766202fd917d86625565ceff728b8043e3ecc528e02d6",
+ "symbols": [
+  {
+   "global": false,
+   "name": ".sec..bss.ML_OPENS",
+   "section": ".bss.ML_OPENS",
+   "value": 0
+  },
+  {
+   "global": false,
+   "name": ".sec..bss.g_menu",
+   "section": ".bss.g_menu",
+   "value": 0
+  },
+  {
+   "global": false,
+   "name": ".sec..data.ML_LAST",
+   "section": ".data.ML_LAST",
+   "value": 0
+  },
+  {
+   "global": false,
+   "name": ".sec..rodata.desc",
+   "section": ".rodata.desc",
+   "value": 0
+  },
+  {
+   "global": false,
+   "name": ".sec..rodata.str1.1",
+   "section": ".rodata.str1.1",
+   "value": 0
+  },
+  {
+   "global": false,
+   "name": ".sec..text.fill",
+   "section": ".text.fill",
+   "value": 0
+  },
+  {
+   "global": false,
+   "name": ".sec..text.pick",
+   "section": ".text.pick",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "ML_LAST",
+   "section": ".data.ML_LAST",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "ML_OPENS",
+   "section": ".bss.ML_OPENS",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.machine.fn.name.long",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.page.fn.view_track",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.project.fn.active_kit",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.project.fn.set_track_type",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.project.fn.settings",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.project.fn.singleton",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.view.fn.push_shared",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": false,
+   "name": "desc",
+   "section": ".rodata.desc",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_core_handle",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_menu_add_action",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_menu_close",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_menu_new",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_menu_open",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_menu_refresh",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": false,
+   "name": "fill",
+   "section": ".text.fill",
+   "value": 0
+  },
+  {
+   "global": false,
+   "name": "g_menu",
+   "section": ".bss.g_menu",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "ml_push",
+   "section": ".text.ml_push",
+   "value": 0
+  },
+  {
+   "global": false,
+   "name": "pick",
+   "section": ".text.pick",
+   "value": 0
+  }
+ ],
+ "toolchain": {
+  "as": "GNU assembler (GNU Binutils) 2.47.20260726",
+  "cflags": "-mcpu=54418 -std=c11 -Os -ffreestanding -fno-builtin -nostdlib -fno-pic -fno-pie -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-stack-protector -Wall -Wextra -Werror",
+  "gcc": "m68k-elf-gcc (GCC) 16.2.0",
+  "instructions_redecoded": "83",
+  "isa_check": "ef89f3d372128a6b9f2b2aa1813a9df204d1cce6f04e742d85c152ff2d84cfc2",
+  "ld": "GNU ld (GNU Binutils) 2.47.20260726"
+ }
+}
