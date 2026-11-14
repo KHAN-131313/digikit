@@ -15,10 +15,15 @@ conflicts = []
 [targets]
 "dn2-1.12" = "experimental"
 
-# `patchkit pack khan/md --device dt2|dn2 -o md.dkm` makes the .dkm; the digikit runtime sends the DSP object to the DSP and
-# publishes the voice row and the machine row.
-# The machine declaration (DK_MACHINE, DK_PARAM and DK_PAGE in src/module.c). It holds only .dk.desc records; patchkit pack reads them
-# and leaves them out of the .dkm.
+# The machines are declared by builder calls in init (src/module.c). The ids are what the keys hash; `dsp` is the prefix of
+# each machine's DSP symbols in src/dsp/md.s. `[uses.<device>]` is written by `mise run module:check`.
+[[machine]]
+id = "md"
+
+[[machine]]
+id = "xt"
+dsp = "mx"
+
 [[object]]
 path = "build/md-cf.dko.json"
 sources = ["src/module.c"]

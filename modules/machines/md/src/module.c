@@ -1,31 +1,38 @@
-/* The machine declaration of khan/md. patchkit pack reads these records; the device never sees them.
-   The DSP symbols are in src/dsp/md.s, which reads the words in the Machinedrum's order: PTCH DEC RAMP RDEC MOD MFRQ
-   MDEC MFB. The defaults are the Machinedrum's EFM-BD defaults. */
-#include <dk/machine/machine.h>
+/* The machines of khan/md, declared by builder calls in init. The DSP (src/dsp/md.s) reads the words in the Machinedrum's
+   order; the defaults are the Machinedrum's.
+   EFM-BD: PTCH DEC RAMP RDEC MOD MFRQ MDEC MFB (DSP prefix md).
+   EFM-XT: an FM tom, EFM-BD's voice over two octaves through a high-pass; CLIC starts the carrier further in (DSP prefix mx). */
+#include <dk/core/module.h>
+#include "module_ids.h"
 
-DK_MACHINE(md, .name = "MD EFM-BD", .short_name = "MDKHAN", .render = "_md_render",
-           .note_on = "_md_note_on", .desc = "_md_desc");
-DK_PARAM(md, 0, md_ptch, "Pitch", "PTCH", 0, 127, 36);
-DK_PARAM(md, 1, md_dec, "Decay", "DEC", 0, 127, 76);
-DK_PARAM(md, 2, md_ramp, "Ramp", "RAMP", 0, 127, 64);
-DK_PARAM(md, 3, md_rdec, "Ramp Decay", "RDEC", 0, 127, 55);
-DK_PARAM(md, 4, md_mod, "Mod Amount", "MOD", 0, 127, 64);
-DK_PARAM(md, 5, md_mfrq, "Mod Freq", "MFRQ", 0, 127, 64);
-DK_PARAM(md, 6, md_mdec, "Mod Decay", "MDEC", 0, 127, 32);
-DK_PARAM(md, 7, md_mfb, "Mod Feedback", "MFB", 0, 127, 127);
-DK_PAGE(md, "MDKHAN", "EFM-BD", DK_KNOB(0), DK_KNOB(1), DK_KNOB(2), DK_KNOB(3), DK_KNOB(4),
-        DK_KNOB(5), DK_KNOB(6), DK_KNOB(7));
+typedef struct md_knob {
+    const char *name, *short_name;
+    uint32_t def;
+} md_knob;
 
-/* EFM-XT: an FM tom, EFM-BD's voice over two octaves through a high-pass; CLIC starts the carrier further in. */
-DK_MACHINE(xt, .name = "MD EFM-XT", .short_name = "MDXT", .render = "_mx_render",
-           .note_on = "_mx_note_on", .desc = "_mx_desc");
-DK_PARAM(xt, 0, xt_ptch, "Pitch", "PTCH", 0, 127, 64);
-DK_PARAM(xt, 1, xt_dec, "Decay", "DEC", 0, 127, 64);
-DK_PARAM(xt, 2, xt_ramp, "Ramp", "RAMP", 0, 127, 38);
-DK_PARAM(xt, 3, xt_rdec, "Ramp Decay", "RDEC", 0, 127, 87);
-DK_PARAM(xt, 4, xt_mod, "Mod Amount", "MOD", 0, 127, 48);
-DK_PARAM(xt, 5, xt_mfrq, "Mod Freq", "MFRQ", 0, 127, 84);
-DK_PARAM(xt, 6, xt_mdec, "Mod Decay", "MDEC", 0, 127, 55);
-DK_PARAM(xt, 7, xt_clic, "Click", "CLIC", 0, 127, 127);
-DK_PAGE(xt, "MDXT", "EFM-XT", DK_KNOB(0), DK_KNOB(1), DK_KNOB(2), DK_KNOB(3), DK_KNOB(4),
-        DK_KNOB(5), DK_KNOB(6), DK_KNOB(7));
+static void add(dk_module_ctx *ctx, uint32_t id, const char *name, const char *short_name, const char *title,
+                const md_knob *k)
+{
+    dk_machine *m = dk_module_ctx_add_machine(ctx, id, name, short_name);
+    dk_page *p = dk_machine_add_page(m, title, short_name);
+    for (unsigned i = 0; i < 8; i++)
+        dk_page_add_param(p, k[i].name, k[i].short_name, k[i].def);
+}
+
+static const md_knob efm_bd[8] = {
+    {"Pitch", "PTCH", 36},     {"Decay", "DEC", 76},      {"Ramp", "RAMP", 64},     {"Ramp Decay", "RDEC", 55},
+    {"Mod Amount", "MOD", 64}, {"Mod Freq", "MFRQ", 64}, {"Mod Decay", "MDEC", 32}, {"Mod Feedback", "MFB", 127},
+};
+static const md_knob efm_xt[8] = {
+    {"Pitch", "PTCH", 64},     {"Decay", "DEC", 64},      {"Ramp", "RAMP", 38},     {"Ramp Decay", "RDEC", 87},
+    {"Mod Amount", "MOD", 48}, {"Mod Freq", "MFRQ", 84}, {"Mod Decay", "MDEC", 55}, {"Click", "CLIC", 127},
+};
+
+static int32_t init(dk_module_ctx *ctx)
+{
+    add(ctx, DK_MACHINE_ID_MD, "MD EFM-BD", "MDKHAN", "EFM-BD", efm_bd);
+    add(ctx, DK_MACHINE_ID_XT, "MD EFM-XT", "MDXT", "EFM-XT", efm_xt);
+    return DK_OK;
+}
+
+const dk_module_def dk_module = {.init = init};
