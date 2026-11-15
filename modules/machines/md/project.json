@@ -7,6 +7,11 @@
         "files": ["tests/equiv.device.test.ts"],
         "modules": ["khan/md"],
         "plusdrive": true
+      },
+      {
+        "files": ["tests/sixteen.device.test.ts"],
+        "modules": ["khan/md"],
+        "plusdrive": true
       }
     ]
   }
