@@ -5,11 +5,11 @@ import dataclasses
 import tomllib
 from pathlib import Path
 
+import md_ref
 import numpy as np
 import pytest
 from support.machine_rig import MachineRig
 
-import md_ref
 from tools.patchkit import pk_conform, pk_toolchains
 
 pytestmark = pytest.mark.skipif(
@@ -53,7 +53,16 @@ SYMBOLS = {
     "hh": ("_mh_render", "_mh_note_on", "_mh_desc"),
     "cy": ("_my_render", "_my_note_on", "_my_desc"),
 }
-MODELS = {"bd": md_ref.EfmBd, "xt": md_ref.EfmXt, "sd": md_ref.EfmSd, "cp": md_ref.EfmCp, "rs": md_ref.EfmRs, "cb": md_ref.EfmCb, "hh": md_ref.EfmHh, "cy": md_ref.EfmCy}
+MODELS = {
+    "bd": md_ref.EfmBd,
+    "xt": md_ref.EfmXt,
+    "sd": md_ref.EfmSd,
+    "cp": md_ref.EfmCp,
+    "rs": md_ref.EfmRs,
+    "cb": md_ref.EfmCb,
+    "hh": md_ref.EfmHh,
+    "cy": md_ref.EfmCy,
+}
 
 
 def machine_spec(machine: str):
@@ -68,13 +77,18 @@ def xt_spec():
     """EFM-XT, the module's second machine: pk_conform.spec reads only the first, so XT is BD's spec with XT's symbols
     (both machines' knobs sit in the same positions)."""
     base = pk_conform.spec("khan/md", "dn2")
-    return dataclasses.replace(base, entry="_mx_render", note_on="_mx_note_on", desc="_mx_desc")
+    return dataclasses.replace(
+        base, entry="_mx_render", note_on="_mx_note_on", desc="_mx_desc"
+    )
 
 
 class Rig(MachineRig):
     def __init__(self, machine: str = "bd", record_stores: bool = False) -> None:
         super().__init__(
-            "khan/md", "dn2", spec=None if machine == "bd" else machine_spec(machine), record_stores=record_stores
+            "khan/md",
+            "dn2",
+            spec=None if machine == "bd" else machine_spec(machine),
+            record_stores=record_stores,
         )
 
     def play(self, note: float, vel: int, knobs) -> None:
@@ -101,7 +115,9 @@ class Rig(MachineRig):
         return np.concatenate(ys), counts
 
 
-def played(knobs, note: int = 60, vel: int = 100, blocks: int = 60, machine: str = "bd"):
+def played(
+    knobs, note: int = 60, vel: int = 100, blocks: int = 60, machine: str = "bd"
+):
     """The rig's blocks after the trigger block (the DN2 trigger bit starts the note in the next block) and the model's."""
     rig = Rig(machine)
     rig.play(note, vel, knobs)
@@ -152,7 +168,10 @@ RS_DEFAULTS = (64, 32, 64, 32, 64, 64, 44, 64)
 RS_CASES = {
     "rs-defaults": (RS_DEFAULTS, 60),
     "rs-rim-only": ((40, 80, 100, 0, 0, 64, 64, 0), 60),
-    "rs-snare-loud-fractional": ((90.5, 10.25, 30.75, 64.5, 127, 100.5, 96.25, 127), 72),
+    "rs-snare-loud-fractional": (
+        (90.5, 10.25, 30.75, 64.5, 127, 100.5, 96.25, 127),
+        72,
+    ),
     "rs-all-max": ((127,) * 8, 96),
     "rs-all-min": ((0,) * 8, 24),
 }
@@ -168,7 +187,10 @@ HH_DEFAULTS = (96, 32, 0, 0, 64, 64, 64, 127)
 HH_CASES = {
     "hh-defaults": (HH_DEFAULTS, 60),
     "hh-plain-trem": ((64, 96, 127, 64, 0, 64, 64, 0), 60),
-    "hh-trem-fast-fractional": ((30.5, 110.25, 80.75, 127, 40.5, 20.25, 90.5, 30.75), 72),
+    "hh-trem-fast-fractional": (
+        (30.5, 110.25, 80.75, 127, 40.5, 20.25, 90.5, 30.75),
+        72,
+    ),
     "hh-all-max": ((127,) * 8, 96),
     "hh-all-min": ((0,) * 8, 24),
 }
@@ -180,17 +202,25 @@ CY_CASES = {
     "cy-all-max": ((127,) * 8, 96),
     "cy-all-min": ((0,) * 8, 24),
 }
-ALL_CASES = {**{k: ("bd", *v) for k, v in CASES.items()}, **{k: ("xt", *v) for k, v in XT_CASES.items()},
-             **{k: ("sd", *v) for k, v in SD_CASES.items()}, **{k: ("cp", *v) for k, v in CP_CASES.items()},
-             **{k: ("rs", *v) for k, v in RS_CASES.items()}, **{k: ("cb", *v) for k, v in CB_CASES.items()},
-             **{k: ("hh", *v) for k, v in HH_CASES.items()}, **{k: ("cy", *v) for k, v in CY_CASES.items()}}
+ALL_CASES = {
+    **{k: ("bd", *v) for k, v in CASES.items()},
+    **{k: ("xt", *v) for k, v in XT_CASES.items()},
+    **{k: ("sd", *v) for k, v in SD_CASES.items()},
+    **{k: ("cp", *v) for k, v in CP_CASES.items()},
+    **{k: ("rs", *v) for k, v in RS_CASES.items()},
+    **{k: ("cb", *v) for k, v in CB_CASES.items()},
+    **{k: ("hh", *v) for k, v in HH_CASES.items()},
+    **{k: ("cy", *v) for k, v in CY_CASES.items()},
+}
 
 
 @pytest.mark.parametrize("name", ALL_CASES)
 def test_the_routine_matches_the_model(name):
     machine, knobs, note = ALL_CASES[name]
     got, want, _ = played(knobs, note, machine=machine)
-    assert np.max(np.abs(want)) > (0.05 if machine == "bd" else 5e-4)  # high-passes take the lowest notes away
+    assert np.max(np.abs(want)) > (
+        0.05 if machine == "bd" else 5e-4
+    )  # high-passes take the lowest notes away
     np.testing.assert_array_equal(got, want)
 
 
@@ -222,12 +252,29 @@ def test_knobs_flipping_every_block_stay_finite_and_bounded():
 
 # Instructions a block (the adapter's ~700 included) after the paired-load loop, with about 5% headroom: a change that makes a
 # machine slower fails here (the descriptions' ceilings are looser).
-COST = {"bd": 3050, "xt": 3250, "sd": 3850, "cp": 3550, "rs": 5200, "cb": 5500, "hh": 3500, "cy": 8200}
+COST = {
+    "bd": 3050,
+    "xt": 3250,
+    "sd": 3850,
+    "cp": 3550,
+    "rs": 5200,
+    "cb": 5500,
+    "hh": 3500,
+    "cy": 8200,
+}
 
 
 def test_cost_per_block():
-    for machine, cases in (("bd", CASES), ("xt", XT_CASES), ("sd", SD_CASES), ("cp", CP_CASES), ("rs", RS_CASES),
-                           ("cb", CB_CASES), ("hh", HH_CASES), ("cy", CY_CASES)):
+    for machine, cases in (
+        ("bd", CASES),
+        ("xt", XT_CASES),
+        ("sd", SD_CASES),
+        ("cp", CP_CASES),
+        ("rs", RS_CASES),
+        ("cb", CB_CASES),
+        ("hh", HH_CASES),
+        ("cy", CY_CASES),
+    ):
         for knobs, note in cases.values():
             _, _, counts = played(knobs, note, blocks=4, machine=machine)
             assert max(counts) < COST[machine], (machine, counts)
@@ -240,7 +287,9 @@ def test_cost_per_block():
 def model_audio(knobs, seconds: float) -> np.ndarray:
     m = md_ref.EfmBd()
     m.note_on(words(knobs))
-    return m.render(60 << 8, words(knobs), int(seconds * 48000 / 32) + 1).astype(np.float64)
+    return m.render(60 << 8, words(knobs), int(seconds * 48000 / 32) + 1).astype(
+        np.float64
+    )
 
 
 def peak_hz(x: np.ndarray, t0: float = 0.1, t1: float = 0.3) -> float:
@@ -261,14 +310,23 @@ def test_ptch_tunes_as_the_machinedrum(ptch, hz):
 
 # From MFB 32 the feedback turns chaotic: ours is 0.75 semitone high at 32, and from 48 about 2.5-3 semitones brighter
 # (spectral centroid) than the original. Smoothing the fed-back sine or scaling it did not close that without breaking 16..48.
-@pytest.mark.parametrize("mfb, hz, st", [(0, 102.5, 0.1), (16, 86.4, 0.5), (32, 31.9, 1.0)])
+@pytest.mark.parametrize(
+    "mfb, hz, st", [(0, 102.5, 0.1), (16, 86.4, 0.5), (32, 31.9, 1.0)]
+)
 def test_feedback_pulls_the_pitch_down_as_the_machinedrums_does(mfb, hz, st):
     x = model_audio((64, 96, 16, 64, 64, 64, 127, mfb), 0.32)
     assert abs(np.log2(peak_hz(x) / hz)) * 12 < st
 
 
 @pytest.mark.parametrize(
-    "dec, at, db", [(32, 0.05, -39.9), (64, 0.05, -10.1), (64, 0.2, -30.3), (96, 0.2, -8.3), (96, 0.5, -16.1)]
+    "dec, at, db",
+    [
+        (32, 0.05, -39.9),
+        (64, 0.05, -10.1),
+        (64, 0.2, -30.3),
+        (96, 0.2, -8.3),
+        (96, 0.5, -16.1),
+    ],
 )
 def test_dec_falls_as_the_machinedrums_does(dec, at, db):
     x = model_audio((64, dec, 16, 64, 0, 64, 64, 0), at + 0.02)
@@ -300,7 +358,9 @@ def test_sd_rests_after_its_noise_and_tone_have_died():
 def sd_audio(knobs, seconds: float) -> np.ndarray:
     m = md_ref.EfmSd()
     m.note_on(words(knobs))
-    return m.render(60 << 8, words(knobs), int(seconds * 48000 / 32) + 1).astype(np.float64)
+    return m.render(60 << 8, words(knobs), int(seconds * 48000 / 32) + 1).astype(
+        np.float64
+    )
 
 
 @pytest.mark.parametrize("ptch, hz", [(0, 121.9), (64, 290.4), (127, 679.7)])
@@ -320,7 +380,6 @@ def test_sd_hpf_takes_the_tone_down_as_the_machinedrums_does(hpf, db):
     assert abs(level(hpf) - level(0) - db) < 0.5
 
 
-
 def test_cp_rests_when_the_train_is_over_and_quiet():
     got, want, counts = played((64, 10, 24, 20, 0, 64, 64, 0), blocks=200, machine="cp")
     np.testing.assert_array_equal(got, want)
@@ -332,10 +391,14 @@ def test_cp_rests_when_the_train_is_over_and_quiet():
 def cp_audio(knobs, seconds: float) -> np.ndarray:
     m = md_ref.EfmCp()
     m.note_on(words(knobs))
-    return m.render(60 << 8, words(knobs), int(seconds * 48000 / 32) + 1).astype(np.float64)
+    return m.render(60 << 8, words(knobs), int(seconds * 48000 / 32) + 1).astype(
+        np.float64
+    )
 
 
-@pytest.mark.parametrize("clps, claps", [(0, 0), (7, 0), (8, 1), (13, 1), (16, 2), (64, 8), (127, 15)])
+@pytest.mark.parametrize(
+    "clps, claps", [(0, 0), (7, 0), (8, 1), (13, 1), (16, 2), (64, 8), (127, 15)]
+)
 def test_cp_strikes_clps_over_8_claps_as_the_machinedrum(clps, claps):
     """Restarts of the gain (claps after the first, and the tail's start) at CDEC 64, 317 samples apart: as many as the
     original's at these CLPS values."""
@@ -347,7 +410,7 @@ def test_cp_strikes_clps_over_8_claps_as_the_machinedrum(clps, claps):
         env = m.env
         m.block(60 << 8, k)
         gains.append(env)
-    restarts = sum(1 for a, b in zip(gains, gains[1:]) if b > a * 1.5)
+    restarts = sum(1 for a, b in zip(gains, gains[1:], strict=False) if b > a * 1.5)
     assert restarts == claps
 
 
@@ -360,10 +423,16 @@ def test_cp_ptch_tunes_as_the_machinedrum(ptch, hz):
 @pytest.mark.parametrize("machine", ["bd", "xt", "sd", "cp", "rs", "cb", "hh", "cy"])
 def test_every_store_stays_in_the_voice_or_its_output(machine):
     """With the rig's store recording on: the routine writes only its own state block and output (and its stack)."""
-    knobs = {"bd": DEFAULTS, "xt": XT_DEFAULTS, "sd": SD_DEFAULTS, "cp": CP_DEFAULTS, "rs": RS_DEFAULTS, "cb": CB_DEFAULTS,
-             "hh": HH_DEFAULTS, "cy": CY_DEFAULTS}[
-        machine
-    ]
+    knobs = {
+        "bd": DEFAULTS,
+        "xt": XT_DEFAULTS,
+        "sd": SD_DEFAULTS,
+        "cp": CP_DEFAULTS,
+        "rs": RS_DEFAULTS,
+        "cb": CB_DEFAULTS,
+        "hh": HH_DEFAULTS,
+        "cy": CY_DEFAULTS,
+    }[machine]
     rig = Rig(machine, record_stores=True)
     rig.play(60, 100, knobs)
     for _ in range(6):
@@ -381,7 +450,9 @@ def test_rs_rim_tunes_as_the_machinedrum(ptch, hz):
     assert abs(np.log2(peak_hz(x, 0.02, 0.08) / hz)) * 1200 < 25  # cents
 
 
-@pytest.mark.parametrize("ptch, lo, hi", [(0, 172.1, 254.9), (64, 409.8, 606.8), (127, 959.8, 1421.3)])
+@pytest.mark.parametrize(
+    "ptch, lo, hi", [(0, 172.1, 254.9), (64, 409.8, 606.8), (127, 959.8, 1421.3)]
+)
 def test_cb_tones_tune_as_the_machinedrums(ptch, lo, hi):
     m = md_ref.EfmCb()
     k = words((ptch, 96, 0, 0, 0, 64, 64, 0))
@@ -394,7 +465,9 @@ def test_cb_tones_tune_as_the_machinedrums(ptch, lo, hi):
     spec[np.abs(f - a) < 30] = 0
     b = float(f[np.argmax(spec * (f > 20))])
     got = sorted((a, b))
-    assert abs(np.log2(got[0] / lo)) * 1200 < 25 and abs(np.log2(got[1] / hi)) * 1200 < 25, got
+    assert (
+        abs(np.log2(got[0] / lo)) * 1200 < 25 and abs(np.log2(got[1] / hi)) * 1200 < 25
+    ), got
 
 
 def hh_audio(knobs, blocks: int) -> np.ndarray:
@@ -414,15 +487,27 @@ def test_hh_tremolo_as_the_machinedrums():
     """TFRQ 64: 7.62 Hz; TREM 127 takes the level to silence once a cycle, TREM 64 6 dB down (the original's, measured)."""
     x = hh_audio((64, 127, 127, 64, 0, 64, 64, 0), 1500)
     w = 48
-    env = np.array([np.sqrt(np.mean(x[i * w : (i + 1) * w] ** 2)) for i in range(len(x) // w)])
+    env = np.array(
+        [np.sqrt(np.mean(x[i * w : (i + 1) * w] ** 2)) for i in range(len(x) // w)]
+    )
     spec = np.abs(np.fft.rfft((env - env.mean()) * np.hanning(len(env)), 1 << 15))
     f = np.fft.rfftfreq(1 << 15, w / 48000)
     assert abs(f[np.argmax(spec * (f > 0.5))] - 7.62) < 0.3
     assert 20 * np.log10(env.min() / env.max()) < -40
     half = hh_audio((64, 127, 64, 64, 0, 64, 64, 0), 500)
     flat = hh_audio((64, 127, 0, 64, 0, 64, 64, 0), 500)
-    e = np.array([np.sqrt(np.mean(half[i * w : (i + 1) * w] ** 2)) for i in range(len(half) // w)])
-    e0 = np.array([np.sqrt(np.mean(flat[i * w : (i + 1) * w] ** 2)) for i in range(len(flat) // w)])
+    e = np.array(
+        [
+            np.sqrt(np.mean(half[i * w : (i + 1) * w] ** 2))
+            for i in range(len(half) // w)
+        ]
+    )
+    e0 = np.array(
+        [
+            np.sqrt(np.mean(flat[i * w : (i + 1) * w] ** 2))
+            for i in range(len(flat) // w)
+        ]
+    )
     assert abs(20 * np.log10(np.min(e / e0)) + 6.0) < 1.0
 
 

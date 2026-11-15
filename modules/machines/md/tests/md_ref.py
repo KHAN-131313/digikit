@@ -65,7 +65,9 @@ def knob(table: str, word: int) -> np.float32:
     return t[k] + (t[k + 1] - t[k]) * fr
 
 
-def run_pair(p, ptch, ptch8, rdec, mdec, dec, step1, fbamt, modamt, cfb=None) -> np.ndarray:
+def run_pair(
+    p, ptch, ptch8, rdec, mdec, dec, step1, fbamt, modamt, cfb=None
+) -> np.ndarray:
     """md.s _md_efm_loop: one FM pair's block on p's state (ph1 ph2 m op1 op2 fbg); with cfb, _md_efm_loop_cfb (the carrier
     fed back too: p.m2)."""
     op1, op2, fbg = p.op1, p.op2, p.fbg
@@ -404,8 +406,17 @@ class EfmCb:
             step1 = f32(8) * step1
             modamt = f32(params[4]) * np.uint32(0x39000000).view(np.float32)
             cfb = f32(params[3]) * f32(24576)
-            return (ptch, ptch8, knob("_md_efm_rdec", params[3]), knob("_md_efm_mdec", params[6]),
-                    knob("_md_efm_dec", params[1]), step1, f32(0), modamt, cfb)
+            return (
+                ptch,
+                ptch8,
+                knob("_md_efm_rdec", params[3]),
+                knob("_md_efm_mdec", params[6]),
+                knob("_md_efm_dec", params[1]),
+                step1,
+                f32(0),
+                modamt,
+                cfb,
+            )
 
         lo = coefs(None)
         hi = coefs(np.uint32(0x3FBD8ADB).view(np.float32))
@@ -451,8 +462,18 @@ class EfmHh:
         step1 = f32(8) * step1
         modamt = f32(params[4]) * f32(2.0**-12)
         cfb = f32(params[7]) * f32(65536)
-        out = run_pair(self.p, ptch, ptch8, knob("_md_efm_rdec", params[3]), knob("_md_efm_mdec", params[6]),
-                       knob("_md_efm_dec", params[1]), step1, f32(0), modamt, cfb)
+        out = run_pair(
+            self.p,
+            ptch,
+            ptch8,
+            knob("_md_efm_rdec", params[3]),
+            knob("_md_efm_mdec", params[6]),
+            knob("_md_efm_dec", params[1]),
+            step1,
+            f32(0),
+            modamt,
+            cfb,
+        )
         inc = trunc(knob("_md_hh_trem", params[3]) * f32(32))
         self.phi = i32(self.phi + inc)
         c = sine(i32(self.phi + 0x40000000))
@@ -513,7 +534,9 @@ class EfmCy:
         idx = f32(params[4]) * h(0x4839D118)
         idx = idx + h(0x4DE42A1E)
         idx = idx * self.depth
-        idx = idx * f32(0.25)  # a quarter, shifted back after TRUNC: the phase moves wrap instead of overflowing
+        idx = (
+            idx * f32(0.25)
+        )  # a quarter, shifted back after TRUNC: the phase moves wrap instead of overflowing
         self.depth = self.depth * knob("_md_cy_mdec", params[6])
         fbk = f32(params[2]) * h(0x4599999A)  # a quarter as well
         prev = self.prev

@@ -10,8 +10,8 @@ typedef struct md_knob {
     uint32_t def;
 } md_knob;
 
-static void add(dk_module_ctx *ctx, uint32_t id, const char *name, const char *short_name, const char *title,
-                const md_knob *k)
+static void add(dk_module_ctx *ctx, uint32_t id, const char *name, const char *short_name,
+                const char *title, const md_knob *k)
 {
     dk_machine *m = dk_module_ctx_add_machine(ctx, id, name, short_name);
     dk_page *p = dk_machine_add_page(m, title, short_name);
@@ -20,12 +20,14 @@ static void add(dk_module_ctx *ctx, uint32_t id, const char *name, const char *s
 }
 
 static const md_knob efm_bd[8] = {
-    {"Pitch", "PTCH", 36},     {"Decay", "DEC", 76},      {"Ramp", "RAMP", 64},     {"Ramp Decay", "RDEC", 55},
-    {"Mod Amount", "MOD", 64}, {"Mod Freq", "MFRQ", 64}, {"Mod Decay", "MDEC", 32}, {"Mod Feedback", "MFB", 127},
+    {"Pitch", "PTCH", 36},      {"Decay", "DEC", 76},         {"Ramp", "RAMP", 64},
+    {"Ramp Decay", "RDEC", 55}, {"Mod Amount", "MOD", 64},    {"Mod Freq", "MFRQ", 64},
+    {"Mod Decay", "MDEC", 32},  {"Mod Feedback", "MFB", 127},
 };
 static const md_knob efm_xt[8] = {
-    {"Pitch", "PTCH", 64},     {"Decay", "DEC", 64},      {"Ramp", "RAMP", 38},     {"Ramp Decay", "RDEC", 87},
-    {"Mod Amount", "MOD", 48}, {"Mod Freq", "MFRQ", 84}, {"Mod Decay", "MDEC", 55}, {"Click", "CLIC", 127},
+    {"Pitch", "PTCH", 64},      {"Decay", "DEC", 64},      {"Ramp", "RAMP", 38},
+    {"Ramp Decay", "RDEC", 87}, {"Mod Amount", "MOD", 48}, {"Mod Freq", "MFRQ", 84},
+    {"Mod Decay", "MDEC", 55},  {"Click", "CLIC", 127},
 };
 
 static int32_t init(dk_module_ctx *ctx)
