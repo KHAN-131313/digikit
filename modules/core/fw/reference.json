@@ -1366,7 +1366,7 @@
       },
       "subsystem": "machine",
       "users": [
-        "core/machine-list"
+        "core/ui"
       ],
       "was": []
     },
@@ -1410,7 +1410,7 @@
       "sig": "const char *(i32 filter)",
       "subsystem": "machine",
       "users": [
-        "core/machine-list"
+        "core/ui"
       ],
       "was": []
     },
@@ -1460,7 +1460,7 @@
       "subsystem": "machine",
       "users": [
         "core/machines",
-        "core/machine-list"
+        "core/ui"
       ],
       "was": [
         "cf.machine.fn.list_entry",
@@ -1514,7 +1514,7 @@
       "subsystem": "machine",
       "users": [
         "core/machines",
-        "core/machine-list"
+        "core/ui"
       ],
       "was": [
         "cf.machine.fn.name.0",
@@ -2137,7 +2137,7 @@
       "subsystem": "machine",
       "users": [
         "core/machines",
-        "core/machine-list"
+        "core/ui"
       ],
       "was": []
     },
@@ -2338,7 +2338,7 @@
       "site": "cf.machine.site.sel.open_push",
       "subsystem": "machine",
       "users": [
-        "core/machine-list"
+        "core/ui"
       ],
       "was": []
     },
@@ -3670,7 +3670,7 @@
       },
       "subsystem": "machine",
       "users": [
-        "core/machine-list"
+        "core/ui"
       ],
       "was": []
     },
@@ -6929,7 +6929,7 @@
       "sig": "i32 (const u8 *settings, i32 track)",
       "subsystem": "page",
       "users": [
-        "core/machine-list"
+        "core/ui"
       ],
       "was": []
     },
@@ -9790,7 +9790,7 @@
       "sig": "void (u32 kit, i32 track, i32 filter, i32 a, i32 b)",
       "subsystem": "project",
       "users": [
-        "core/machine-list"
+        "core/ui"
       ],
       "was": []
     },
@@ -9834,7 +9834,7 @@
       "sig": "void (u32 kit, i32 track, i32 machine, i32 a, i32 b)",
       "subsystem": "project",
       "users": [
-        "core/machine-list"
+        "core/ui"
       ],
       "was": []
     },
@@ -9985,7 +9985,7 @@
       "sig": "i32 (u32 kit, i32 track)",
       "subsystem": "project",
       "users": [
-        "core/machine-list"
+        "core/ui"
       ],
       "was": []
     },
@@ -10029,7 +10029,7 @@
       "sig": "u8 (u32 kit, i32 track)",
       "subsystem": "project",
       "users": [
-        "core/machine-list"
+        "core/ui"
       ],
       "was": []
     },
@@ -14608,7 +14608,7 @@
       "sig": "u32 (u32 manager, const shared_ptr *sp, u32 replace)",
       "subsystem": "view",
       "users": [
-        "core/machine-list"
+        "core/ui"
       ],
       "was": []
     },

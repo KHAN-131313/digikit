@@ -71,7 +71,7 @@ cpu = "cf"
 rule.dt2 = { kind = "cf_func", hash = "7c680e4200eed1964a22109ee2d43932", offset = 0x0, len = 8 }
 rule.dn2 = { kind = "cf_func", hash = "69828342bcd67f7587f7d51d4c4a6575", offset = 0x0, len = 8 }
 mark = "D"
-users = ["core/machines", "core/machine-list"]
+users = ["core/machines", "core/ui"]
 doc = "Entry of the machine list builder; the same function holds the list table pointer, the alloc size and the operand sites."
 
 [[fn]]
@@ -82,7 +82,7 @@ rule.dt2 = { kind = "cf_func", hash = "5fd4ff30eda1da21d9c57e4c68b890fe", offset
 rule.dn2 = { kind = "cf_func", hash = "feed4ccea8848444496f10f25c10b1bc", offset = 0x0, len = 24 }
 sig = "const char *(i32 machine)"
 mark = "D"
-users = ["core/machines", "core/machine-list"]
+users = ["core/machines", "core/ui"]
 doc = "Long-name accessor of the machine name table: core/machines raises its bound (moveq at +1) and repoints the table pointer literal at +0x12 to the copied table."
 
 [[fn]]
@@ -598,7 +598,7 @@ mode = "before"
 regs = { in = [], clobbers = ["ccr"] }
 devices = ["dt2", "dn2"]
 mark = "D"
-users = ["core/machines", "core/machine-list"]
+users = ["core/machines", "core/ui"]
 doc = "Entry of the machine list builder; the hook builds the registry tables before the builder reads its list buffer."
 
 [[hook]]
@@ -821,7 +821,7 @@ cpu = "cf"
 rule.dt2 = { kind = "cf_func", hash = "3057ffb253716aad1da9975c2e77710e", offset = 0x131c, len = 6 }
 rule.dn2 = { kind = "cf_func", hash = "71c32ba1a7bf0da12a16a0f159d02dba", offset = 0x151e, len = 6 }
 mark = "D"
-users = ["core/machine-list"]
+users = ["core/ui"]
 doc = "The `jsr push(manager, shared_ptr *, 1)` (absolute, 6 bytes) with which the main view's key handler shows the Machine Selection view on FUNC + SRC (DT2) or FUNC + SYN (DN2) (finding 132)."
 
 [[hook]]
@@ -833,7 +833,7 @@ regs = { in = [], clobbers = ["d0", "d1", "a0", "a1", "ccr"] }
 handler = { sig = "u32 (u32 manager, const shared_ptr *sp, u32 replace)", args = ["sp+4", "sp+8", "sp+12"] }
 devices = ["dt2", "dn2"]
 mark = "D"
-users = ["core/machine-list"]
+users = ["core/ui"]
 doc = "The push of the Machine Selection view: the target becomes a function that shows digikit's machine list (or calls the stock push)."
 
 [[fn]]
@@ -842,7 +842,7 @@ cpu = "cf"
 rule.dt2 = { kind = "cf_func", hash = "1b8cb066c2caefda57e7836d91311ecc", offset = 0x0, len = 6 }
 rule.dn2 = { kind = "cf_func", hash = "d47df48273bdbbdbde217c6e06a9510d", offset = 0x0, len = 6 }
 mark = "D"
-users = ["core/machine-list"]
+users = ["core/ui"]
 doc = "The filter type list getter of the Machine Selection view's second page: returns a std::vector<int> through a pointer in a0, no stack arguments (as cf.machine.fn.list.entry does for the machines). Finding 130."
 
 [[fn]]
@@ -851,6 +851,6 @@ cpu = "cf"
 sig = "const char *(i32 filter)"
 rule = { kind = "cf_func", hash = "8c0853eaa8e31ce570f9842483069682", offset = 0x0, len = 6 }
 mark = "D"
-users = ["core/machine-list"]
+users = ["core/ui"]
 doc = "The name of a filter type (`Multi-Mode`, `Lowpass 4`, ...), as the Machine Selection view's second page prints it."
 

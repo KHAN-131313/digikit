@@ -1,9 +1,10 @@
 /* core/machine-list: the machine list that digikit owns, in place of the firmware's Machine Selection view.
  * Plan: docs/plans/machine-list.md. Facts: docs/findings/131 and 132.
  *
- * ml_push takes the place of the stock push at the one call site that shows the stock view on FUNC + SRC (Digitakt II) or
- * FUNC + SYN (Digitone II): same arguments (the view manager, the shared_ptr of the stock view, replace), same result. It opens
- * the list and leaves the stock view unpushed; when the list cannot be made it calls the stock push, so the stock view opens.
+ * An app (docs/ARCHITECTURE.md): core/ui owns the firmware side. Where the firmware shows its Machine Selection view (FUNC + SRC on
+ * the Digitakt II, FUNC + SYN on the Digitone II) core/ui calls dk_app_machine_list_open, which opens this list and returns 1;
+ * when the list cannot be made it returns 0 and core/ui shows the stock view. The firmware's lists, names, the track's machine
+ * and filter and their setters come from core/ui (dk_ui_core.h).
  *
  * The list is a plain core/ui menu, filled at every open from the firmware's machine list (its order; core/dynreg leaves out
  * unfilled run-time types): one row per machine, the track's machine marked and under the cursor. YES on a row sets that
@@ -27,24 +28,11 @@
 #include <stddef.h>
 #include <dk/platform/ui.h>
 #include <dk_ui_core.h>
-#include <dk_fw_machine.h>
-#include <dk_fw_mem.h>
-#include <dk_fw_page.h>
-#include <dk_fw_project.h>
-#include <dk_fw_view.h>
 #include "dkrt.h"
 
 #define ML_MAX 40
 #define ML_FOLDERS 8
 #define ML_FNAME 16 /* a folder name with its NUL (dk_module_ctx_folder: 15 characters) */
-
-/* std::vector<int> as the getter returns it. */
-typedef struct vec {
-    int32_t *begin, *end, *cap;
-} vec;
-
-void ml_get_list(vec *out);    /* shim.s */
-void ml_get_filters(vec *out); /* shim.s */
 
 /* The rows of the list as it was last filled: the machine type of each row, their number, the track they are for and the
    track's machine (-1: none). ML_OPENS counts the opens, ML_LAST is the last type a row committed (-1: none). */
@@ -77,13 +65,6 @@ static dk_ui_menu *g_filter;
 static dk_ui_menu *g_sub[ML_FOLDERS];
 static dk_ui_menu_desc g_sub_desc[ML_FOLDERS];
 static void fill_sub(dk_ui_menu *m, void *arg);
-
-static uint32_t kit_and_track(int32_t *track)
-{
-    uint32_t project = dk_fw_project_singleton();
-    *track = (int32_t)dk_fw_page_view_track((const uint8_t *)dk_fw_project_settings(project));
-    return dk_fw_project_active_kit(project);
-}
 
 static int32_t same(const char *a, const char *b)
 {
@@ -127,21 +108,18 @@ static int32_t folder_of(int32_t type)
 /* Reads the machine list and the track's machine into the ML_ globals. */
 static void scan(void)
 {
-    vec v;
-    v.begin = v.end = v.cap = 0;
-    ml_get_list(&v);
-    uint32_t kit = kit_and_track(&ML_TRACK);
-    ML_CUR = dk_fw_project_track_type(kit, ML_TRACK);
+    int32_t t[ML_MAX];
+    uint32_t n = dk_ui_machine_types(t, ML_MAX);
+    ML_TRACK = dk_ui_track();
+    ML_CUR = dk_ui_track_machine();
     ML_N = 0;
-    for (int32_t *p = v.begin; p && p < v.end && ML_N < ML_MAX; p++) {
-        const char *name = *p < 0 ? 0 : dk_fw_machine_name_long(*p);
+    for (uint32_t i = 0; i < n; i++) {
+        const char *name = dk_ui_machine_name(t[i]);
         if (name && name[0]) {
-            ML_TF[ML_N] = folder_of(*p);
-            ML_TYPE[ML_N++] = *p;
+            ML_TF[ML_N] = folder_of(t[i]);
+            ML_TYPE[ML_N++] = t[i];
         }
     }
-    if (v.begin)
-        dk_fw_mem_free((uint8_t *)v.begin);
 }
 
 static int32_t row_of(int32_t type)
@@ -155,20 +133,15 @@ static int32_t row_of(int32_t type)
 /* Reads the filter type list and the track's filter type into the ML_F globals. */
 static void scan_filters(void)
 {
-    vec v;
-    v.begin = v.end = v.cap = 0;
-    ml_get_filters(&v);
-    int32_t track;
-    uint32_t kit = kit_and_track(&track);
-    ML_FCUR = dk_fw_project_track_filter(kit, track);
+    int32_t t[ML_MAX];
+    uint32_t n = dk_ui_filter_types(t, ML_MAX);
+    ML_FCUR = dk_ui_track_filter();
     ML_FN = 0;
-    for (int32_t *p = v.begin; p && p < v.end && ML_FN < ML_MAX; p++) {
-        const char *name = *p < 0 ? 0 : dk_fw_machine_filter_name(*p);
+    for (uint32_t i = 0; i < n; i++) {
+        const char *name = dk_ui_filter_name(t[i]);
         if (name && name[0])
-            ML_FTYPE[ML_FN++] = *p;
+            ML_FTYPE[ML_FN++] = t[i];
     }
-    if (v.begin)
-        dk_fw_mem_free((uint8_t *)v.begin);
 }
 
 static int32_t filter_row_of(int32_t filter)
@@ -189,11 +162,9 @@ static void pick_filter(void *arg, int32_t row)
         dk_ui_menu_close(g_filter);
         return;
     }
-    int32_t track;
-    uint32_t kit = kit_and_track(&track);
-    dk_fw_project_set_track_filter(kit, track, filter, 1, 1);
+    dk_ui_set_track_filter(filter);
     ML_FLAST = filter;
-    ML_FCUR = dk_fw_project_track_filter(kit, track);
+    ML_FCUR = dk_ui_track_filter();
     for (uint32_t i = 0; i < ML_FN; i++)
         dk_ui_menu_check(g_filter, (int32_t)i, ML_FTYPE[i] == ML_FCUR);
 }
@@ -234,11 +205,9 @@ static void pick(void *arg, int32_t row)
         dk_ui_menu_close(g_menu);
         return;
     }
-    int32_t track;
-    uint32_t kit = kit_and_track(&track);
-    dk_fw_project_set_track_type(kit, track, type, 1, 1);
+    dk_ui_set_track_machine(type);
     ML_LAST = type;
-    ML_CUR = dk_fw_project_track_type(kit, track);
+    ML_CUR = dk_ui_track_machine();
     marks();
 }
 
@@ -255,9 +224,7 @@ static void fill_filters(dk_ui_menu *m, void *arg)
 {
     (void)arg;
     char text[DK_UI_ROW];
-    int32_t track;
-    uint32_t kit = kit_and_track(&track);
-    if (dk_fw_project_track_is_midi(kit, track)) { /* the stock view's words */
+    if (dk_ui_track_is_midi()) { /* the stock view's words */
         ML_FN = 0;
         dk_ui_menu_add_text(m, "NO FILTERS ON");
         dk_ui_menu_add_text(m, "MIDI TRACKS.");
@@ -265,7 +232,7 @@ static void fill_filters(dk_ui_menu *m, void *arg)
     }
     scan_filters();
     for (uint32_t i = 0; i < ML_FN; i++) {
-        label(text, dk_fw_machine_filter_name(ML_FTYPE[i]));
+        label(text, dk_ui_filter_name(ML_FTYPE[i]));
         dk_ui_menu_add_action(m, text, pick_filter, NULL, (int32_t)i);
         if (ML_FTYPE[i] == ML_FCUR)
             dk_ui_menu_check(m, (int32_t)i, 1);
@@ -299,7 +266,7 @@ static void fill(dk_ui_menu *m, void *arg)
     for (uint32_t r = 0; r < ML_NROW; r++) {
         int32_t v = ML_ROW[r];
         if (v >= 0) {
-            label(text, dk_fw_machine_name_long(ML_TYPE[v]));
+            label(text, dk_ui_machine_name(ML_TYPE[v]));
             dk_ui_menu_add_action(m, text, pick, NULL, v);
         } else
             dk_ui_menu_add_folder(m, ML_FOLDER[-1 - v], g_sub[-1 - v]);
@@ -317,7 +284,7 @@ static void fill_sub(dk_ui_menu *m, void *arg)
     for (uint32_t i = 0; i < ML_N; i++) {
         if (ML_TF[i] != f)
             continue;
-        label(text, dk_fw_machine_name_long(ML_TYPE[i]));
+        label(text, dk_ui_machine_name(ML_TYPE[i]));
         dk_ui_menu_add_action(m, text, pick, NULL, (int32_t)i);
         if (ML_TYPE[i] == ML_CUR)
             dk_ui_menu_check(m, k, 1);
@@ -400,7 +367,7 @@ static const char *machines_label(void)
     return st.device == 1 ? "SRC" : "SYN";
 }
 
-uint32_t ml_push(uint32_t manager, const shared_ptr *view, uint32_t replace)
+int32_t dk_app_machine_list_open(void)
 {
     ML_OPENS++;
     if (!g_menu) {
@@ -415,14 +382,10 @@ uint32_t ml_push(uint32_t manager, const shared_ptr *view, uint32_t replace)
             g_filter = 0; /* no tabs: the machines alone */
     }
     if (!g_menu)
-        return dk_fw_view_push_shared(manager, view, replace);
-    /* the stock view opens on its filter page when the track shows its filter page (page 2) */
-    int32_t track;
-    uint32_t project = dk_fw_project_singleton();
-    const uint8_t *settings = (const uint8_t *)dk_fw_project_settings(project);
-    track = (int32_t)dk_fw_page_view_track(settings);
+        return 0; /* core/ui shows the stock view */
+    /* the stock view opens on its filter page when the track shows its filter page */
     ML_IN = -1;
-    if (g_filter && dk_fw_page_track_page(settings, track) == 2)
+    if (g_filter && dk_ui_track_on_filter_page())
         show(1);
     else {
         if (g_filter)

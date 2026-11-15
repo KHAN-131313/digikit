@@ -24,4 +24,29 @@ void dk_ui_menu_add_folder(dk_ui_menu *m, const char *text, dk_ui_menu *sub);
    app's rows with dk_ui_stock_row. An optional link: core/ui resolves it at patch time and does nothing when no module provides it. */
 void dk_app_settings_rows(uint8_t *stock_menu);
 
+/* The machine list's firmware side (core/machine-list; docs/findings/131 and 132). The track is the selected one; a type is a
+   machine type number, a filter a filter type number.
+   dk_ui_machine_types: the firmware's machine list (its order; core/dynreg leaves out unfilled run-time types), at most `max`
+   types into `out`; returns how many. dk_ui_filter_types: the same for the filter types (the stock view's second page). */
+uint32_t dk_ui_machine_types(int32_t *out, uint32_t max);
+uint32_t dk_ui_filter_types(int32_t *out, uint32_t max);
+/* The long name of a machine type and the name of a filter type (0 when none). */
+const char *dk_ui_machine_name(int32_t type);
+const char *dk_ui_filter_name(int32_t filter);
+/* The selected track, its machine type and filter type, and the setters the stock view's YES uses. */
+int32_t dk_ui_track(void);
+int32_t dk_ui_track_machine(void);
+int32_t dk_ui_track_filter(void);
+void dk_ui_set_track_machine(int32_t type);
+void dk_ui_set_track_filter(int32_t filter);
+/* 1 when the selected track is a MIDI track (it has no filter). */
+int32_t dk_ui_track_is_midi(void);
+/* 1 when the selected track shows its filter page (the stock view opens on its filter page then). */
+int32_t dk_ui_track_on_filter_page(void);
+
+/* Implemented by an app (core/machine-list) and called by core/ui where the firmware shows its Machine Selection view (FUNC + SRC
+   on the Digitakt II, FUNC + SYN on the Digitone II): return 1 when the app showed its own list, 0 to show the stock view. An
+   optional link, as dk_app_settings_rows: without it the stock view opens. */
+int32_t dk_app_machine_list_open(void);
+
 #endif

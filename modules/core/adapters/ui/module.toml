@@ -23,7 +23,7 @@ ports = ["dt2-1.17", "dn2-1.12"]
 path = "build/ui.dko.json"
 sources = ["src/ui.c", "src/shim.s"]
 place = "cf.expansion"
-optional = ["dk_app_settings_rows"]
+optional = ["dk_app_settings_rows", "dk_app_machine_list_open"]
 
 [object.externs]
 _dk_tail = "hook.cf.menu.site.settings_list.tail.tail"
@@ -36,3 +36,13 @@ to = "dk_hook"
 
 [[claim]]
 resource = "cf.menu.site.settings_list.tail"
+
+# The one call that shows the stock Machine Selection view on FUNC + SRC / FUNC + SYN (finding 132): its target becomes ui_sel_push,
+# which asks the app (core/machine-list, dk_app_machine_list_open) first and else calls the stock push with the same arguments.
+[[op]]
+op = "hook"
+hook = "cf.machine.hook.sel.open_push"
+to = "ui_sel_push"
+
+[[claim]]
+resource = "cf.machine.site.sel.open_push"

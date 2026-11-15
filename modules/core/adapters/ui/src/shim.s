@@ -27,3 +27,33 @@ dk_hook:
     jsr     (%a0)
     addq.l  #4,%sp
 1:  jmp     _dk_tail
+
+| ui_machine_list(out) / ui_filter_list(out): the firmware's machine list and filter type list getters return a std::vector<int>
+|   through a pointer in a0 and take no stack arguments (finding 132); this adapts the cdecl call from C. `out` is three words:
+|   begin, end, capacity end; the caller frees `begin` with the firmware's delete. core/dynreg's filter runs inside the machine
+|   list getter, so it holds the stock types and the run-time types that have a name, in the firmware's order.
+    .globl ui_machine_list
+ui_machine_list:
+    move.l  4(%sp),%a0
+    jmp     cf.machine.fn.list.entry
+
+    .globl ui_filter_list
+ui_filter_list:
+    move.l  4(%sp),%a0
+    jmp     cf.machine.fn.filter.list
+
+| ui_sel_push(manager, shared_ptr *view, replace): the target of the one call that shows the stock Machine Selection view on
+|   FUNC + SRC / FUNC + SYN (cf.machine.hook.sel.open_push, retarget; finding 132), with the stock push's arguments and result.
+|   It calls the app's optional dk_app_machine_list_open (0 when no app is in the image): 1 means the app showed its own list
+|   and the stock view stays unpushed; otherwise the stock push runs with the same stack arguments (a tail jump).
+    .globl ui_sel_push
+ui_sel_push:
+    move.l  #dk_app_machine_list_open,%d0
+    jeq     1f
+    move.l  %d0,%a0
+    jsr     (%a0)
+    tst.l   %d0
+    jeq     1f
+    moveq   #1,%d0
+    rts
+1:  jmp     cf.view.fn.push_shared

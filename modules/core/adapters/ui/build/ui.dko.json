@@ -25,6 +25,34 @@
   },
   {
    "addend": 0,
+   "offset": 50,
+   "section": ".text",
+   "symbol": "cf.machine.fn.list.entry",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 60,
+   "section": ".text",
+   "symbol": "cf.machine.fn.filter.list",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 66,
+   "section": ".text",
+   "symbol": "dk_app_machine_list_open",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 86,
+   "section": ".text",
+   "symbol": "cf.view.fn.push_shared",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
    "offset": 30,
    "section": ".text.fn_manager",
    "symbol": ".sec..rodata.typeinfo_dummy",
@@ -249,6 +277,13 @@
   },
   {
    "addend": 0,
+   "offset": 60,
+   "section": ".text.ui_take",
+   "symbol": "cf.mem.fn.free",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
    "offset": 86,
    "section": ".text.inv_draw",
    "symbol": ".sec..rodata.inv_draw.str1.1",
@@ -294,6 +329,20 @@
    "offset": 274,
    "section": ".text.inv_draw",
    "symbol": "cf.draw.fn.fill_rect",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 2,
+   "section": ".text.ui_kit",
+   "symbol": "cf.project.fn.singleton",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 10,
+   "section": ".text.ui_kit",
+   "symbol": "cf.project.fn.active_kit",
    "type": "cf.32"
   },
   {
@@ -1331,15 +1380,211 @@
    "section": ".text.dk_ui_menu_checked",
    "symbol": ".sec..text.ui_checked",
    "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 26,
+   "section": ".text.dk_ui_machine_types",
+   "symbol": "ui_machine_list",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 42,
+   "section": ".text.dk_ui_machine_types",
+   "symbol": ".sec..text.ui_take",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 26,
+   "section": ".text.dk_ui_filter_types",
+   "symbol": "ui_filter_list",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 42,
+   "section": ".text.dk_ui_filter_types",
+   "symbol": ".sec..text.ui_take",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 8,
+   "section": ".text.dk_ui_machine_name",
+   "symbol": "cf.machine.fn.name.long",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 8,
+   "section": ".text.dk_ui_filter_name",
+   "symbol": "cf.machine.fn.filter.name",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 2,
+   "section": ".text.dk_ui_track",
+   "symbol": "cf.project.fn.singleton",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 10,
+   "section": ".text.dk_ui_track",
+   "symbol": "cf.project.fn.settings",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 18,
+   "section": ".text.dk_ui_track",
+   "symbol": "cf.page.fn.view_track",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 4,
+   "section": ".text.dk_ui_track_machine",
+   "symbol": ".sec..text.dk_ui_track",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 12,
+   "section": ".text.dk_ui_track_machine",
+   "symbol": ".sec..text.ui_kit",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 22,
+   "section": ".text.dk_ui_track_machine",
+   "symbol": "cf.project.fn.track_type",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 4,
+   "section": ".text.dk_ui_track_filter",
+   "symbol": ".sec..text.dk_ui_track",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 12,
+   "section": ".text.dk_ui_track_filter",
+   "symbol": ".sec..text.ui_kit",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 22,
+   "section": ".text.dk_ui_track_filter",
+   "symbol": "cf.project.fn.track_filter",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 4,
+   "section": ".text.dk_ui_set_track_machine",
+   "symbol": ".sec..text.dk_ui_track",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 12,
+   "section": ".text.dk_ui_set_track_machine",
+   "symbol": ".sec..text.ui_kit",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 36,
+   "section": ".text.dk_ui_set_track_machine",
+   "symbol": "cf.project.fn.set_track_type",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 4,
+   "section": ".text.dk_ui_set_track_filter",
+   "symbol": ".sec..text.dk_ui_track",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 12,
+   "section": ".text.dk_ui_set_track_filter",
+   "symbol": ".sec..text.ui_kit",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 36,
+   "section": ".text.dk_ui_set_track_filter",
+   "symbol": "cf.project.fn.set_track_filter",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 4,
+   "section": ".text.dk_ui_track_is_midi",
+   "symbol": ".sec..text.dk_ui_track",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 12,
+   "section": ".text.dk_ui_track_is_midi",
+   "symbol": ".sec..text.ui_kit",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 22,
+   "section": ".text.dk_ui_track_is_midi",
+   "symbol": "cf.project.fn.track_is_midi",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 4,
+   "section": ".text.dk_ui_track_on_filter_page",
+   "symbol": ".sec..text.dk_ui_track",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 12,
+   "section": ".text.dk_ui_track_on_filter_page",
+   "symbol": "cf.project.fn.singleton",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 20,
+   "section": ".text.dk_ui_track_on_filter_page",
+   "symbol": "cf.project.fn.settings",
+   "type": "cf.32"
+  },
+  {
+   "addend": 0,
+   "offset": 32,
+   "section": ".text.dk_ui_track_on_filter_page",
+   "symbol": "cf.page.fn.track_page",
+   "type": "cf.32"
   }
  ],
  "sections": [
   {
    "align": 4,
-   "hex": "206f00042f2f000c2f2f000c4eb900000000508f4e75203c00000000670820402f0a4e90588f4ef900000000",
+   "hex": "206f00042f2f000c2f2f000c4eb900000000508f4e75203c00000000670820402f0a4e90588f4ef900000000206f00044ef900000000206f00044ef900000000203c00000000670c20404e904a80670470014e754ef900000000",
    "kind": "text",
    "name": ".text",
-   "size": 44
+   "size": 90
   },
   {
    "align": 2,
@@ -1454,6 +1699,13 @@
    "size": 298
   },
   {
+   "align": 2,
+   "hex": "598f2f0a226f000c4280221120414a88660a4a81661e245f588f4e75b1e9000464f0b0af001467ea246f001025980c00528060da2f012f4000084eb900000000588f202f000460ce",
+   "kind": "text",
+   "name": ".text.ui_take",
+   "size": 72
+  },
+  {
    "align": 1,
    "hex": "4f4e004f4646002530336400",
    "kind": "data",
@@ -1466,6 +1718,13 @@
    "kind": "text",
    "name": ".text.inv_draw",
    "size": 342
+  },
+  {
+   "align": 2,
+   "hex": "4eb9000000002f004eb900000000588f4e75",
+   "kind": "text",
+   "name": ".text.ui_kit",
+   "size": 18
   },
   {
    "align": 2,
@@ -1714,6 +1973,83 @@
   },
   {
    "align": 2,
+   "hex": "4feffff42f0e4def000442af000442af000842af000c2f0e4eb9000000002f2f001c2f2f001c2f0e4eb9000000004fef00102c5f4fef000c4e75",
+   "kind": "text",
+   "name": ".text.dk_ui_machine_types",
+   "size": 58
+  },
+  {
+   "align": 2,
+   "hex": "4feffff42f0e4def000442af000442af000842af000c2f0e4eb9000000002f2f001c2f2f001c2f0e4eb9000000004fef00102c5f4fef000c4e75",
+   "kind": "text",
+   "name": ".text.dk_ui_filter_types",
+   "size": 58
+  },
+  {
+   "align": 2,
+   "hex": "4aaf00046d064ef90000000042804e75",
+   "kind": "text",
+   "name": ".text.dk_ui_machine_name",
+   "size": 16
+  },
+  {
+   "align": 2,
+   "hex": "4aaf00046d064ef90000000042804e75",
+   "kind": "text",
+   "name": ".text.dk_ui_filter_name",
+   "size": 16
+  },
+  {
+   "align": 2,
+   "hex": "4eb9000000002f004eb9000000002f004eb900000000508f4e75",
+   "kind": "text",
+   "name": ".text.dk_ui_track",
+   "size": 26
+  },
+  {
+   "align": 2,
+   "hex": "598f4eb9000000002e804eb9000000002f172f004eb9000000004fef000c4e75",
+   "kind": "text",
+   "name": ".text.dk_ui_track_machine",
+   "size": 32
+  },
+  {
+   "align": 2,
+   "hex": "598f4eb9000000002e804eb9000000002f172f004eb9000000004fef000c4e75",
+   "kind": "text",
+   "name": ".text.dk_ui_track_filter",
+   "size": 32
+  },
+  {
+   "align": 2,
+   "hex": "598f4eb9000000002e804eb90000000048780001487800012f2f00102f2f000c2f004eb9000000004fef00184e75",
+   "kind": "text",
+   "name": ".text.dk_ui_set_track_machine",
+   "size": 46
+  },
+  {
+   "align": 2,
+   "hex": "598f4eb9000000002e804eb90000000048780001487800012f2f00102f2f000c2f004eb9000000004fef00184e75",
+   "kind": "text",
+   "name": ".text.dk_ui_set_track_filter",
+   "size": 46
+  },
+  {
+   "align": 2,
+   "hex": "598f4eb9000000002e804eb9000000002f172f004eb9000000004a0056c0710044804fef000c4e75",
+   "kind": "text",
+   "name": ".text.dk_ui_track_is_midi",
+   "size": 40
+  },
+  {
+   "align": 2,
+   "hex": "598f4eb9000000002e804eb9000000002f004eb9000000002f2f00042f004eb9000000007202b28057c0710044804fef00104e75",
+   "kind": "text",
+   "name": ".text.dk_ui_track_on_filter_page",
+   "size": 52
+  },
+  {
+   "align": 2,
    "hex": "",
    "kind": "bss",
    "name": ".bss.ui_token",
@@ -1825,7 +2161,7 @@
    "size": 4
   }
  ],
- "source_sha256": "436272db0579674f128af230705537daf4e26e1cc3a72657bf3c99c2a1585772",
+ "source_sha256": "1dce45a1038c65653f71bf304980039ddc6ca9b1056edbfecc284cbb05c6983a",
  "symbols": [
   {
    "global": false,
@@ -1961,6 +2297,12 @@
   },
   {
    "global": false,
+   "name": ".sec..text.dk_ui_track",
+   "section": ".text.dk_ui_track",
+   "value": 0
+  },
+  {
+   "global": false,
    "name": ".sec..text.fn_manager",
    "section": ".text.fn_manager",
    "value": 0
@@ -2087,6 +2429,12 @@
   },
   {
    "global": false,
+   "name": ".sec..text.ui_kit",
+   "section": ".text.ui_kit",
+   "value": 0
+  },
+  {
+   "global": false,
    "name": ".sec..text.ui_open",
    "section": ".text.ui_open",
    "value": 0
@@ -2101,6 +2449,12 @@
    "global": false,
    "name": ".sec..text.ui_submenu",
    "section": ".text.ui_submenu",
+   "value": 0
+  },
+  {
+   "global": false,
+   "name": ".sec..text.ui_take",
+   "section": ".text.ui_take",
    "value": 0
   },
   {
@@ -2130,6 +2484,30 @@
   {
    "global": true,
    "name": "cf.draw.fn.fill_rect",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.machine.fn.filter.list",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.machine.fn.filter.name",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.machine.fn.list.entry",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.machine.fn.name.long",
    "section": null,
    "value": 0
   },
@@ -2219,6 +2597,66 @@
   },
   {
    "global": true,
+   "name": "cf.page.fn.track_page",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.page.fn.view_track",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.project.fn.active_kit",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.project.fn.set_track_filter",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.project.fn.set_track_type",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.project.fn.settings",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.project.fn.singleton",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.project.fn.track_filter",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.project.fn.track_is_midi",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "cf.project.fn.track_type",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
    "name": "cf.string.fn.shared_ptr.make",
    "section": null,
    "value": 0
@@ -2273,6 +2711,12 @@
   },
   {
    "global": true,
+   "name": "cf.view.fn.push_shared",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
    "name": "cf.view.fn.view_controller_push",
    "section": null,
    "value": 0
@@ -2321,6 +2765,12 @@
   },
   {
    "global": true,
+   "name": "dk_app_machine_list_open",
+   "section": null,
+   "value": 0
+  },
+  {
+   "global": true,
    "name": "dk_app_settings_rows",
    "section": null,
    "value": 0
@@ -2353,6 +2803,30 @@
    "global": true,
    "name": "dk_ui_core_handle",
    "section": ".text.dk_ui_core_handle",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_filter_name",
+   "section": ".text.dk_ui_filter_name",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_filter_types",
+   "section": ".text.dk_ui_filter_types",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_machine_name",
+   "section": ".text.dk_ui_machine_name",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_machine_types",
+   "section": ".text.dk_ui_machine_types",
    "value": 0
   },
   {
@@ -2453,6 +2927,18 @@
   },
   {
    "global": true,
+   "name": "dk_ui_set_track_filter",
+   "section": ".text.dk_ui_set_track_filter",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_set_track_machine",
+   "section": ".text.dk_ui_set_track_machine",
+   "value": 0
+  },
+  {
+   "global": true,
    "name": "dk_ui_stock_row",
    "section": ".text.dk_ui_stock_row",
    "value": 0
@@ -2467,6 +2953,36 @@
    "global": true,
    "name": "dk_ui_toast",
    "section": ".text.dk_ui_toast",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_track",
+   "section": ".text.dk_ui_track",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_track_filter",
+   "section": ".text.dk_ui_track_filter",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_track_is_midi",
+   "section": ".text.dk_ui_track_is_midi",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_track_machine",
+   "section": ".text.dk_ui_track_machine",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "dk_ui_track_on_filter_page",
+   "section": ".text.dk_ui_track_on_filter_page",
    "value": 0
   },
   {
@@ -2698,10 +3214,28 @@
    "value": 0
   },
   {
+   "global": true,
+   "name": "ui_filter_list",
+   "section": ".text",
+   "value": 54
+  },
+  {
    "global": false,
    "name": "ui_is_open",
    "section": ".text.ui_is_open",
    "value": 0
+  },
+  {
+   "global": false,
+   "name": "ui_kit",
+   "section": ".text.ui_kit",
+   "value": 0
+  },
+  {
+   "global": true,
+   "name": "ui_machine_list",
+   "section": ".text",
+   "value": 44
   },
   {
    "global": false,
@@ -2716,9 +3250,21 @@
    "value": 0
   },
   {
+   "global": true,
+   "name": "ui_sel_push",
+   "section": ".text",
+   "value": 64
+  },
+  {
    "global": false,
    "name": "ui_submenu",
    "section": ".text.ui_submenu",
+   "value": 0
+  },
+  {
+   "global": false,
+   "name": "ui_take",
+   "section": ".text.ui_take",
    "value": 0
   },
   {
@@ -2738,8 +3284,8 @@
   "as": "GNU assembler (GNU Binutils) 2.47.20260726",
   "cflags": "-mcpu=54418 -std=c11 -Os -ffreestanding -fno-builtin -nostdlib -fno-pic -fno-pie -ffunction-sections -fdata-sections -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-stack-protector -Wall -Wextra -Werror",
   "gcc": "m68k-elf-gcc (GCC) 16.2.0",
-  "instructions_redecoded": "2171",
-  "isa_check": "1907d632a5cf59f5d28732a84ba84104a361a3fca16fab4b64fb4c730962086f",
+  "instructions_redecoded": "2336",
+  "isa_check": "dc09cd6d91f3e31aebb7b306f1d15b0af5a9974bd9133bf19424fbd3ec5e4908",
   "ld": "GNU ld (GNU Binutils) 2.47.20260726"
  }
 }

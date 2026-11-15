@@ -34,6 +34,9 @@
 #include "dk_fw_window.h"
 #include "dk_fw_text.h"
 #include "dk_fw_draw.h"
+#include "dk_fw_machine.h"
+#include "dk_fw_page.h"
+#include "dk_fw_project.h"
 
 /* The control-block vtables of the two make_shared window types (data anchors; the address is the vtable). */
 extern const uint8_t fw_confirm_cb_vt __asm__("cf.window.site.confirm_cb_vptr_lit");
@@ -1153,4 +1156,93 @@ void dk_ui_menu_check(dk_ui_menu *list, int32_t row, int32_t on)
 int32_t dk_ui_menu_checked(const dk_ui_menu *list, int32_t row)
 {
     return ui_checked(list, (int)row);
+}
+
+/* ---- the machine list's firmware side (dk_ui_core.h; core/machine-list) ---------------------------------------------------- */
+
+/* std::vector<int> as the firmware's list getters return it. */
+typedef struct ui_vec {
+    int32_t *begin, *end, *cap;
+} ui_vec;
+
+void ui_machine_list(ui_vec *out); /* shim.s */
+void ui_filter_list(ui_vec *out);  /* shim.s */
+
+static uint32_t ui_take(ui_vec *v, int32_t *out, uint32_t max)
+{
+    uint32_t n = 0;
+    for (int32_t *p = v->begin; p && p < v->end && n < max; p++)
+        out[n++] = *p;
+    if (v->begin)
+        dk_fw_mem_free((uint8_t *)v->begin);
+    return n;
+}
+
+uint32_t dk_ui_machine_types(int32_t *out, uint32_t max)
+{
+    ui_vec v = {0, 0, 0};
+    ui_machine_list(&v);
+    return ui_take(&v, out, max);
+}
+
+uint32_t dk_ui_filter_types(int32_t *out, uint32_t max)
+{
+    ui_vec v = {0, 0, 0};
+    ui_filter_list(&v);
+    return ui_take(&v, out, max);
+}
+
+const char *dk_ui_machine_name(int32_t type)
+{
+    return type < 0 ? 0 : dk_fw_machine_name_long(type);
+}
+
+const char *dk_ui_filter_name(int32_t filter)
+{
+    return filter < 0 ? 0 : dk_fw_machine_filter_name(filter);
+}
+
+static const uint8_t *ui_settings(void)
+{
+    return (const uint8_t *)dk_fw_project_settings(dk_fw_project_singleton());
+}
+
+static uint32_t ui_kit(void)
+{
+    return dk_fw_project_active_kit(dk_fw_project_singleton());
+}
+
+int32_t dk_ui_track(void)
+{
+    return (int32_t)dk_fw_page_view_track(ui_settings());
+}
+
+int32_t dk_ui_track_machine(void)
+{
+    return dk_fw_project_track_type(ui_kit(), dk_ui_track());
+}
+
+int32_t dk_ui_track_filter(void)
+{
+    return dk_fw_project_track_filter(ui_kit(), dk_ui_track());
+}
+
+void dk_ui_set_track_machine(int32_t type)
+{
+    dk_fw_project_set_track_type(ui_kit(), dk_ui_track(), type, 1, 1);
+}
+
+void dk_ui_set_track_filter(int32_t filter)
+{
+    dk_fw_project_set_track_filter(ui_kit(), dk_ui_track(), filter, 1, 1);
+}
+
+int32_t dk_ui_track_is_midi(void)
+{
+    return dk_fw_project_track_is_midi(ui_kit(), dk_ui_track()) != 0;
+}
+
+int32_t dk_ui_track_on_filter_page(void)
+{
+    return dk_fw_page_track_page(ui_settings(), dk_ui_track()) == 2;
 }

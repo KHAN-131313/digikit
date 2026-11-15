@@ -16,17 +16,9 @@ ports = ["dt2-1.17", "dn2-1.12"]
 "dt2-1.17" = "experimental"
 "dn2-1.12" = "experimental"
 
-# One C source on <dk/platform/ui.h> (core/ui draws it with the firmware's own views). Facts: docs/findings/131 and 132.
+# One C source on <dk/platform/ui.h>, dk_ui_core.h and dkrt.h. core/ui owns the firmware side: its hook on the call that shows the
+# stock view calls dk_app_machine_list_open. Facts: docs/findings/131 and 132.
 [[object]]
 path = "build/machine-list.dko.json"
-sources = ["src/list.c", "src/shim.s"]
+sources = ["src/list.c"]
 place = "cf.expansion"
-
-# The one call that shows the stock view on FUNC + SYN (finding 132): its target becomes ml_push, with the same arguments.
-[[op]]
-op = "hook"
-hook = "cf.machine.hook.sel.open_push"
-to = "ml_push"
-
-[[claim]]
-resource = "cf.machine.site.sel.open_push"
