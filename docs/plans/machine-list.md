@@ -62,7 +62,7 @@ a folder sign or a small icon. Wanted later (Khan): closer to the stock machine 
    registry's row owners); the list groups by it. Runtime 0.8.1 (a new import). Host tests in `collect/tests.rs`; the fixture
    `test/folder-sine` (two machines in the folder TEST). Run on DN2 1.12 (dk:dev with test/sine and test/folder-sine): the
    folder row and its icon, opening it, a pick inside it, NO back to the marked folder row, reopening inside the folder, YES
-   on the marked machine closing the list. [ ] DT2 1.17.
+   on the marked machine closing the list. The same on DT2 1.17.
 6. [ ] Tests: host tests of the list logic; a device test on both devices (open, pick, marker, folder in and out, NO).
 7. [ ] Fallback and safety: when the list cannot be made the stock view opens (the spike does this); a patch set without
    `core/machine-list` keeps the stock view.
