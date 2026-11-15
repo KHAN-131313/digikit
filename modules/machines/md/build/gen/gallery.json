@@ -6,40 +6,40 @@
           "clone_of": 0,
           "knobs": [
             {
-              "param": "md_mfrq",
+              "param": "mod_freq_25",
               "slot": 25
             },
             {
-              "param": "md_ptch",
+              "param": "pitch_26",
               "slot": 26
             },
             {
-              "param": "md_dec",
+              "param": "decay_27",
               "slot": 27
             },
             {
-              "param": "md_mdec",
+              "param": "mod_decay_28",
               "slot": 28
             },
             {
-              "param": "md_ramp",
+              "param": "ramp_29",
               "slot": 29
             },
             {
-              "param": "md_rdec",
+              "param": "ramp_decay_30",
               "slot": 30
             },
             {
-              "param": "md_mod",
+              "param": "mod_amount_31",
               "slot": 31
             },
             {
-              "param": "md_mfb",
+              "param": "mod_feedback",
               "slot": 32
             }
           ],
           "level": 10,
-          "name": "MD EFM-BD",
+          "name": "EFM-BD",
           "own_dsp": true,
           "page": {
             "name": "MDKHAN",
@@ -51,7 +51,7 @@
         }
       },
       "id": "md",
-      "name": "MD EFM-BD",
+      "name": "EFM-BD",
       "short": "MDKHAN"
     },
     {
@@ -60,40 +60,40 @@
           "clone_of": 0,
           "knobs": [
             {
-              "param": "xt_mfrq",
+              "param": "mod_freq_25",
               "slot": 25
             },
             {
-              "param": "xt_ptch",
+              "param": "pitch_26",
               "slot": 26
             },
             {
-              "param": "xt_dec",
+              "param": "decay_27",
               "slot": 27
             },
             {
-              "param": "xt_mdec",
+              "param": "mod_decay_28",
               "slot": 28
             },
             {
-              "param": "xt_ramp",
+              "param": "ramp_29",
               "slot": 29
             },
             {
-              "param": "xt_rdec",
+              "param": "ramp_decay_30",
               "slot": 30
             },
             {
-              "param": "xt_mod",
+              "param": "mod_amount_31",
               "slot": 31
             },
             {
-              "param": "xt_clic",
+              "param": "click",
               "slot": 32
             }
           ],
           "level": 10,
-          "name": "MD EFM-XT",
+          "name": "EFM-XT",
           "own_dsp": true,
           "page": {
             "name": "MDXT",
@@ -105,7 +105,7 @@
         }
       },
       "id": "xt",
-      "name": "MD EFM-XT",
+      "name": "EFM-XT",
       "short": "MDXT"
     }
   ],
@@ -114,7 +114,7 @@
     "dn2": [
       {
         "default": 9216,
-        "id": "md_ptch",
+        "id": "pitch_26",
         "max": 32512,
         "min": 0,
         "name": "Pitch",
@@ -124,7 +124,7 @@
       },
       {
         "default": 19456,
-        "id": "md_dec",
+        "id": "decay_27",
         "max": 32512,
         "min": 0,
         "name": "Decay",
@@ -134,7 +134,7 @@
       },
       {
         "default": 16384,
-        "id": "md_ramp",
+        "id": "ramp_29",
         "max": 32512,
         "min": 0,
         "name": "Ramp",
@@ -144,7 +144,7 @@
       },
       {
         "default": 14080,
-        "id": "md_rdec",
+        "id": "ramp_decay_30",
         "max": 32512,
         "min": 0,
         "name": "Ramp Decay",
@@ -154,7 +154,7 @@
       },
       {
         "default": 16384,
-        "id": "md_mod",
+        "id": "mod_amount_31",
         "max": 32512,
         "min": 0,
         "name": "Mod Amount",
@@ -164,7 +164,7 @@
       },
       {
         "default": 16384,
-        "id": "md_mfrq",
+        "id": "mod_freq_25",
         "max": 32512,
         "min": 0,
         "name": "Mod Freq",
@@ -174,7 +174,7 @@
       },
       {
         "default": 8192,
-        "id": "md_mdec",
+        "id": "mod_decay_28",
         "max": 32512,
         "min": 0,
         "name": "Mod Decay",
@@ -184,7 +184,7 @@
       },
       {
         "default": 32512,
-        "id": "md_mfb",
+        "id": "mod_feedback",
         "max": 32512,
         "min": 0,
         "name": "Mod Feedback",
@@ -194,7 +194,7 @@
       },
       {
         "default": 16384,
-        "id": "xt_ptch",
+        "id": "pitch_26",
         "max": 32512,
         "min": 0,
         "name": "Pitch",
@@ -204,7 +204,7 @@
       },
       {
         "default": 16384,
-        "id": "xt_dec",
+        "id": "decay_27",
         "max": 32512,
         "min": 0,
         "name": "Decay",
@@ -214,7 +214,7 @@
       },
       {
         "default": 9728,
-        "id": "xt_ramp",
+        "id": "ramp_29",
         "max": 32512,
         "min": 0,
         "name": "Ramp",
@@ -224,7 +224,7 @@
       },
       {
         "default": 22272,
-        "id": "xt_rdec",
+        "id": "ramp_decay_30",
         "max": 32512,
         "min": 0,
         "name": "Ramp Decay",
@@ -234,7 +234,7 @@
       },
       {
         "default": 12288,
-        "id": "xt_mod",
+        "id": "mod_amount_31",
         "max": 32512,
         "min": 0,
         "name": "Mod Amount",
@@ -244,7 +244,7 @@
       },
       {
         "default": 21504,
-        "id": "xt_mfrq",
+        "id": "mod_freq_25",
         "max": 32512,
         "min": 0,
         "name": "Mod Freq",
@@ -254,7 +254,7 @@
       },
       {
         "default": 14080,
-        "id": "xt_mdec",
+        "id": "mod_decay_28",
         "max": 32512,
         "min": 0,
         "name": "Mod Decay",
@@ -264,7 +264,7 @@
       },
       {
         "default": 32512,
-        "id": "xt_clic",
+        "id": "click",
         "max": 32512,
         "min": 0,
         "name": "Click",

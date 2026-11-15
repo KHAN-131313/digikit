@@ -2,6 +2,8 @@
 The rig draws hostile context registers for every call; Rig.run checks that they come back."""
 
 import dataclasses
+import tomllib
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -15,8 +17,27 @@ pytestmark = pytest.mark.skipif(
     reason="selache not built (tools/patchkit/pk_toolchains.py selache)",
 )
 
-IDS = ("md_ptch", "md_dec", "md_ramp", "md_rdec", "md_mod", "md_mfrq", "md_mdec", "md_mfb")
 DEFAULTS = (36, 76, 64, 55, 64, 64, 32, 127)
+
+
+def _param_slots() -> list[int]:
+    """The knob of each parameter word on the Digitone II (devices/digitone-ii.toml)."""
+    path = Path(__file__).resolve().parents[4] / "devices" / "digitone-ii.toml"
+    found: list[int] = []
+
+    def walk(t):
+        for k, v in t.items():
+            if k == "param_slots":
+                found.append(v)
+            elif isinstance(v, dict):
+                walk(v)
+
+    walk(tomllib.loads(path.read_text()))
+    assert len(found) == 1, found
+    return found[0]
+
+
+PARAM_SLOTS = _param_slots()
 
 
 def words(knobs) -> list[int]:
@@ -62,7 +83,11 @@ class Rig(MachineRig):
         self.trigger()
 
     def knobs(self, knobs) -> None:
-        self.set_params(dict(zip(IDS, words(knobs), strict=True)))
+        """The eight knob words in the machine's (declaration) order. Word i sits on knob param_slots[i] of the device file;
+        the spec lists the parameters by knob."""
+        by_knob = {p.knob: p.id for p in self.spec.params}
+        ids = [by_knob[k] for k in PARAM_SLOTS]
+        self.set_params(dict(zip(ids, words(knobs), strict=True)))
 
     def run(self, n: int):
         ys, counts = [], []

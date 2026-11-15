@@ -1235,8 +1235,8 @@ _my_note_on:
     JUMP (M13, I13);
 
 .SECTION/DM seg_dmda;
-// dk_machine_desc: magic, contract, n_params, voices, state_bytes, state_clear_bytes, max_cycles_block, max_cycles_note_on,
-// max_call_depth, stack_bytes.
+// dk_machine_desc (8 words, runtime 0.8): magic, contract, n_params, voices, state_bytes, state_clear_bytes, max_call_depth,
+// stack_bytes. The DSP cost is not in it: module:check measures it.
 .GLOBAL _md_desc;
 .VAR _md_desc = DK_MAGIC;
 .VAR _md_desc1 = DK_MACHINE_V1;
@@ -1244,10 +1244,8 @@ _my_note_on:
 .VAR _md_desc3 = DK_MAX_VOICES;
 .VAR _md_desc4 = MD_STATE;
 .VAR _md_desc5 = MD_CLEAR;
-.VAR _md_desc6 = 4000;
-.VAR _md_desc7 = 4400;
-.VAR _md_desc8 = 1;
-.VAR _md_desc9 = 0;
+.VAR _md_desc6 = 1;
+.VAR _md_desc7 = 0;
 .GLOBAL _mx_desc;
 .VAR _mx_desc = DK_MAGIC;
 .VAR _mx_desc1 = DK_MACHINE_V1;
@@ -1255,10 +1253,8 @@ _my_note_on:
 .VAR _mx_desc3 = DK_MAX_VOICES;
 .VAR _mx_desc4 = MD_STATE;
 .VAR _mx_desc5 = MD_CLEAR;
-.VAR _mx_desc6 = 4400;
-.VAR _mx_desc7 = 4400;
-.VAR _mx_desc8 = 1;
-.VAR _mx_desc9 = 0;
+.VAR _mx_desc6 = 1;
+.VAR _mx_desc7 = 0;
 .GLOBAL _ms_desc;
 .VAR _ms_desc = DK_MAGIC;
 .VAR _ms_desc1 = DK_MACHINE_V1;
@@ -1266,10 +1262,8 @@ _my_note_on:
 .VAR _ms_desc3 = DK_MAX_VOICES;
 .VAR _ms_desc4 = MD_STATE;
 .VAR _ms_desc5 = MD_CLEAR;
-.VAR _ms_desc6 = 5000;
-.VAR _ms_desc7 = 4400;
-.VAR _ms_desc8 = 1;
-.VAR _ms_desc9 = 0;
+.VAR _ms_desc6 = 1;
+.VAR _ms_desc7 = 0;
 .GLOBAL _mc_desc;
 .VAR _mc_desc = DK_MAGIC;
 .VAR _mc_desc1 = DK_MACHINE_V1;
@@ -1277,10 +1271,8 @@ _my_note_on:
 .VAR _mc_desc3 = DK_MAX_VOICES;
 .VAR _mc_desc4 = MD_STATE;
 .VAR _mc_desc5 = MD_CLEAR;
-.VAR _mc_desc6 = 5000;
-.VAR _mc_desc7 = 4400;
-.VAR _mc_desc8 = 1;
-.VAR _mc_desc9 = 0;
+.VAR _mc_desc6 = 1;
+.VAR _mc_desc7 = 0;
 .GLOBAL _mr_desc;
 .VAR _mr_desc = DK_MAGIC;
 .VAR _mr_desc1 = DK_MACHINE_V1;
@@ -1288,10 +1280,8 @@ _my_note_on:
 .VAR _mr_desc3 = DK_MAX_VOICES;
 .VAR _mr_desc4 = MR_STATE;
 .VAR _mr_desc5 = MR_CLEAR;
-.VAR _mr_desc6 = 8000;
-.VAR _mr_desc7 = 4400;
-.VAR _mr_desc8 = 1;
-.VAR _mr_desc9 = 0;
+.VAR _mr_desc6 = 1;
+.VAR _mr_desc7 = 0;
 .GLOBAL _mb_desc;
 .VAR _mb_desc = DK_MAGIC;
 .VAR _mb_desc1 = DK_MACHINE_V1;
@@ -1299,10 +1289,8 @@ _my_note_on:
 .VAR _mb_desc3 = DK_MAX_VOICES;
 .VAR _mb_desc4 = MB_STATE;
 .VAR _mb_desc5 = MB_CLEAR;
-.VAR _mb_desc6 = 8500;
-.VAR _mb_desc7 = 4400;
-.VAR _mb_desc8 = 1;
-.VAR _mb_desc9 = 0;
+.VAR _mb_desc6 = 1;
+.VAR _mb_desc7 = 0;
 .GLOBAL _mh_desc;
 .VAR _mh_desc = DK_MAGIC;
 .VAR _mh_desc1 = DK_MACHINE_V1;
@@ -1310,10 +1298,8 @@ _my_note_on:
 .VAR _mh_desc3 = DK_MAX_VOICES;
 .VAR _mh_desc4 = MD_STATE;
 .VAR _mh_desc5 = MD_CLEAR;
-.VAR _mh_desc6 = 5500;
-.VAR _mh_desc7 = 4400;
-.VAR _mh_desc8 = 1;
-.VAR _mh_desc9 = 0;
+.VAR _mh_desc6 = 1;
+.VAR _mh_desc7 = 0;
 .GLOBAL _my_desc;
 .VAR _my_desc = DK_MAGIC;
 .VAR _my_desc1 = DK_MACHINE_V1;
@@ -1321,7 +1307,5 @@ _my_note_on:
 .VAR _my_desc3 = DK_MAX_VOICES;
 .VAR _my_desc4 = MY_STATE;
 .VAR _my_desc5 = MY_CLEAR;
-.VAR _my_desc6 = 9000;
-.VAR _my_desc7 = 4400;
-.VAR _my_desc8 = 0;
-.VAR _my_desc9 = 0;
+.VAR _my_desc6 = 0;
+.VAR _my_desc7 = 0;

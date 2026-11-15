@@ -8,11 +8,10 @@ const SCENARIOS: Equiv[] = [
     device: 'dn2',
     modules: ['khan/md'],
     play: { module: 'khan/md', machine: 'md' },
-    hint: 4,
-    hintRun: 5,
+    hint: 5,
     trigFrame: DN2_TRIG,
     voices: 2,
-    ignoreRunMachines: ['MD EFM-BD', 'MD EFM-XT'],
+    ignoreRunMachines: ['EFM-BD', 'EFM-XT'],
   },
 ];
 
