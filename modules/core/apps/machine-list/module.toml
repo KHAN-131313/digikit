@@ -16,13 +16,13 @@ ports = ["dt2-1.17", "dn2-1.12"]
 "dt2-1.17" = "experimental"
 "dn2-1.12" = "experimental"
 
-# One C source on <dk/platform/ui.h> (core/ui draws it with the firmware's own views). Facts: docs/findings/130 and 131.
+# One C source on <dk/platform/ui.h> (core/ui draws it with the firmware's own views). Facts: docs/findings/131 and 132.
 [[object]]
 path = "build/machine-list.dko.json"
 sources = ["src/list.c", "src/shim.s"]
 place = "cf.expansion"
 
-# The one call that shows the stock view on FUNC + SYN (finding 131): its target becomes ml_push, with the same arguments.
+# The one call that shows the stock view on FUNC + SYN (finding 132): its target becomes ml_push, with the same arguments.
 [[op]]
 op = "hook"
 hook = "cf.machine.hook.sel.open_push"

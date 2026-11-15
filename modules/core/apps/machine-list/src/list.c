@@ -1,5 +1,5 @@
 /* core/machine-list: the machine list that digikit owns, in place of the firmware's Machine Selection view.
- * Plan: docs/plans/machine-list.md. Facts: docs/findings/130 and 131.
+ * Plan: docs/plans/machine-list.md. Facts: docs/findings/131 and 132.
  *
  * ml_push takes the place of the stock push at the one call site that shows the stock view on FUNC + SRC (Digitakt II) or
  * FUNC + SYN (Digitone II): same arguments (the view manager, the shared_ptr of the stock view, replace), same result. It opens

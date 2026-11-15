@@ -632,7 +632,7 @@ static uint32_t list_key(uint8_t *view, uint8_t *ev)
 }
 
 /* A plain menu with tabs (dk_ui_menu_tabs). The paint adds, under the title, what the firmware's Machine Selection view shows
-   there (finding 130): the tab's label between two arrows, and a row of dots, a 3 x 3 box for this tab and one pixel for each
+   there (finding 131): the tab's label between two arrows, and a row of dots, a 3 x 3 box for this tab and one pixel for each
    other one, at that view's coordinates (y counts from the bottom). LEFT and RIGHT call the side function with -1 or +1. */
 /* The font object the firmware draws small text with (the stock Machine Selection view draws its title and page arrows with it).
    A VerticalMenuView holds font data at +0xa8, not a font object, so text drawn with that does not show. This anchor is the address

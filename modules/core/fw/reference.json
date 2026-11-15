@@ -3651,7 +3651,7 @@
         ]
       },
       "cpu": "cf",
-      "doc": "The `jsr push(manager, shared_ptr *, 1)` (absolute, 6 bytes) with which the main view's key handler shows the Machine Selection view on FUNC + SRC (DT2) or FUNC + SYN (DN2) (finding 131).",
+      "doc": "The `jsr push(manager, shared_ptr *, 1)` (absolute, 6 bytes) with which the main view's key handler shows the Machine Selection view on FUNC + SRC (DT2) or FUNC + SYN (DN2) (finding 132).",
       "file": "devices/fw/machine.toml",
       "kind": "site",
       "mark": "D",
@@ -6521,7 +6521,8 @@
       },
       "subsystem": "page",
       "users": [
-        "core/machines"
+        "core/machines",
+        "core/ui"
       ],
       "was": []
     },
@@ -6908,7 +6909,7 @@
         "rust": "dkfw::page::track_page"
       },
       "cpu": "cf",
-      "doc": "`int f(ProjectSettings *, int track)`: the parameter page a track shows (2 is the filter page). The Machine Selection view opens on its filter page when it is 2 (finding 130).",
+      "doc": "`int f(ProjectSettings *, int track)`: the parameter page a track shows (2 is the filter page). The Machine Selection view opens on its filter page when it is 2 (finding 131).",
       "file": "devices/fw/page.toml",
       "kind": "fn",
       "mark": "D",
@@ -9769,7 +9770,7 @@
         "rust": "dkfw::project::set_track_filter"
       },
       "cpu": "cf",
-      "doc": "`f(Kit *, int track, int filter, 1, 1)`: sets a track's filter type as the Machine Selection view does on YES on its second page (finding 130). The view passes 1, 1.",
+      "doc": "`f(Kit *, int track, int filter, 1, 1)`: sets a track's filter type as the Machine Selection view does on YES on its second page (finding 131). The view passes 1, 1.",
       "file": "devices/fw/project.toml",
       "kind": "fn",
       "mark": "D",
@@ -9813,7 +9814,7 @@
         "rust": "dkfw::project::set_track_type"
       },
       "cpu": "cf",
-      "doc": "`f(Kit *, int track, int type, 1, 1)`: sets a track's machine type as the Machine Selection view does on YES (finding 131). The meaning of the last two arguments is not known; the view passes 1, 1.",
+      "doc": "`f(Kit *, int track, int type, 1, 1)`: sets a track's machine type as the Machine Selection view does on YES (finding 132). The meaning of the last two arguments is not known; the view passes 1, 1.",
       "file": "devices/fw/project.toml",
       "kind": "fn",
       "mark": "D",
@@ -9964,7 +9965,7 @@
         "rust": "dkfw::project::track_filter"
       },
       "cpu": "cf",
-      "doc": "`int f(Kit *, int track)`: the filter type of a track, the value the Machine Selection view marks on its second page (finding 130).",
+      "doc": "`int f(Kit *, int track)`: the filter type of a track, the value the Machine Selection view marks on its second page (finding 131).",
       "file": "devices/fw/project.toml",
       "kind": "fn",
       "mark": "D",
@@ -14587,7 +14588,7 @@
         "rust": "dkfw::view::push_shared"
       },
       "cpu": "cf",
-      "doc": "The push the main view's key handler uses for the views it opens: `f(ViewController *, shared_ptr<View> *, replace)` (finding 131).",
+      "doc": "The push the main view's key handler uses for the views it opens: `f(ViewController *, shared_ptr<View> *, replace)` (finding 132).",
       "file": "devices/fw/view.toml",
       "kind": "fn",
       "mark": "D",

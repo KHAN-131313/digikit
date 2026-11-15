@@ -66,7 +66,7 @@ rule.dt2 = { kind = "cf_func", hash = "32441e7a8a2c46c0561dcb6063bdac45", offset
 rule.dn2 = { kind = "cf_func", hash = "42f12722dd5b838c1c8d8563e44870a3", offset = 0x0, len = 6 }
 mark = "D"
 users = ["core/machine-list"]
-doc = "`f(Kit *, int track, int type, 1, 1)`: sets a track's machine type as the Machine Selection view does on YES (finding 131). The meaning of the last two arguments is not known; the view passes 1, 1."
+doc = "`f(Kit *, int track, int type, 1, 1)`: sets a track's machine type as the Machine Selection view does on YES (finding 132). The meaning of the last two arguments is not known; the view passes 1, 1."
 
 [[fn]]
 name = "cf.project.fn.track_filter"
@@ -75,7 +75,7 @@ sig = "i32 (u32 kit, i32 track)"
 rule = { kind = "cf_func", hash = "2e8ab5ddb7cacd4147bccc5d7624c203", offset = 0x0, len = 6 }
 mark = "D"
 users = ["core/machine-list"]
-doc = "`int f(Kit *, int track)`: the filter type of a track, the value the Machine Selection view marks on its second page (finding 130)."
+doc = "`int f(Kit *, int track)`: the filter type of a track, the value the Machine Selection view marks on its second page (finding 131)."
 
 [[fn]]
 name = "cf.project.fn.set_track_filter"
@@ -85,7 +85,7 @@ rule.dt2 = { kind = "cf_func", hash = "ce8cf6e5c09f545e970e24bc1ecd373d", offset
 rule.dn2 = { kind = "cf_func", hash = "352724479de405988b1ec2e6145813b5", offset = 0x0, len = 6 }
 mark = "D"
 users = ["core/machine-list"]
-doc = "`f(Kit *, int track, int filter, 1, 1)`: sets a track's filter type as the Machine Selection view does on YES on its second page (finding 130). The view passes 1, 1."
+doc = "`f(Kit *, int track, int filter, 1, 1)`: sets a track's filter type as the Machine Selection view does on YES on its second page (finding 131). The view passes 1, 1."
 
 [[fn]]
 name = "cf.project.fn.track_is_midi"

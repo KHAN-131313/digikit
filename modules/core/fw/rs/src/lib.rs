@@ -466,7 +466,7 @@ pub mod page {
     // cf.page.fn.source_turn: no sig yet
 
     unsafe extern "C" {
-        /// `int f(ProjectSettings *, int track)`: the parameter page a track shows (2 is the filter page). The Machine Selection view opens on its filter page when it is 2 (finding 130).
+        /// `int f(ProjectSettings *, int track)`: the parameter page a track shows (2 is the filter page). The Machine Selection view opens on its filter page when it is 2 (finding 131).
         #[link_name = "cf.page.fn.track_page"]
         pub fn track_page(settings: *const u8, track: i32) -> i32;
     }
@@ -532,13 +532,13 @@ pub mod project {
     }
 
     unsafe extern "C" {
-        /// `f(Kit *, int track, int filter, 1, 1)`: sets a track's filter type as the Machine Selection view does on YES on its second page (finding 130). The view passes 1, 1.
+        /// `f(Kit *, int track, int filter, 1, 1)`: sets a track's filter type as the Machine Selection view does on YES on its second page (finding 131). The view passes 1, 1.
         #[link_name = "cf.project.fn.set_track_filter"]
         pub fn set_track_filter(kit: u32, track: i32, filter: i32, a: i32, b: i32);
     }
 
     unsafe extern "C" {
-        /// `f(Kit *, int track, int type, 1, 1)`: sets a track's machine type as the Machine Selection view does on YES (finding 131). The meaning of the last two arguments is not known; the view passes 1, 1.
+        /// `f(Kit *, int track, int type, 1, 1)`: sets a track's machine type as the Machine Selection view does on YES (finding 132). The meaning of the last two arguments is not known; the view passes 1, 1.
         #[link_name = "cf.project.fn.set_track_type"]
         pub fn set_track_type(kit: u32, track: i32, machine: i32, a: i32, b: i32);
     }
@@ -556,7 +556,7 @@ pub mod project {
     }
 
     unsafe extern "C" {
-        /// `int f(Kit *, int track)`: the filter type of a track, the value the Machine Selection view marks on its second page (finding 130).
+        /// `int f(Kit *, int track)`: the filter type of a track, the value the Machine Selection view marks on its second page (finding 131).
         #[link_name = "cf.project.fn.track_filter"]
         pub fn track_filter(kit: u32, track: i32) -> i32;
     }
@@ -1110,7 +1110,7 @@ pub mod view {
     }
 
     unsafe extern "C" {
-        /// The push the main view's key handler uses for the views it opens: `f(ViewController *, shared_ptr<View> *, replace)` (finding 131).
+        /// The push the main view's key handler uses for the views it opens: `f(ViewController *, shared_ptr<View> *, replace)` (finding 132).
         #[link_name = "cf.view.fn.push_shared"]
         pub fn push_shared(manager: u32, sp: *const crate::string::shared_ptr, replace: u32) -> u32;
     }

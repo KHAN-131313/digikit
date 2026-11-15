@@ -2,15 +2,15 @@
 
 Goal: a machine list that digikit owns, in place of the firmware's Machine Selection view, so that run-time machines can sit in
 folders, the list is built when it opens (hot reload, collections, project modules), and its size is not tied to the firmware's
-list tables. Facts: findings [130](../findings/130-dn2-machine-sel-rows.md) and
-[131](../findings/131-dn2-machine-sel-open-and-commit.md). Branch: `khan/machine-list`.
+list tables. Facts: findings [131](../findings/131-dn2-machine-sel-rows.md) and
+[132](../findings/132-dn2-machine-sel-open-and-commit.md). Branch: `khan/machine-list`.
 
 Payoff: high (folders are what many-machine modules such as a Machinedrum set need; one list for both devices). Confidence:
 medium-high: the spike (step 0) showed the two unknowns work on the DN2 1.12 in the emulator.
 
 ## Why not patch the stock view
 
-The stock view can be patched to rebuild its rows for a folder (finding 130 has the sites), but that is one level deep, depends on
+The stock view can be patched to rebuild its rows for a folder (finding 131 has the sites), but that is one level deep, depends on
 register and stack state inside its key handler, costs a machine type per folder row, and its rows are built once at boot. The
 stock view already shows its second list (filter types) as a sideways page, which reads as a tab, not as a folder.
 
@@ -57,7 +57,7 @@ a folder sign or a small icon. Wanted later (Khan): closer to the stock machine 
 6. [ ] Tests: host tests of the list logic; a device test on both devices (open, pick, marker, folder in and out, NO).
 7. [ ] Fallback and safety: when the list cannot be made the stock view opens (the spike does this); a patch set without
    `core/machine-list` keeps the stock view.
-8. [ ] Docs: MODULE-AUTHORING (folders), finding 131 completed, this plan closed.
+8. [ ] Docs: MODULE-AUTHORING (folders), finding 132 completed, this plan closed.
 
 ## Open
 

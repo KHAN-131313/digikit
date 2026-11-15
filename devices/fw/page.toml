@@ -384,5 +384,5 @@ sig = "i32 (const u8 *settings, i32 track)"
 rule = { kind = "cf_func", hash = "b926074fed5a621e3386a0299797392c", offset = 0x0, len = 6 }
 mark = "D"
 users = ["core/machine-list"]
-doc = "`int f(ProjectSettings *, int track)`: the parameter page a track shows (2 is the filter page). The Machine Selection view opens on its filter page when it is 2 (finding 130)."
+doc = "`int f(ProjectSettings *, int track)`: the parameter page a track shows (2 is the filter page). The Machine Selection view opens on its filter page when it is 2 (finding 131)."
 

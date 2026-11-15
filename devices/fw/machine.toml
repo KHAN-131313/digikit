@@ -814,7 +814,7 @@ mark = "D"
 users = ["core/dynreg"]
 doc = "The getter's `jsr (A3); move.l D0,(4,A2)` (6 bytes; a2 = the vector being returned); both are replaced by a routine that copies without unfilled reserved machine types."
 
-# ---- the Machine Selection view (docs/findings/130 and 131) -------------------------------------------------------------
+# ---- the Machine Selection view (docs/findings/131 and 132) -------------------------------------------------------------
 [[site]]
 name = "cf.machine.site.sel.open_push"
 cpu = "cf"
@@ -822,7 +822,7 @@ rule.dt2 = { kind = "cf_func", hash = "3057ffb253716aad1da9975c2e77710e", offset
 rule.dn2 = { kind = "cf_func", hash = "71c32ba1a7bf0da12a16a0f159d02dba", offset = 0x151e, len = 6 }
 mark = "D"
 users = ["core/machine-list"]
-doc = "The `jsr push(manager, shared_ptr *, 1)` (absolute, 6 bytes) with which the main view's key handler shows the Machine Selection view on FUNC + SRC (DT2) or FUNC + SYN (DN2) (finding 131)."
+doc = "The `jsr push(manager, shared_ptr *, 1)` (absolute, 6 bytes) with which the main view's key handler shows the Machine Selection view on FUNC + SRC (DT2) or FUNC + SYN (DN2) (finding 132)."
 
 [[hook]]
 name = "cf.machine.hook.sel.open_push"
