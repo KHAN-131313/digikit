@@ -60,11 +60,19 @@ a folder sign or a small icon. Wanted later (Khan): closer to the stock machine 
    manifest key: machines are declared by builder calls in `init`, and the folder commits with them); the runtime keeps it per
    module from the commit until the unload and gives it per machine type to core modules (`dkrt_machine_folder`, through the
    registry's row owners); the list groups by it. Runtime 0.8.1 (a new import). Host tests in `collect/tests.rs`; the fixture
-   `test/folder-sine` (two machines in the folder TEST). [ ] Run on both devices.
+   `test/folder-sine` (two machines in the folder TEST). Run on DN2 1.12 (dk:dev with test/sine and test/folder-sine): the
+   folder row and its icon, opening it, a pick inside it, NO back to the marked folder row, reopening inside the folder, YES
+   on the marked machine closing the list. [ ] DT2 1.17.
 6. [ ] Tests: host tests of the list logic; a device test on both devices (open, pick, marker, folder in and out, NO).
 7. [ ] Fallback and safety: when the list cannot be made the stock view opens (the spike does this); a patch set without
    `core/machine-list` keeps the stock view.
 8. [ ] Docs: MODULE-AUTHORING (folders), finding 132 completed, this plan closed.
+
+## Look, to do
+
+- The tab arrows (`‹` `›`) closer to the label and on its line: today they sit at fixed x (0x07, 0x28) and 2 pixels above the label
+  (y 0x0e against 0x0c), so they float away from a short label such as SYN. Place them a small fixed gap from the label's edges
+  (from its width) and at its height, for SYN, SRC and FLTR alike (Khan, 2026-11-15).
 
 ## Open
 

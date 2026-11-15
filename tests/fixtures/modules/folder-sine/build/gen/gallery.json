@@ -1,0 +1,163 @@
+{
+  "machines": [
+    {
+      "devices": {
+        "dn2": {
+          "clone_of": 0,
+          "knobs": [
+            null,
+            {
+              "param": "level_26",
+              "slot": 26
+            }
+          ],
+          "level": 10,
+          "name": "Sine A",
+          "own_dsp": true,
+          "page": {
+            "name": "SNA",
+            "title": "Sine A"
+          },
+          "position": null,
+          "short": "SNA",
+          "type": null
+        },
+        "dt2": {
+          "clone_of": 0,
+          "knobs": [
+            {
+              "slot": 0,
+              "stock": 202
+            },
+            {
+              "param": "level_1",
+              "slot": 1
+            },
+            null,
+            null,
+            null,
+            null,
+            null,
+            {
+              "slot": 7,
+              "stock": 209
+            }
+          ],
+          "level": 10,
+          "name": "Sine A",
+          "own_dsp": false,
+          "page": null,
+          "position": null,
+          "short": "SNA",
+          "type": null
+        }
+      },
+      "id": "fsa",
+      "name": "Sine A",
+      "short": "SNA"
+    },
+    {
+      "devices": {
+        "dn2": {
+          "clone_of": 0,
+          "knobs": [
+            null,
+            {
+              "param": "level_26",
+              "slot": 26
+            }
+          ],
+          "level": 10,
+          "name": "Sine B",
+          "own_dsp": true,
+          "page": {
+            "name": "SNB",
+            "title": "Sine B"
+          },
+          "position": null,
+          "short": "SNB",
+          "type": null
+        },
+        "dt2": {
+          "clone_of": 0,
+          "knobs": [
+            {
+              "slot": 0,
+              "stock": 202
+            },
+            {
+              "param": "level_1",
+              "slot": 1
+            },
+            null,
+            null,
+            null,
+            null,
+            null,
+            {
+              "slot": 7,
+              "stock": 209
+            }
+          ],
+          "level": 10,
+          "name": "Sine B",
+          "own_dsp": false,
+          "page": null,
+          "position": null,
+          "short": "SNB",
+          "type": null
+        }
+      },
+      "id": "fsb",
+      "name": "Sine B",
+      "short": "SNB"
+    }
+  ],
+  "module": "test/folder-sine",
+  "params": {
+    "dn2": [
+      {
+        "default": 32512,
+        "id": "level_26",
+        "max": 32512,
+        "min": 0,
+        "name": "Level",
+        "short": "LEVEL",
+        "slot": 26,
+        "template": 213
+      },
+      {
+        "default": 32512,
+        "id": "level_26",
+        "max": 32512,
+        "min": 0,
+        "name": "Level",
+        "short": "LEVEL",
+        "slot": 26,
+        "template": 213
+      }
+    ],
+    "dt2": [
+      {
+        "default": 32512,
+        "id": "level_1",
+        "max": 32512,
+        "min": 0,
+        "name": "Level",
+        "short": "LEVEL",
+        "slot": 1,
+        "template": 204
+      },
+      {
+        "default": 32512,
+        "id": "level_1",
+        "max": 32512,
+        "min": 0,
+        "name": "Level",
+        "short": "LEVEL",
+        "slot": 1,
+        "template": 204
+      }
+    ]
+  }
+}

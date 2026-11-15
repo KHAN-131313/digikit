@@ -35,3 +35,17 @@ place = "cf.expansion"
 path = "build/folder-sine-dsp.dko.json"
 sources = ["../sine/src/dsp/sine.s"]
 place = "dsp.l2"
+
+[uses.dt2]
+machine_rows = 2
+param_rows = 2
+page_rows = 0
+record_bytes = 392
+dsp_cost_voice = 1782
+
+[uses.dn2]
+machine_rows = 2
+param_rows = 2
+page_rows = 2
+record_bytes = 584
+dsp_cost_voice = 1936
