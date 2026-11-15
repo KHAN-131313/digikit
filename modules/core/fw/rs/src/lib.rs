@@ -82,6 +82,14 @@ pub mod machine {
 
     // cf.machine.fn.dispatch: no sig yet
 
+    // cf.machine.fn.filter.list: no sig yet
+
+    unsafe extern "C" {
+        /// The name of a filter type (`Multi-Mode`, `Lowpass 4`, ...), as the Machine Selection view's second page prints it.
+        #[link_name = "cf.machine.fn.filter.name"]
+        pub fn filter_name(filter: i32) -> *const u8;
+    }
+
     // cf.machine.fn.list.entry: no sig yet
 
     unsafe extern "C" {
@@ -518,6 +526,12 @@ pub mod project {
     }
 
     unsafe extern "C" {
+        /// `f(Kit *, int track, int filter, 1, 1)`: sets a track's filter type as the Machine Selection view does on YES on its second page (finding 130). The view passes 1, 1.
+        #[link_name = "cf.project.fn.set_track_filter"]
+        pub fn set_track_filter(kit: u32, track: i32, filter: i32, a: i32, b: i32);
+    }
+
+    unsafe extern "C" {
         /// `f(Kit *, int track, int type, 1, 1)`: sets a track's machine type as the Machine Selection view does on YES (finding 131). The meaning of the last two arguments is not known; the view passes 1, 1.
         #[link_name = "cf.project.fn.set_track_type"]
         pub fn set_track_type(kit: u32, track: i32, machine: i32, a: i32, b: i32);
@@ -533,6 +547,18 @@ pub mod project {
         /// The Project singleton getter `Project *f(void)`; its code differs per image. core/runtime reads it for the machine-change watch.
         #[link_name = "cf.project.fn.singleton"]
         pub fn singleton() -> u32;
+    }
+
+    unsafe extern "C" {
+        /// `int f(Kit *, int track)`: the filter type of a track, the value the Machine Selection view marks on its second page (finding 130).
+        #[link_name = "cf.project.fn.track_filter"]
+        pub fn track_filter(kit: u32, track: i32) -> i32;
+    }
+
+    unsafe extern "C" {
+        /// `bool f(Kit *, int track)`: bit `track` of the kit's MIDI track mask. The Machine Selection view shows `NO FILTERS ON MIDI TRACKS.` in place of the filter list when it is set.
+        #[link_name = "cf.project.fn.track_is_midi"]
+        pub fn track_is_midi(kit: u32, track: i32) -> u8;
     }
 
     unsafe extern "C" {

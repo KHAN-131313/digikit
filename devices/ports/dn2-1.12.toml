@@ -262,6 +262,26 @@ mark = "D"
 rule = "fw/machine:cf_func"
 
 [[anchor]]
+name = "cf.machine.fn.filter.list"
+cpu = "cf"
+kind = "code"
+addr = 0x4004dae2
+len = 6
+sha256 = "7bb72cf3adc69024065bf04512b596ace132cfd977956ebe56fc822c9f1a0921"
+mark = "D"
+rule = "fw/machine:cf_func"
+
+[[anchor]]
+name = "cf.machine.fn.filter.name"
+cpu = "cf"
+kind = "code"
+addr = 0x400dc508
+len = 6
+sha256 = "ee3af96091c4b93c7521b8497449ed07268395479720ba1a8e05987f14d25a60"
+mark = "D"
+rule = "fw/machine:cf_func"
+
+[[anchor]]
 name = "cf.machine.fn.list.entry"
 cpu = "cf"
 kind = "code"
@@ -2276,6 +2296,16 @@ mark = "D"
 rule = "fw/project:cf_func"
 
 [[anchor]]
+name = "cf.project.fn.set_track_filter"
+cpu = "cf"
+kind = "code"
+addr = 0x40031a56
+len = 6
+sha256 = "4a870d2680fd003a7fc0e417154f96f7044b3ceed28dd17634d9ee2ea1b89be3"
+mark = "D"
+rule = "fw/project:cf_func"
+
+[[anchor]]
 name = "cf.project.fn.set_track_type"
 cpu = "cf"
 kind = "code"
@@ -2302,6 +2332,26 @@ kind = "code"
 addr = 0x4018ac5a
 len = 4
 sha256 = "9d173d59041b301888ec7a85e552356c0a38f1538ed266082f5001737ceb2308"
+mark = "D"
+rule = "fw/project:cf_func"
+
+[[anchor]]
+name = "cf.project.fn.track_filter"
+cpu = "cf"
+kind = "code"
+addr = 0x400313a6
+len = 6
+sha256 = "51d1223b8e84b10fe2319b5f4d0d8e5fda92c0d5d4116ad6aa7150523cdd801e"
+mark = "D"
+rule = "fw/project:cf_func"
+
+[[anchor]]
+name = "cf.project.fn.track_is_midi"
+cpu = "cf"
+kind = "code"
+addr = 0x40031274
+len = 6
+sha256 = "8d1503d38f264a9b0be0700a53c1e2e61354803cc529f54092a511ae826bca7f"
 mark = "D"
 rule = "fw/project:cf_func"
 

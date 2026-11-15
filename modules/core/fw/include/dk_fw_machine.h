@@ -9,6 +9,9 @@
 
 /* cf.machine.fn.current_track_type: no sig yet */
 /* cf.machine.fn.dispatch: no sig yet */
+/* cf.machine.fn.filter.list: no sig yet */
+/* The name of a filter type (`Multi-Mode`, `Lowpass 4`, ...), as the Machine Selection view's second page prints it. */
+const char * dk_fw_machine_filter_name(int32_t filter) __asm__("cf.machine.fn.filter.name");
 /* cf.machine.fn.list.entry: no sig yet */
 /* Long-name accessor of the machine name table: core/machines raises its bound (moveq at +1) and repoints the table pointer literal at +0x12 to the copied table. */
 const char * dk_fw_machine_name_long(int32_t machine) __asm__("cf.machine.fn.name.long");

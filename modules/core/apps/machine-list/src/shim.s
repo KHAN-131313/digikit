@@ -9,3 +9,9 @@
 ml_get_list:
     move.l  4(%sp),%a0
     jmp     cf.machine.fn.list.entry
+
+| ml_get_filters(out): the same for the filter type list (the stock view's second page).
+    .globl ml_get_filters
+ml_get_filters:
+    move.l  4(%sp),%a0
+    jmp     cf.machine.fn.filter.list

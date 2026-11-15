@@ -71,7 +71,7 @@ cpu = "cf"
 rule.dt2 = { kind = "cf_func", hash = "7c680e4200eed1964a22109ee2d43932", offset = 0x0, len = 8 }
 rule.dn2 = { kind = "cf_func", hash = "69828342bcd67f7587f7d51d4c4a6575", offset = 0x0, len = 8 }
 mark = "D"
-users = ["core/machines"]
+users = ["core/machines", "core/machine-list"]
 doc = "Entry of the machine list builder; the same function holds the list table pointer, the alloc size and the operand sites."
 
 [[fn]]
@@ -598,7 +598,7 @@ mode = "before"
 regs = { in = [], clobbers = ["ccr"] }
 devices = ["dt2", "dn2"]
 mark = "D"
-users = ["core/machines"]
+users = ["core/machines", "core/machine-list"]
 doc = "Entry of the machine list builder; the hook builds the registry tables before the builder reads its list buffer."
 
 [[hook]]
@@ -835,3 +835,22 @@ devices = ["dt2", "dn2"]
 mark = "D"
 users = ["core/machine-list"]
 doc = "The push of the Machine Selection view: the target becomes a function that shows digikit's machine list (or calls the stock push)."
+
+[[fn]]
+name = "cf.machine.fn.filter.list"
+cpu = "cf"
+rule.dt2 = { kind = "cf_func", hash = "1b8cb066c2caefda57e7836d91311ecc", offset = 0x0, len = 6 }
+rule.dn2 = { kind = "cf_func", hash = "d47df48273bdbbdbde217c6e06a9510d", offset = 0x0, len = 6 }
+mark = "D"
+users = ["core/machine-list"]
+doc = "The filter type list getter of the Machine Selection view's second page: returns a std::vector<int> through a pointer in a0, no stack arguments (as cf.machine.fn.list.entry does for the machines). Finding 130."
+
+[[fn]]
+name = "cf.machine.fn.filter.name"
+cpu = "cf"
+sig = "const char *(i32 filter)"
+rule = { kind = "cf_func", hash = "8c0853eaa8e31ce570f9842483069682", offset = 0x0, len = 6 }
+mark = "D"
+users = ["core/machine-list"]
+doc = "The name of a filter type (`Multi-Mode`, `Lowpass 4`, ...), as the Machine Selection view's second page prints it."
+

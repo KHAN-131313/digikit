@@ -1329,6 +1329,93 @@
     },
     {
       "at": {
+        "dn2-1.12": [
+          {
+            "addr": "0x4004dae2",
+            "len": 6
+          }
+        ],
+        "dt2-1.17": [
+          {
+            "addr": "0x40052c98",
+            "len": 6
+          }
+        ]
+      },
+      "bindings": {
+        "c": "dk_fw_machine_filter_list",
+        "rust": "dkfw::machine::filter_list"
+      },
+      "cpu": "cf",
+      "doc": "The filter type list getter of the Machine Selection view's second page: returns a std::vector<int> through a pointer in a0, no stack arguments (as cf.machine.fn.list.entry does for the machines). Finding 130.",
+      "file": "devices/fw/machine.toml",
+      "kind": "fn",
+      "mark": "D",
+      "name": "cf.machine.fn.filter.list",
+      "rule": {
+        "dn2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        },
+        "dt2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        }
+      },
+      "subsystem": "machine",
+      "users": [
+        "core/machine-list"
+      ],
+      "was": []
+    },
+    {
+      "at": {
+        "dn2-1.12": [
+          {
+            "addr": "0x400dc508",
+            "len": 6
+          }
+        ],
+        "dt2-1.17": [
+          {
+            "addr": "0x400da71e",
+            "len": 6
+          }
+        ]
+      },
+      "bindings": {
+        "c": "dk_fw_machine_filter_name",
+        "rust": "dkfw::machine::filter_name"
+      },
+      "cpu": "cf",
+      "doc": "The name of a filter type (`Multi-Mode`, `Lowpass 4`, ...), as the Machine Selection view's second page prints it.",
+      "file": "devices/fw/machine.toml",
+      "kind": "fn",
+      "mark": "D",
+      "name": "cf.machine.fn.filter.name",
+      "rule": {
+        "dn2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        },
+        "dt2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        }
+      },
+      "sig": "const char *(i32 filter)",
+      "subsystem": "machine",
+      "users": [
+        "core/machine-list"
+      ],
+      "was": []
+    },
+    {
+      "at": {
         "dn2-1.11": [
           {
             "addr": "0x4004d8b6",
@@ -1372,7 +1459,8 @@
       },
       "subsystem": "machine",
       "users": [
-        "core/machines"
+        "core/machines",
+        "core/machine-list"
       ],
       "was": [
         "cf.machine.fn.list_entry",
@@ -2048,7 +2136,8 @@
       "site": "cf.machine.fn.list.entry",
       "subsystem": "machine",
       "users": [
-        "core/machines"
+        "core/machines",
+        "core/machine-list"
       ],
       "was": []
     },
@@ -9620,6 +9709,50 @@
       "at": {
         "dn2-1.12": [
           {
+            "addr": "0x40031a56",
+            "len": 6
+          }
+        ],
+        "dt2-1.17": [
+          {
+            "addr": "0x4003696e",
+            "len": 6
+          }
+        ]
+      },
+      "bindings": {
+        "c": "dk_fw_project_set_track_filter",
+        "rust": "dkfw::project::set_track_filter"
+      },
+      "cpu": "cf",
+      "doc": "`f(Kit *, int track, int filter, 1, 1)`: sets a track's filter type as the Machine Selection view does on YES on its second page (finding 130). The view passes 1, 1.",
+      "file": "devices/fw/project.toml",
+      "kind": "fn",
+      "mark": "D",
+      "name": "cf.project.fn.set_track_filter",
+      "rule": {
+        "dn2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        },
+        "dt2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        }
+      },
+      "sig": "void (u32 kit, i32 track, i32 filter, i32 a, i32 b)",
+      "subsystem": "project",
+      "users": [
+        "core/machine-list"
+      ],
+      "was": []
+    },
+    {
+      "at": {
+        "dn2-1.12": [
+          {
             "addr": "0x40031880",
             "len": 6
           }
@@ -9766,6 +9899,94 @@
         "cf.project.fn.get",
         "dkrt.fw.project"
       ]
+    },
+    {
+      "at": {
+        "dn2-1.12": [
+          {
+            "addr": "0x400313a6",
+            "len": 6
+          }
+        ],
+        "dt2-1.17": [
+          {
+            "addr": "0x400362be",
+            "len": 6
+          }
+        ]
+      },
+      "bindings": {
+        "c": "dk_fw_project_track_filter",
+        "rust": "dkfw::project::track_filter"
+      },
+      "cpu": "cf",
+      "doc": "`int f(Kit *, int track)`: the filter type of a track, the value the Machine Selection view marks on its second page (finding 130).",
+      "file": "devices/fw/project.toml",
+      "kind": "fn",
+      "mark": "D",
+      "name": "cf.project.fn.track_filter",
+      "rule": {
+        "dn2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        },
+        "dt2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        }
+      },
+      "sig": "i32 (u32 kit, i32 track)",
+      "subsystem": "project",
+      "users": [
+        "core/machine-list"
+      ],
+      "was": []
+    },
+    {
+      "at": {
+        "dn2-1.12": [
+          {
+            "addr": "0x40031274",
+            "len": 6
+          }
+        ],
+        "dt2-1.17": [
+          {
+            "addr": "0x4003618c",
+            "len": 6
+          }
+        ]
+      },
+      "bindings": {
+        "c": "dk_fw_project_track_is_midi",
+        "rust": "dkfw::project::track_is_midi"
+      },
+      "cpu": "cf",
+      "doc": "`bool f(Kit *, int track)`: bit `track` of the kit's MIDI track mask. The Machine Selection view shows `NO FILTERS ON MIDI TRACKS.` in place of the filter list when it is set.",
+      "file": "devices/fw/project.toml",
+      "kind": "fn",
+      "mark": "D",
+      "name": "cf.project.fn.track_is_midi",
+      "rule": {
+        "dn2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        },
+        "dt2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        }
+      },
+      "sig": "u8 (u32 kit, i32 track)",
+      "subsystem": "project",
+      "users": [
+        "core/machine-list"
+      ],
+      "was": []
     },
     {
       "at": {
@@ -19763,7 +19984,7 @@
       "name": "link"
     },
     {
-      "count": 80,
+      "count": 82,
       "cpu": "cf",
       "file": "devices/fw/machine.toml",
       "meaning": "the machine framework: dispatch, names, per-type tables, the run-time registry",
@@ -19805,7 +20026,7 @@
       "name": "param"
     },
     {
-      "count": 6,
+      "count": 9,
       "cpu": "cf",
       "file": "devices/fw/project.toml",
       "meaning": "the project object, kits, tracks, serialisation",
