@@ -30,8 +30,9 @@ static const md_knob efm_xt[8] = {
 
 static int32_t init(dk_module_ctx *ctx)
 {
-    add(ctx, DK_MACHINE_ID_MD, "MD EFM-BD", "MDKHAN", "EFM-BD", efm_bd);
-    add(ctx, DK_MACHINE_ID_XT, "MD EFM-XT", "MDXT", "EFM-XT", efm_xt);
+    dk_module_ctx_folder(ctx, "MD"); /* the machine list shows them in one MD folder row */
+    add(ctx, DK_MACHINE_ID_MD, "EFM-BD", "MDKHAN", "EFM-BD", efm_bd);
+    add(ctx, DK_MACHINE_ID_XT, "EFM-XT", "MDXT", "EFM-XT", efm_xt);
     return DK_OK;
 }
 
