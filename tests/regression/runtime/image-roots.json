@@ -10,6 +10,10 @@
       "roots": ["core/runtime", "core/dynreg", "core/dyndsp", "core/digikit-menu"]
     },
     {
+      "id": "rt-health",
+      "roots": ["core/runtime", "core/dynreg", "core/dyndsp", "core/health"]
+    },
+    {
       "id": "coupled",
       "roots": ["core/runtime", "core/dynreg", "core/dyndsp", "core/input", "core/dynfx", "core/fxpages"]
     },
