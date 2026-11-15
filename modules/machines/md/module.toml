@@ -24,6 +24,30 @@ id = "md"
 id = "xt"
 dsp = "mx"
 
+[[machine]]
+id = "sd"
+dsp = "ms"
+
+[[machine]]
+id = "cp"
+dsp = "mc"
+
+[[machine]]
+id = "rs"
+dsp = "mr"
+
+[[machine]]
+id = "cb"
+dsp = "mb"
+
+[[machine]]
+id = "hh"
+dsp = "mh"
+
+[[machine]]
+id = "cy"
+dsp = "my"
+
 [[object]]
 path = "build/md-cf.dko.json"
 sources = ["src/module.c"]
@@ -41,8 +65,8 @@ page_rows = 0
 record_bytes = 0
 
 [uses.dn2]
-machine_rows = 2
-param_rows = 16
-page_rows = 2
-record_bytes = 1704
+machine_rows = 8
+param_rows = 62
+page_rows = 8
+record_bytes = 6608
 dsp_cost_voice = 2880

@@ -107,6 +107,322 @@
       "id": "xt",
       "name": "EFM-XT",
       "short": "MDXT"
+    },
+    {
+      "devices": {
+        "dn2": {
+          "clone_of": 0,
+          "knobs": [
+            {
+              "param": "mod_freq_25",
+              "slot": 25
+            },
+            {
+              "param": "pitch_26",
+              "slot": 26
+            },
+            {
+              "param": "decay_27",
+              "slot": 27
+            },
+            {
+              "param": "mod_decay_28",
+              "slot": 28
+            },
+            {
+              "param": "noise",
+              "slot": 29
+            },
+            {
+              "param": "noise_decay",
+              "slot": 30
+            },
+            {
+              "param": "mod_amount_31",
+              "slot": 31
+            },
+            {
+              "param": "high_pass_32",
+              "slot": 32
+            }
+          ],
+          "level": 10,
+          "name": "EFM-SD",
+          "own_dsp": true,
+          "page": {
+            "name": "MDSD",
+            "title": "EFM-SD"
+          },
+          "position": null,
+          "short": "MDSD",
+          "type": null
+        }
+      },
+      "id": "sd",
+      "name": "EFM-SD",
+      "short": "MDSD"
+    },
+    {
+      "devices": {
+        "dn2": {
+          "clone_of": 0,
+          "knobs": [
+            {
+              "param": "mod_freq_25",
+              "slot": 25
+            },
+            {
+              "param": "pitch_26",
+              "slot": 26
+            },
+            {
+              "param": "decay_27",
+              "slot": 27
+            },
+            {
+              "param": "mod_decay_28",
+              "slot": 28
+            },
+            {
+              "param": "claps",
+              "slot": 29
+            },
+            {
+              "param": "clap_decay",
+              "slot": 30
+            },
+            {
+              "param": "mod_amount_31",
+              "slot": 31
+            },
+            {
+              "param": "high_pass_32",
+              "slot": 32
+            }
+          ],
+          "level": 10,
+          "name": "EFM-CP",
+          "own_dsp": true,
+          "page": {
+            "name": "MDCP",
+            "title": "EFM-CP"
+          },
+          "position": null,
+          "short": "MDCP",
+          "type": null
+        }
+      },
+      "id": "cp",
+      "name": "EFM-CP",
+      "short": "MDCP"
+    },
+    {
+      "devices": {
+        "dn2": {
+          "clone_of": 0,
+          "knobs": [
+            {
+              "param": "snare_pitch",
+              "slot": 25
+            },
+            {
+              "param": "pitch_26",
+              "slot": 26
+            },
+            {
+              "param": "decay_27",
+              "slot": 27
+            },
+            {
+              "param": "snare_decay",
+              "slot": 28
+            },
+            {
+              "param": "mod_amount_29",
+              "slot": 29
+            },
+            {
+              "param": "high_pass_30",
+              "slot": 30
+            },
+            {
+              "param": "snare",
+              "slot": 31
+            },
+            {
+              "param": "snare_mod",
+              "slot": 32
+            }
+          ],
+          "level": 10,
+          "name": "EFM-RS",
+          "own_dsp": true,
+          "page": {
+            "name": "MDRS",
+            "title": "EFM-RS"
+          },
+          "position": null,
+          "short": "MDRS",
+          "type": null
+        }
+      },
+      "id": "rs",
+      "name": "EFM-RS",
+      "short": "MDRS"
+    },
+    {
+      "devices": {
+        "dn2": {
+          "clone_of": 0,
+          "knobs": [
+            {
+              "param": "mod_freq_25",
+              "slot": 25
+            },
+            {
+              "param": "pitch_26",
+              "slot": 26
+            },
+            {
+              "param": "decay_27",
+              "slot": 27
+            },
+            {
+              "param": "mod_decay_28",
+              "slot": 28
+            },
+            {
+              "param": "snap",
+              "slot": 29
+            },
+            {
+              "param": "feedback_30",
+              "slot": 30
+            },
+            {
+              "param": "mod_amount_31",
+              "slot": 31
+            }
+          ],
+          "level": 10,
+          "name": "EFM-CB",
+          "own_dsp": true,
+          "page": {
+            "name": "MDCB",
+            "title": "EFM-CB"
+          },
+          "position": null,
+          "short": "MDCB",
+          "type": null
+        }
+      },
+      "id": "cb",
+      "name": "EFM-CB",
+      "short": "MDCB"
+    },
+    {
+      "devices": {
+        "dn2": {
+          "clone_of": 0,
+          "knobs": [
+            {
+              "param": "mod_freq_25",
+              "slot": 25
+            },
+            {
+              "param": "pitch_26",
+              "slot": 26
+            },
+            {
+              "param": "decay_27",
+              "slot": 27
+            },
+            {
+              "param": "mod_decay_28",
+              "slot": 28
+            },
+            {
+              "param": "tremolo",
+              "slot": 29
+            },
+            {
+              "param": "tremolo_freq",
+              "slot": 30
+            },
+            {
+              "param": "mod_amount_31",
+              "slot": 31
+            },
+            {
+              "param": "feedback_32",
+              "slot": 32
+            }
+          ],
+          "level": 10,
+          "name": "EFM-HH",
+          "own_dsp": true,
+          "page": {
+            "name": "MDHH",
+            "title": "EFM-HH"
+          },
+          "position": null,
+          "short": "MDHH",
+          "type": null
+        }
+      },
+      "id": "hh",
+      "name": "EFM-HH",
+      "short": "MDHH"
+    },
+    {
+      "devices": {
+        "dn2": {
+          "clone_of": 0,
+          "knobs": [
+            {
+              "param": "mod_freq_25",
+              "slot": 25
+            },
+            {
+              "param": "pitch_26",
+              "slot": 26
+            },
+            {
+              "param": "decay_27",
+              "slot": 27
+            },
+            {
+              "param": "mod_decay_28",
+              "slot": 28
+            },
+            {
+              "param": "feedback_29",
+              "slot": 29
+            },
+            {
+              "param": "high_pass_30",
+              "slot": 30
+            },
+            {
+              "param": "mod_amount_31",
+              "slot": 31
+            }
+          ],
+          "level": 10,
+          "name": "EFM-CY",
+          "own_dsp": true,
+          "page": {
+            "name": "MDCY",
+            "title": "EFM-CY"
+          },
+          "position": null,
+          "short": "MDCY",
+          "type": null
+        }
+      },
+      "id": "cy",
+      "name": "EFM-CY",
+      "short": "MDCY"
     }
   ],
   "module": "khan/md",
@@ -270,6 +586,466 @@
         "name": "Click",
         "short": "CLIC",
         "slot": 32,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "pitch_26",
+        "max": 32512,
+        "min": 0,
+        "name": "Pitch",
+        "short": "PTCH",
+        "slot": 26,
+        "template": 213
+      },
+      {
+        "default": 14080,
+        "id": "decay_27",
+        "max": 32512,
+        "min": 0,
+        "name": "Decay",
+        "short": "DEC",
+        "slot": 27,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "noise",
+        "max": 32512,
+        "min": 0,
+        "name": "Noise",
+        "short": "NOIS",
+        "slot": 29,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "noise_decay",
+        "max": 32512,
+        "min": 0,
+        "name": "Noise Decay",
+        "short": "NDEC",
+        "slot": 30,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "mod_amount_31",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Amount",
+        "short": "MOD",
+        "slot": 31,
+        "template": 213
+      },
+      {
+        "default": 8192,
+        "id": "mod_freq_25",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Freq",
+        "short": "MFRQ",
+        "slot": 25,
+        "template": 213
+      },
+      {
+        "default": 11264,
+        "id": "mod_decay_28",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Decay",
+        "short": "MDEC",
+        "slot": 28,
+        "template": 213
+      },
+      {
+        "default": 4096,
+        "id": "high_pass_32",
+        "max": 32512,
+        "min": 0,
+        "name": "High-pass",
+        "short": "HPF",
+        "slot": 32,
+        "template": 213
+      },
+      {
+        "default": 21248,
+        "id": "pitch_26",
+        "max": 32512,
+        "min": 0,
+        "name": "Pitch",
+        "short": "PTCH",
+        "slot": 26,
+        "template": 213
+      },
+      {
+        "default": 10496,
+        "id": "decay_27",
+        "max": 32512,
+        "min": 0,
+        "name": "Decay",
+        "short": "DEC",
+        "slot": 27,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "claps",
+        "max": 32512,
+        "min": 0,
+        "name": "Claps",
+        "short": "CLPS",
+        "slot": 29,
+        "template": 213
+      },
+      {
+        "default": 9216,
+        "id": "clap_decay",
+        "max": 32512,
+        "min": 0,
+        "name": "Clap Decay",
+        "short": "CDEC",
+        "slot": 30,
+        "template": 213
+      },
+      {
+        "default": 8192,
+        "id": "mod_amount_31",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Amount",
+        "short": "MOD",
+        "slot": 31,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "mod_freq_25",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Freq",
+        "short": "MFRQ",
+        "slot": 25,
+        "template": 213
+      },
+      {
+        "default": 32512,
+        "id": "mod_decay_28",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Decay",
+        "short": "MDEC",
+        "slot": 28,
+        "template": 213
+      },
+      {
+        "default": 8192,
+        "id": "high_pass_32",
+        "max": 32512,
+        "min": 0,
+        "name": "High-pass",
+        "short": "HPF",
+        "slot": 32,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "pitch_26",
+        "max": 32512,
+        "min": 0,
+        "name": "Pitch",
+        "short": "PTCH",
+        "slot": 26,
+        "template": 213
+      },
+      {
+        "default": 8192,
+        "id": "decay_27",
+        "max": 32512,
+        "min": 0,
+        "name": "Decay",
+        "short": "DEC",
+        "slot": 27,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "mod_amount_29",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Amount",
+        "short": "MOD",
+        "slot": 29,
+        "template": 213
+      },
+      {
+        "default": 8192,
+        "id": "high_pass_30",
+        "max": 32512,
+        "min": 0,
+        "name": "High-pass",
+        "short": "HPF",
+        "slot": 30,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "snare",
+        "max": 32512,
+        "min": 0,
+        "name": "Snare",
+        "short": "SNAR",
+        "slot": 31,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "snare_pitch",
+        "max": 32512,
+        "min": 0,
+        "name": "Snare Pitch",
+        "short": "SPTC",
+        "slot": 25,
+        "template": 213
+      },
+      {
+        "default": 11264,
+        "id": "snare_decay",
+        "max": 32512,
+        "min": 0,
+        "name": "Snare Decay",
+        "short": "SDEC",
+        "slot": 28,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "snare_mod",
+        "max": 32512,
+        "min": 0,
+        "name": "Snare Mod",
+        "short": "SMOD",
+        "slot": 32,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "pitch_26",
+        "max": 32512,
+        "min": 0,
+        "name": "Pitch",
+        "short": "PTCH",
+        "slot": 26,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "decay_27",
+        "max": 32512,
+        "min": 0,
+        "name": "Decay",
+        "short": "DEC",
+        "slot": 27,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "snap",
+        "max": 32512,
+        "min": 0,
+        "name": "Snap",
+        "short": "SNAP",
+        "slot": 29,
+        "template": 213
+      },
+      {
+        "default": 24576,
+        "id": "feedback_30",
+        "max": 32512,
+        "min": 0,
+        "name": "Feedback",
+        "short": "FB",
+        "slot": 30,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "mod_amount_31",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Amount",
+        "short": "MOD",
+        "slot": 31,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "mod_freq_25",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Freq",
+        "short": "MFRQ",
+        "slot": 25,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "mod_decay_28",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Decay",
+        "short": "MDEC",
+        "slot": 28,
+        "template": 213
+      },
+      {
+        "default": 24576,
+        "id": "pitch_26",
+        "max": 32512,
+        "min": 0,
+        "name": "Pitch",
+        "short": "PTCH",
+        "slot": 26,
+        "template": 213
+      },
+      {
+        "default": 8192,
+        "id": "decay_27",
+        "max": 32512,
+        "min": 0,
+        "name": "Decay",
+        "short": "DEC",
+        "slot": 27,
+        "template": 213
+      },
+      {
+        "default": 0,
+        "id": "tremolo",
+        "max": 32512,
+        "min": 0,
+        "name": "Tremolo",
+        "short": "TREM",
+        "slot": 29,
+        "template": 213
+      },
+      {
+        "default": 0,
+        "id": "tremolo_freq",
+        "max": 32512,
+        "min": 0,
+        "name": "Tremolo Freq",
+        "short": "TFRQ",
+        "slot": 30,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "mod_amount_31",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Amount",
+        "short": "MOD",
+        "slot": 31,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "mod_freq_25",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Freq",
+        "short": "MFRQ",
+        "slot": 25,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "mod_decay_28",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Decay",
+        "short": "MDEC",
+        "slot": 28,
+        "template": 213
+      },
+      {
+        "default": 32512,
+        "id": "feedback_32",
+        "max": 32512,
+        "min": 0,
+        "name": "Feedback",
+        "short": "FB",
+        "slot": 32,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "pitch_26",
+        "max": 32512,
+        "min": 0,
+        "name": "Pitch",
+        "short": "PTCH",
+        "slot": 26,
+        "template": 213
+      },
+      {
+        "default": 18432,
+        "id": "decay_27",
+        "max": 32512,
+        "min": 0,
+        "name": "Decay",
+        "short": "DEC",
+        "slot": 27,
+        "template": 213
+      },
+      {
+        "default": 24576,
+        "id": "feedback_29",
+        "max": 32512,
+        "min": 0,
+        "name": "Feedback",
+        "short": "FB",
+        "slot": 29,
+        "template": 213
+      },
+      {
+        "default": 32512,
+        "id": "high_pass_30",
+        "max": 32512,
+        "min": 0,
+        "name": "High-pass",
+        "short": "HPF",
+        "slot": 30,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "mod_amount_31",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Amount",
+        "short": "MOD",
+        "slot": 31,
+        "template": 213
+      },
+      {
+        "default": 8192,
+        "id": "mod_freq_25",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Freq",
+        "short": "MFRQ",
+        "slot": 25,
+        "template": 213
+      },
+      {
+        "default": 16384,
+        "id": "mod_decay_28",
+        "max": 32512,
+        "min": 0,
+        "name": "Mod Decay",
+        "short": "MDEC",
+        "slot": 28,
         "template": 213
       }
     ]

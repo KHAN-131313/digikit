@@ -2,3 +2,9 @@
 #pragma once
 #define DK_MACHINE_ID_MD 0u
 #define DK_MACHINE_ID_XT 1u
+#define DK_MACHINE_ID_SD 2u
+#define DK_MACHINE_ID_CP 3u
+#define DK_MACHINE_ID_RS 4u
+#define DK_MACHINE_ID_CB 5u
+#define DK_MACHINE_ID_HH 6u
+#define DK_MACHINE_ID_CY 7u

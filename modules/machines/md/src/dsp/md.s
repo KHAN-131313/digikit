@@ -1285,7 +1285,7 @@ _my_note_on:
 .GLOBAL _mb_desc;
 .VAR _mb_desc = DK_MAGIC;
 .VAR _mb_desc1 = DK_MACHINE_V1;
-.VAR _mb_desc2 = 8;
+.VAR _mb_desc2 = 7;
 .VAR _mb_desc3 = DK_MAX_VOICES;
 .VAR _mb_desc4 = MB_STATE;
 .VAR _mb_desc5 = MB_CLEAR;
@@ -1303,7 +1303,7 @@ _my_note_on:
 .GLOBAL _my_desc;
 .VAR _my_desc = DK_MAGIC;
 .VAR _my_desc1 = DK_MACHINE_V1;
-.VAR _my_desc2 = 8;
+.VAR _my_desc2 = 7;
 .VAR _my_desc3 = DK_MAX_VOICES;
 .VAR _my_desc4 = MY_STATE;
 .VAR _my_desc5 = MY_CLEAR;
