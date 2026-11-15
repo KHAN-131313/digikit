@@ -10,9 +10,10 @@
  * machine for the selected track: the mark moves and the list stays open. YES on the marked row closes the list (the stock
  * view's rule). NO closes it.
  *
- * FILTER is a folder at the end of the list (not on a MIDI track, as the stock view shows no filters there): the filter types
- * of the stock view's second page, the track's type marked. YES sets the type and the folder stays open, YES on the marked
- * type closes the list, NO goes back to the machines.
+ * The filter types are a second tab, as in the stock view: LEFT and RIGHT switch between the machines and the filter types
+ * (core/ui tabs: the label and the page dots under the title). The list opens on the filter tab when the track shows its
+ * filter page, as the stock view does. The track's filter type is marked; YES sets a type and the tab stays open, YES on the
+ * marked type closes the list. On a MIDI track the tab says that MIDI tracks have no filters.
  *
  * The globals without static are read by the proofs by name. The module links without memcpy and memset. */
 #include <stdint.h>
@@ -24,6 +25,7 @@
 #include <dk_fw_page.h>
 #include <dk_fw_project.h>
 #include <dk_fw_view.h>
+#include "dkrt.h"
 
 #define ML_MAX 40
 
@@ -43,13 +45,13 @@ int32_t ML_TRACK;
 int32_t ML_CUR = -1;
 uint32_t ML_OPENS;
 int32_t ML_LAST = -1;
-/* The same for the FILTER folder: the filter type of each row, their number, the track's filter type, the last one a row
-   committed (-1: none), and 1 when the list was filled with the folder (0 on a MIDI track). */
+/* The same for the filter tab: the filter type of each row, their number (0 on a MIDI track), the track's filter type and
+   the last one a row committed (-1: none). ML_TAB is the tab that is open or was open last: 0 machines, 1 filter types. */
 int32_t ML_FTYPE[ML_MAX];
 uint32_t ML_FN;
 int32_t ML_FCUR = -1;
 int32_t ML_FLAST = -1;
-uint32_t ML_HAS_FILTER;
+uint32_t ML_TAB;
 
 static dk_ui *g_ui;
 static dk_ui_menu *g_menu;
@@ -123,7 +125,6 @@ static void pick_filter(void *arg, int32_t row)
     int32_t filter = ML_FTYPE[row];
     if (filter == ML_FCUR) { /* YES on the marked type closes the list */
         dk_ui_menu_close(g_filter);
-        dk_ui_menu_close(g_menu);
         return;
     }
     int32_t track;
@@ -150,13 +151,6 @@ static void pick(void *arg, int32_t row)
     dk_fw_project_set_track_type(kit, track, type, 1, 1);
     ML_LAST = type;
     ML_CUR = dk_fw_project_track_type(kit, track);
-    /* FILTER comes or goes with a MIDI machine: fill again then (a refill scrolls the cursor row to the top). Otherwise the
-       mark moves in place. */
-    uint32_t has = g_filter && !dk_fw_project_track_is_midi(kit, track);
-    if (has != ML_HAS_FILTER) {
-        dk_ui_menu_refresh(g_menu);
-        return;
-    }
     for (uint32_t i = 0; i < ML_N; i++)
         dk_ui_menu_check(g_menu, (int32_t)i, ML_TYPE[i] == ML_CUR);
 }
@@ -174,6 +168,14 @@ static void fill_filters(dk_ui_menu *m, void *arg)
 {
     (void)arg;
     char text[DK_UI_ROW];
+    int32_t track;
+    uint32_t kit = kit_and_track(&track);
+    if (dk_fw_project_track_is_midi(kit, track)) { /* the stock view's words */
+        ML_FN = 0;
+        dk_ui_menu_add_text(m, "NO FILTERS ON");
+        dk_ui_menu_add_text(m, "MIDI TRACKS.");
+        return;
+    }
     scan_filters();
     for (uint32_t i = 0; i < ML_FN; i++) {
         label(text, dk_fw_machine_filter_name(ML_FTYPE[i]));
@@ -194,16 +196,49 @@ static void fill(dk_ui_menu *m, void *arg)
         if (ML_TYPE[i] == ML_CUR)
             dk_ui_menu_check(m, (int32_t)i, 1);
     }
-    int32_t track;
-    uint32_t kit = kit_and_track(&track);
-    ML_HAS_FILTER = g_filter && !dk_fw_project_track_is_midi(kit, track);
-    if (ML_HAS_FILTER)
-        dk_ui_menu_add_folder(m, "FILTER", g_filter);
 }
 
-static const dk_ui_menu_desc desc = {.name = "MachineList", .title = "MACHINES", .flags = 0, .fill = fill};
+/* Shows tab `tab` (0 machines, 1 filter types) with the cursor on its marked row, and closes the other. */
+static void show(uint32_t tab)
+{
+    dk_ui_menu *on = tab ? g_filter : g_menu, *off = tab ? g_menu : g_filter;
+    int32_t row;
+    if (tab) {
+        scan_filters();
+        row = filter_row_of(ML_FCUR);
+    } else {
+        scan();
+        row = row_of(ML_CUR);
+    }
+    ML_TAB = tab;
+    dk_ui_menu_close(off);
+    dk_ui_menu_select(on, row < 0 ? 0 : row);
+    dk_ui_menu_open(on);
+}
+
+/* LEFT or RIGHT on a tab: `tab` is the tab the key came from. */
+static void side(void *tab, int32_t dir)
+{
+    uint32_t from = (uint32_t)(uintptr_t)tab;
+    if (from == 0 && dir > 0)
+        show(1);
+    else if (from == 1 && dir < 0)
+        show(0);
+}
+
+static const dk_ui_menu_desc desc = {
+    .name = "MachineList", .title = "MACHINES", .flags = 0, .fill = fill};
 static const dk_ui_menu_desc filter_desc = {
-    .name = "MachineListFilter", .title = "FILTER", .flags = 0, .fill = fill_filters};
+    .name = "MachineListFilter", .title = "MACHINES", .flags = 0, .fill = fill_filters};
+
+/* The first tab's label is the page key's name: SRC on the Digitakt II, SYN on the Digitone II. */
+static const char *machines_label(void)
+{
+    DkrtStatus st;
+    st.device = 0;
+    dkrt_status(&st);
+    return st.device == 1 ? "SRC" : "SYN";
+}
 
 uint32_t ml_push(uint32_t manager, const shared_ptr *view, uint32_t replace)
 {
@@ -214,17 +249,25 @@ uint32_t ml_push(uint32_t manager, const shared_ptr *view, uint32_t replace)
             g_menu = dk_ui_menu_new(g_ui, &desc);
             g_filter = dk_ui_menu_new(g_ui, &filter_desc);
         }
+        if (g_menu && g_filter &&
+            !(dk_ui_menu_tabs(g_menu, machines_label(), 0, 2, side, (void *)0) &&
+              dk_ui_menu_tabs(g_filter, "FLTR", 1, 2, side, (void *)1)))
+            g_filter = 0; /* no tabs: the machines alone */
     }
     if (!g_menu)
         return dk_fw_view_push_shared(manager, view, replace);
-    scan(); /* for the cursor: the open fills again */
-    int32_t row = row_of(ML_CUR);
-    dk_ui_menu_select(g_menu, row < 0 ? 0 : row);
-    if (g_filter) {
-        scan_filters();
-        row = filter_row_of(ML_FCUR);
-        dk_ui_menu_select(g_filter, row < 0 ? 0 : row);
+    /* the stock view opens on its filter page when the track shows its filter page (page 2) */
+    int32_t track;
+    uint32_t project = dk_fw_project_singleton();
+    const uint8_t *settings = (const uint8_t *)dk_fw_project_settings(project);
+    track = (int32_t)dk_fw_page_view_track(settings);
+    if (g_filter)
+        show(dk_fw_page_track_page(settings, track) == 2);
+    else {
+        scan();
+        int32_t row = row_of(ML_CUR);
+        dk_ui_menu_select(g_menu, row < 0 ? 0 : row);
+        dk_ui_menu_open(g_menu);
     }
-    dk_ui_menu_open(g_menu);
     return 1;
 }

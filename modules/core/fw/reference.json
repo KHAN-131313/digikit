@@ -6890,6 +6890,50 @@
     },
     {
       "at": {
+        "dn2-1.12": [
+          {
+            "addr": "0x40046ce2",
+            "len": 6
+          }
+        ],
+        "dt2-1.17": [
+          {
+            "addr": "0x4004ac9c",
+            "len": 6
+          }
+        ]
+      },
+      "bindings": {
+        "c": "dk_fw_page_track_page",
+        "rust": "dkfw::page::track_page"
+      },
+      "cpu": "cf",
+      "doc": "`int f(ProjectSettings *, int track)`: the parameter page a track shows (2 is the filter page). The Machine Selection view opens on its filter page when it is 2 (finding 130).",
+      "file": "devices/fw/page.toml",
+      "kind": "fn",
+      "mark": "D",
+      "name": "cf.page.fn.track_page",
+      "rule": {
+        "dn2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        },
+        "dt2": {
+          "kind": "cf_func",
+          "len": 6,
+          "offset": 0
+        }
+      },
+      "sig": "i32 (const u8 *settings, i32 track)",
+      "subsystem": "page",
+      "users": [
+        "core/machine-list"
+      ],
+      "was": []
+    },
+    {
+      "at": {
         "dn2-1.11": [
           {
             "addr": "0x40046bfe",
@@ -20012,7 +20056,7 @@
       "name": "midi"
     },
     {
-      "count": 34,
+      "count": 35,
       "cpu": "cf",
       "file": "devices/fw/page.toml",
       "meaning": "parameter and FX pages",

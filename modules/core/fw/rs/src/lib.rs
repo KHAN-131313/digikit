@@ -466,6 +466,12 @@ pub mod page {
     // cf.page.fn.source_turn: no sig yet
 
     unsafe extern "C" {
+        /// `int f(ProjectSettings *, int track)`: the parameter page a track shows (2 is the filter page). The Machine Selection view opens on its filter page when it is 2 (finding 130).
+        #[link_name = "cf.page.fn.track_page"]
+        pub fn track_page(settings: *const u8, track: i32) -> i32;
+    }
+
+    unsafe extern "C" {
         /// The track of a parameter page: called with the page's reference at view+0x74, it returns the track number (the stock code clamps it to 0 to 15 and uses it as the track index into the project's sound array, FUN_40035cca on the Digitakt II). Same function body on both devices (DT2 0x4004abb8, DN2 0x40046bfe).
         #[link_name = "cf.page.fn.view_track"]
         pub fn view_track(track_ref: *const u8) -> u32;

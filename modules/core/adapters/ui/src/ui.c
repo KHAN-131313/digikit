@@ -56,11 +56,12 @@ void dk_make_sp(shared_ptr *out, uint8_t *parent, uint8_t *view);
 #define KEY_YES2 0x31
 #define KEY_NO 12
 #define KEY_RIGHT 15
+#define KEY_LEFT 13
 #define MAX_CHOICE 32
 #define LIST_ROWS 8
-#define LIST_COLS 20 /* characters of a list row that the label of a toggle or value row fills */
-#define MARK_DOT_X 0x49    /* a plain menu row's mark: its left edge from the row's draw origin */
-#define MARK_FOLDER_X 0    /* the folder sign: at the draw origin (the icon column of a stock row) */
+#define LIST_COLS 20    /* characters of a list row that the label of a toggle or value row fills */
+#define MARK_DOT_X 0x49 /* a plain menu row's mark: its left edge from the row's draw origin */
+#define MARK_FOLDER_X 0 /* the folder sign: at the draw origin (the icon column of a stock row) */
 
 enum { K_MENU, K_TEXT, K_LIST, K_PANEL };
 enum { R_ACTION, R_SUBMENU, R_TEXT, R_TOGGLE, R_VALUE };
@@ -88,7 +89,14 @@ struct dk_ui_menu {
     dk_ui_menu *panel; /* a list: its side panel */
     row *rows;
     int n, cap;
+    /* tabs of a plain menu (dk_ui_menu_tabs): the label, this menu's place among `tab_count` tabs, and what LEFT and RIGHT call */
+    const char *tab_label;
+    uint8_t tab_index, tab_count;
+    dk_ui_action_fn *tab_side;
+    void *tab_arg;
 };
+
+#define VMV_EXT_AT sizeof(VerticalMenuView) /* our word behind a VerticalMenuView: the dk_ui_menu */
 
 /* std::function<...> as the firmware lays it out: 8 bytes of storage, manager, invoker. */
 typedef struct fn {
@@ -522,9 +530,12 @@ static void ui_value(dk_ui_menu *m, const char *text, int *value, int min, int m
 
 static uint32_t g_text_vt[VT_WORDS];
 static uint32_t g_list_vt[VT_WORDS];
+static uint32_t g_tabs_vt[VT_WORDS];
 static uint32_t g_text_stock_paint;
 static uint32_t g_list_stock_paint;
 static uint32_t g_list_stock_key;
+static uint32_t g_tabs_stock_paint;
+static uint32_t g_tabs_stock_key;
 
 /* The stock View vtable slots 2 and 4 of these views are thunks that start with `moveq #-0x38,d0` (0x70c8). */
 static int is_thunk(uint32_t addr)
@@ -620,6 +631,49 @@ static uint32_t list_key(uint8_t *view, uint8_t *ev)
     return ((uint32_t (*)(uint8_t *, uint8_t *))g_list_stock_key)(view, ev);
 }
 
+/* A plain menu with tabs (dk_ui_menu_tabs). The paint adds, under the title, what the firmware's Machine Selection view shows
+   there (finding 130): the tab's label between two arrows, and a row of dots, a 3 x 3 box for this tab and one pixel for each
+   other one, at that view's coordinates (y counts from the bottom). LEFT and RIGHT call the side function with -1 or +1. */
+/* The font object the firmware draws small text with (the stock Machine Selection view draws its title and page arrows with it).
+   A VerticalMenuView holds font data at +0xa8, not a font object, so text drawn with that does not show. This anchor is the address
+   operand of a pea in the knob draw; it is four bytes wide. */
+extern const uint32_t ui_small_font __asm__("cf.page.data.native_font_operand");
+
+static void tabs_paint(uint8_t *view, uint8_t *canvas)
+{
+    uint8_t *obj = view - VIEW_AT;
+    dk_ui_menu *m = *(dk_ui_menu **)(obj + VMV_EXT_AT);
+    ((void (*)(uint8_t *, uint8_t *))g_tabs_stock_paint)(view, canvas);
+    uint8_t *font = (uint8_t *)ui_small_font;
+    if (!m || !m->tab_count || !font)
+        return;
+    if (m->tab_index > 0)
+        dk_fw_text_draw_fmt(canvas, font, 0x07, 0x0e, 2, "\x8b");
+    if (m->tab_index + 1 < m->tab_count)
+        dk_fw_text_draw_fmt(canvas, font, 0x28, 0x0e, 2, "\x9b");
+    dk_fw_text_draw_fmt(canvas, font, 0x18, 0x0c, 2, "%s", m->tab_label ? m->tab_label : "");
+    int x = 0x18 - (7 * (m->tab_count - 1)) / 2;
+    for (int k = 0; k < m->tab_count; k++, x += 7) {
+        if (k == m->tab_index)
+            dk_fw_draw_fill_rect(canvas, x - 1, 4, x + 1, 6, -1);
+        else
+            dk_fw_draw_fill_rect(canvas, x, 5, x, 5, -1);
+    }
+}
+
+static uint32_t tabs_key(uint8_t *view, uint8_t *ev)
+{
+    uint8_t *obj = view - VIEW_AT;
+    dk_ui_menu *m = *(dk_ui_menu **)(obj + VMV_EXT_AT);
+    uint32_t id = read_u32(ev + 0xc), fl = read_u32(ev + 0x10);
+    if (m && m->tab_count && (id == KEY_LEFT || id == KEY_RIGHT)) {
+        if ((fl & 1) && m->tab_side)
+            m->tab_side(m->tab_arg, id == KEY_RIGHT ? 1 : -1);
+        return 1;
+    }
+    return ((uint32_t (*)(uint8_t *, uint8_t *))g_tabs_stock_key)(view, ev);
+}
+
 /* Copies the View vtable of `obj` into `copy` and replaces slot 4 (and slot 2 when key is not 0). 0 when a slot is not the thunk. */
 static int own_vtable(uint8_t *obj, uint32_t *copy, uint32_t *stock_paint, uint32_t *stock_key,
                       void *paint, void *key)
@@ -672,10 +726,11 @@ static int build_menu(dk_ui_menu *m, const dk_ui_menu_desc *d)
         pm->owner = m;
         m->panel = pm;
     } else {
-        obj = fw_new(sizeof(VerticalMenuView));
+        obj = fw_new(VMV_EXT_AT + 8);
         if (!obj)
             goto fail;
         dk_fw_menu_vertical_menu_view_ctor(obj, d->name, 8, &title, 0);
+        *(dk_ui_menu **)(obj + VMV_EXT_AT) = m;
         m->obj = obj;
         m->font = *(uint8_t **)(obj + VMV_FONT_AT);
         if (m->kind == K_TEXT &&
@@ -1047,6 +1102,24 @@ void dk_ui_menu_add_action(dk_ui_menu *m, const char *text, dk_ui_action_fn *run
 void dk_ui_menu_add_submenu(dk_ui_menu *m, const char *text, dk_ui_menu *sub)
 {
     ui_submenu(m, text, sub);
+}
+
+/* For other core modules: tabs for a plain menu. 0 when the menu's vtable is not the expected one (the menu stays as it was). */
+int32_t dk_ui_menu_tabs(dk_ui_menu *m, const char *label, int32_t index, int32_t count,
+                        dk_ui_action_fn *side, void *arg)
+{
+    if (!m || !m->obj || m->kind != K_MENU || index < 0 || count < 1 || index >= count || count > 8)
+        return 0;
+    if (!own_vtable(m->obj, g_tabs_vt, &g_tabs_stock_paint, &g_tabs_stock_key, (void *)tabs_paint,
+                    (void *)tabs_key))
+        return 0;
+    m->tab_label = label;
+    m->tab_index = (uint8_t)index;
+    m->tab_count = (uint8_t)count;
+    m->tab_side = side;
+    m->tab_arg = arg;
+    invalidate(m);
+    return 1;
 }
 
 /* For other core modules: a submenu row with the folder sign (a plain menu only; elsewhere a plain submenu row). */

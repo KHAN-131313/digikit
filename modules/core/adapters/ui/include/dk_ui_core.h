@@ -11,6 +11,11 @@ dk_ui *dk_ui_core_handle(void);
    Call it from a hook that rebuilds the stock menu; stock_menu is the menu object the hook gets. */
 void dk_ui_stock_row(uint8_t *stock_menu, const char *text, dk_ui_action_fn *fn, void *arg);
 
+/* Tabs for a plain menu, in the look of the firmware's Machine Selection view: under the title, `label` between two arrows and a
+   row of `count` dots, the one at `index` larger. LEFT and RIGHT call side(arg, -1) and side(arg, +1); the caller closes this
+   menu and opens the other tab's. `label` is kept, not copied. Returns 1, or 0 when the menu cannot take tabs. */
+int32_t dk_ui_menu_tabs(dk_ui_menu *m, const char *label, int32_t index, int32_t count,
+                        dk_ui_action_fn *side, void *arg);
 /* A submenu row with a folder sign in the icon column (a plain menu; in a list it is a plain submenu row). */
 void dk_ui_menu_add_folder(dk_ui_menu *m, const char *text, dk_ui_menu *sub);
 /* In a plain menu dk_ui_menu_check(m, row, on) puts a mark (a dot at the right end) on a row and dk_ui_menu_checked reads it:

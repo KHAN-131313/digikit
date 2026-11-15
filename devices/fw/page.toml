@@ -352,7 +352,7 @@ cpu = "cf"
 rule.dt2 = { kind = "cf_func", hash = "763528900f7319c8f10026dea9cf938c", offset = 0xdc, len = 4 }
 rule.dn2 = { kind = "cf_func", hash = "d9f47657c8c7d0976980dee490d55065", offset = 0xdc, len = 4 }
 mark = "D"
-users = ["core/machines"]
+users = ["core/machines", "core/ui"]
 doc = "Address operand of pea at ParameterPageView generic knob draw+0xda; the operand points to the live RAM font object. Hash the code operand, not mutable RAM. Used only through bounded canvas text."
 
 [[hook]]
@@ -376,3 +376,13 @@ devices = ["dt2", "dn2"]
 mark = "D"
 users = ["core/machines"]
 doc = "Encoder code entry: opt-in page returns its declarative code (zero for LOCAL/unused); other mappings resume unchanged."
+
+[[fn]]
+name = "cf.page.fn.track_page"
+cpu = "cf"
+sig = "i32 (const u8 *settings, i32 track)"
+rule = { kind = "cf_func", hash = "b926074fed5a621e3386a0299797392c", offset = 0x0, len = 6 }
+mark = "D"
+users = ["core/machine-list"]
+doc = "`int f(ProjectSettings *, int track)`: the parameter page a track shows (2 is the filter page). The Machine Selection view opens on its filter page when it is 2 (finding 130)."
+

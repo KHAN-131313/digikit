@@ -17,8 +17,11 @@ stock view already shows its second list (filter types) as a sideways page, whic
 ## Behaviour
 
 - FUNC + SYN (DN2) or FUNC + SRC (DT2) opens the list for the selected track, as now.
-- Rows: the stock machines, then run-time machines that are in no folder, then one row per folder. On the DN2 a `FILTER` folder
-  holds the filter types (the stock view's second page).
+- Rows: the stock machines, then run-time machines that are in no folder, then one row per folder.
+- The filter types are a second tab, as in the stock view (decided by Khan): LEFT and RIGHT switch between the machines tab
+  (labelled `SYN` on the DN2, `SRC` on the DT2) and the `FLTR` tab, with the label and page dots under the title. The list
+  opens on the filter tab when the track shows its filter page. On a MIDI track the filter tab shows the stock words
+  `NO FILTERS ON` / `MIDI TRACKS.`.
 - The cursor starts on the track's machine (or on the folder that holds it). The track's machine carries a marker.
 - YES on a machine sets it for the track: the marker moves and the list stays open (decided by Khan, as the stock view does).
   YES on the marked machine closes the list (the stock rule). YES on a folder opens it.
@@ -29,7 +32,7 @@ stock view already shows its second list (filter types) as a sideways page, whic
 ## Look
 
 Built on core/ui, which draws with the firmware's own views. The plain menu (the SETTINGS look: title at the left, large rows)
-is the closest to the stock screens. Each row has a draw function (finding 71, MenuItem `+0x2c`), so a row can carry a marker,
+is the closest to the stock screens; it need not match the stock screen exactly, similar is enough (Khan). Each row has a draw function (finding 71, MenuItem `+0x2c`), so a row can carry a marker,
 a folder sign or a small icon. Wanted later (Khan): closer to the stock machine screen, and a sign that the list is digikit's
 (an icon or text). First version: plain menu, marker on the track's machine, a sign on folder rows.
 
@@ -45,7 +48,10 @@ a folder sign or a small icon. Wanted later (Khan): closer to the stock machine 
 3. [x] core/ui: a row mark (`dk_ui_menu_check` on a plain menu) and a folder row (`dk_ui_menu_add_folder`), drawn by the row
    draw function. [ ] Host tests in `modules/core/adapters/ui/host`.
 4. [x] The list proper: rows from the machine list getter (so the registry's filter and order apply), mark and cursor on
-   the track's machine, stays open after a commit, a `FILTER` folder on both devices (not on a MIDI track).
+   the track's machine, stays open after a commit. The filter types as a second tab (`dk_ui_menu_tabs` in core/ui,
+   `cf.page.fn.track_page` for opening on it), run on both devices in the emulator: LEFT and RIGHT, a pick on each tab, opening
+   on the filter tab, the MIDI text. A first version put them in a `FILTER` folder row; that was replaced by the tab, which is
+   what the stock view does.
 5. [ ] Folders: a module names a folder for its machines (a builder call `dk_module_ctx_folder(ctx, "MD")` or a manifest key;
    decide), the registry keeps it per machine row, the list groups by it. SDK, runtime and tests.
 6. [ ] Tests: host tests of the list logic; a device test on both devices (open, pick, marker, folder in and out, NO).

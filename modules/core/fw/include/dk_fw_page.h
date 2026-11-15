@@ -17,6 +17,8 @@ uint8_t * dk_fw_page_native_track_sound(uint8_t *sounds, uint32_t track) __asm__
 /* cf.page.fn.source_draw: no sig yet */
 /* cf.page.fn.source_key: no sig yet */
 /* cf.page.fn.source_turn: no sig yet */
+/* `int f(ProjectSettings *, int track)`: the parameter page a track shows (2 is the filter page). The Machine Selection view opens on its filter page when it is 2 (finding 130). */
+int32_t dk_fw_page_track_page(const uint8_t *settings, int32_t track) __asm__("cf.page.fn.track_page");
 /* The track of a parameter page: called with the page's reference at view+0x74, it returns the track number (the stock code clamps it to 0 to 15 and uses it as the track index into the project's sound array, FUN_40035cca on the Digitakt II). Same function body on both devices (DT2 0x4004abb8, DN2 0x40046bfe). */
 uint32_t dk_fw_page_view_track(const uint8_t *track_ref) __asm__("cf.page.fn.view_track");
 /* The pointer operand (4 bytes) of `move.l #list,D0` in the FX view builder: the rodata list {12} of the track FX key's one-page view. core/fxpages substitutes its own list. */
