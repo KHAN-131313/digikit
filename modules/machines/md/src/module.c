@@ -1,4 +1,5 @@
-/* The machines of khan/md, declared by builder calls in init, in the folder MD of the machine list. The DSP (src/dsp/md.s)
+/* The machines of khan/md, declared by builder calls in init. On the machine list they sit in the folder Machinedrum (titled MD), one folder
+   per family below it (EFM; TRX and the others when they come). The DSP (src/dsp/md.s)
    reads the words in the Machinedrum's order; the defaults are the Machinedrum's. Knob orders: the fit scripts' (research).
    EFM-BD: PTCH DEC RAMP RDEC MOD MFRQ MDEC MFB (DSP prefix md).
    EFM-XT: an FM tom, EFM-BD's voice over two octaves through a high-pass; CLIC starts the carrier further in (mx).
@@ -13,10 +14,11 @@ typedef struct md_knob {
     uint32_t def;
 } md_knob;
 
-static void add(dk_module_ctx *ctx, uint32_t id, const char *name, const char *short_name,
-                const md_knob *k, unsigned n)
+static void add(dk_module_ctx *ctx, uint32_t id, const char *family, const char *name,
+                const char *short_name, const md_knob *k, unsigned n)
 {
     dk_machine *m = dk_module_ctx_add_machine(ctx, id, name, short_name);
+    dk_machine_folder(m, family);
     dk_page *p = dk_machine_add_page(m, name, short_name);
     for (unsigned i = 0; i < n; i++)
         dk_page_add_param(p, k[i].name, k[i].short_name, k[i].def);
@@ -65,15 +67,16 @@ static const md_knob efm_cy[7] = {
 
 static int32_t init(dk_module_ctx *ctx)
 {
-    dk_module_ctx_folder(ctx, "MD"); /* the machine list shows them in one MD folder row */
-    add(ctx, DK_MACHINE_ID_MD, "EFM-BD", "MDKHAN", efm_bd, 8);
-    add(ctx, DK_MACHINE_ID_XT, "EFM-XT", "MDXT", efm_xt, 8);
-    add(ctx, DK_MACHINE_ID_SD, "EFM-SD", "MDSD", efm_sd, 8);
-    add(ctx, DK_MACHINE_ID_CP, "EFM-CP", "MDCP", efm_cp, 8);
-    add(ctx, DK_MACHINE_ID_RS, "EFM-RS", "MDRS", efm_rs, 8);
-    add(ctx, DK_MACHINE_ID_CB, "EFM-CB", "MDCB", efm_cb, 7);
-    add(ctx, DK_MACHINE_ID_HH, "EFM-HH", "MDHH", efm_hh, 8);
-    add(ctx, DK_MACHINE_ID_CY, "EFM-CY", "MDCY", efm_cy, 7);
+    dk_module_ctx_folder(
+        ctx, "Machinedrum (MD)"); /* the machine list: Machinedrum > EFM > the machines */
+    add(ctx, DK_MACHINE_ID_MD, "EFM", "EFM-BD", "MDKHAN", efm_bd, 8);
+    add(ctx, DK_MACHINE_ID_XT, "EFM", "EFM-XT", "MDXT", efm_xt, 8);
+    add(ctx, DK_MACHINE_ID_SD, "EFM", "EFM-SD", "MDSD", efm_sd, 8);
+    add(ctx, DK_MACHINE_ID_CP, "EFM", "EFM-CP", "MDCP", efm_cp, 8);
+    add(ctx, DK_MACHINE_ID_RS, "EFM", "EFM-RS", "MDRS", efm_rs, 8);
+    add(ctx, DK_MACHINE_ID_CB, "EFM", "EFM-CB", "MDCB", efm_cb, 7);
+    add(ctx, DK_MACHINE_ID_HH, "EFM", "EFM-HH", "MDHH", efm_hh, 8);
+    add(ctx, DK_MACHINE_ID_CY, "EFM", "EFM-CY", "MDCY", efm_cy, 7);
     return DK_OK;
 }
 

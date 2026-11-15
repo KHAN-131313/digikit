@@ -179,6 +179,8 @@ devices = ["dt2", "dn2"]
 
 # Parameters: codes follow the order of the entries (params.dp0.index ...), so the run-time module's records are given the
 # next free one. The template only has to be a valid stock code (the value-class object lookup uses it).
+# The number of entries (64 a device) is a soft limit of ours, not of the firmware: to raise it add entries here and follow
+# sdk/sdk.toml [limits.max] param_rows.
 [[entry]]
 registry = "params"
 id = "dp0"

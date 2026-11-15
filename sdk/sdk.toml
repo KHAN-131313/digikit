@@ -604,7 +604,15 @@ service = "machines"
 since = "0.8.1"
 context = "init"
 sig = "void (dk_module_ctx *ctx, const char *name)"
-doc = "Name the folder this module's machines sit in on the machine list (core/machine-list): one folder row that opens to them. `name` has 1 to 15 characters; the list shows it in upper case, and modules that name the same folder share it. The machines of a module that names none sit at the top of the list. A second call replaces the first; an empty or too long name is an error reported when `init` returns."
+doc = "Name the folder this module's machines sit in on the machine list (core/machine-list): one folder row that opens to them. `name` has 1 to 31 characters; '/' nests folders (\"Machinedrum/EFM\"), and no name in it may be empty. The list shows names in upper case; modules that name the same path share the folder. The machines of a module that names none sit at the top of the list. A second call replaces the first; a bad name is an error reported when `init` returns."
+
+[[import]]
+name = "dk_machine_folder"
+service = "machines"
+since = "0.8.1"
+context = "init"
+sig = "void (dk_machine *m, const char *path)"
+doc = "Put machine `m` in a folder below its module's folder (dk_module_ctx_folder), for example the machine's family: \"EFM\" puts it in Machinedrum > EFM. `path` follows the rules of dk_module_ctx_folder. A machine without it sits in the module's folder. A second call replaces the first; a bad path is an error reported when `init` returns."
 
 [[import]]
 name = "dk_module_ctx_add_fx"
@@ -1639,17 +1647,25 @@ RECORD_BYTES = { id = 4 }     # arena bytes of the record block `init` commits
 DSP_COST_VOICE = { id = 5, capacity = "DSP_COST" }   # DSP instructions per block of one voice of a machine: the worst steady block `module:check` measured (docs/plans/sdk.md section 9)
 DSP_COST_FX = { id = 6, capacity = "DSP_COST" }   # DSP instructions per block of the effects of a module (their worst process calls, summed)
 
+# Which of these limits are hard. Most are digikit's own table and buffer sizes, not limits of the firmware or the hardware
+# (docs/findings/100-module-limits.md section 4: "table sizes of ours; the firmware has no such cap"). Raise one when a module
+# needs more. Each line says which kind it is:
+#   soft    our own size: raise it here, in every devices/*.toml [limits], and in the places the line names; it costs RAM
+#   format  part of a stored record or file format: raising it is a format change (a runtime MINOR, a record or store version)
+#   bound   set by the firmware or the hardware; the line says by what
+# A raise is checked like any change: the owners' tests and a run on both devices (param_rows 16 -> 64 and max_records 32 -> 96,
+# 2026-11-15, are an example: core/dynreg test-device-all, core/runtime rust-tests, patchkit devdata).
 [limits.max]        # contract maxima (capacity plan, docs/plans/capacity-isolation.md): a device's `[limits]` value in devices/*.toml may not exceed them
                     # (`patchkit gen` refuses it). Names are the keys of `[limits]` and, for dsp_area_bytes, of `[digikit]`.
-modules = 8         # module records: the selection record holds SEL_MAX = 8 paths (record format, modules/core/runtime/sdk/src/lib.rs)
-map_entries = 8     # sticky machine-type map entries: MAP_N = 8 (record format: bytes 28-31 and 480-507)
-fx_slots = 4        # effects in the chain: DK_FX_MAX of [fx] (kept equal by packages/patchkit/tests/sdkgen.rs)
-send_slots = 2      # effects on a send bus: the Sound array's free indices a send page can use, [fx] send_indices (at most SEND_MAX = 2 in core/fxpages)
-dsp_area_bytes = 524288  # the 17-bit word offset of a core/dsp-link chunk reaches 2^17 words
-param_rows = 64     # parameter rows core/dynreg reserves (tied to its manifest by packages/patchkit/tests/devdata.rs)
-page_rows = 8       # page rows core/dynreg reserves (Digitone II)
-machine_rows = 8    # run-time machine types core/dynreg reserves (tied to its manifest by packages/patchkit/tests/devdata.rs)
-stage_bytes = 65536  # the runtime's staging buffer: the largest .dkm file (patchkit refuses a larger one)
+modules = 8         # format: module records: the selection record holds SEL_MAX = 8 paths (record format, modules/core/runtime/sdk/src/lib.rs)
+map_entries = 8     # format: sticky machine-type map entries: MAP_N = 8 (record format: bytes 28-31 and 480-507); grows with machine_rows
+fx_slots = 4        # ours as far as known (core/dynfx effect rows, core/fxpages parameter rows); read findings 61 to 67 first: effects in the chain, DK_FX_MAX of [fx] (kept equal by packages/patchkit/tests/sdkgen.rs)
+send_slots = 2      # ours as far as known (SEND_MAX = 2 in core/fxpages), within the free indices of the kit's Fx array ([fx] send_indices): effects on a send bus
+dsp_area_bytes = 524288  # format: the 17-bit word offset of a core/dsp-link chunk reaches 2^17 words; a wider field allows more. Bound by the free L2 (finding 100: about 900 KiB DT2, 450 KiB DN2)
+param_rows = 64     # soft: parameter rows core/dynreg reserves: its entries dp0.., dynreg.s word 104, core/params registry `max`, devdata.rs; about 88 B of RAM a row
+page_rows = 8       # soft: page rows core/dynreg reserves (Digitone II): its entries dpg0..; 84 B a row
+machine_rows = 8    # soft, in several places: run-time machine types core/dynreg reserves (entries dyn16.., core/machines' tables, devdata.rs); about 154 B a type. More than 8 also needs map_entries (format). Bound far above: the firmware keeps a track's type in one byte
+stage_bytes = 65536  # soft: the runtime's staging buffer, the largest .dkm file (patchkit refuses a larger one); arena RAM (tight on the DT2: 1.33 MiB in all)
 
 [limits.format]     # format limits of the `.dkm` loader (packages/dkneeds, modules/core/runtime/src/rs/src/loader.rs, dsp.rs, arena.rs); generated into every language
                     # (`patchkit gen`: dkneeds::NAME, dkproto.py, gen_proto.ts). Also generated, from other keys: MAX_VOICES ([limits.max] machine_rows) and MAX_FX ([limits.max] fx_slots).
@@ -1662,7 +1678,7 @@ dkm_header = 160    # 0xa0: the header of a `.dkm` (init, fini, menu and tick of
 # machine keys, effect ids and the keys of a service's kind), 4 KINDS (kind, length, handler entry: a service module's kinds), 5 SLOTS, 6 HOOKS, 7 EXPORTS, 8 RESOURCES.
 # A module that needs and keeps nothing has the 8-byte head. A file with no table, or another magic, is the format of runtime 0.7: E_CONTRACT.
 dsp_header = 64     # 0x40: the header of the DSP section
-max_records = 96    # records of the `register` table
+max_records = 96    # soft: records of the `register` table (machines + pages + parameters of one module); raise with collect_bytes, about 92 B a record of the arena block `init` uses
 max_relocs = 4096   # ColdFire relocations
 max_imports = 32    # imports of the DSP section
 max_cf_imports = 64  # imports of the ColdFire import table (a different table from the DSP section's)
@@ -1673,7 +1689,7 @@ dsp_slack = 8       # bytes the DSP range may start before its alignment
 arena_hdr = 16      # the arena's block header
 table_magic = 1145787458  # 0x444b5442 "DKTB": the first word of the header table of a `.dkm` (packages/dkneeds/src/keys.rs); another word is a file of the 0.7 format
 table_version = 1   # the version of the header table (a change is a MINOR of the runtime)
-collect_bytes = 13110  # `size_of::<Collect>()` of the runtime's collect.rs on the ColdFire: the builder calls of one `init`, held in an arena block until the commit (the runtime checks it at compile time; the host's struct has more padding)
+collect_bytes = 13382  # `size_of::<Collect>()` of the runtime's collect.rs on the ColdFire: the builder calls of one `init`, held in an arena block until the commit (the runtime checks it at compile time; the host's struct has more padding)
 
 # The settings store (docs/design/digikit-store.md, "The settings record"): one record in two copies in the store range, next to the selection
 # record. `sectors` is the size of ONE copy; the runtime keeps the record in RAM and writes the copy that is not current. The area is part of the

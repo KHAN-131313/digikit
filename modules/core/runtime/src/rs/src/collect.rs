@@ -28,8 +28,8 @@ const MAX_F: usize = crate::dsp::MAX_FX;
 const MAX_PG: usize = 16;
 const MAX_PA: usize = MAX_RECORDS;
 const TEXT: usize = 24;
-/// The bytes of a folder name (`dk_module_ctx_folder`) with its NUL: 15 characters.
-pub const FOLDER: usize = 16;
+/// The bytes of a folder path (`dk_module_ctx_folder`, `dk_machine_folder`) with its NUL: 31 characters, names joined by '/'.
+pub const FOLDER: usize = 32;
 /// The characters of an effect's short name (the tab label of its page record).
 const FX_SHORT: usize = 3;
 const KNOBS: usize = limits::PAGE_KNOBS;
@@ -165,6 +165,8 @@ pub struct Collect {
     pub decl: Declare,
     /// the folder its machines sit in on the machine list (`dk_module_ctx_folder`; empty: none), kept per module at the commit
     pub folder: [u8; FOLDER],
+    /// each machine's folder below the module's (`dk_machine_folder`, by machine index; empty: none), kept per type at the commit
+    pub subs: [[u8; FOLDER]; MAX_M],
     gbytes: [u8; G_BYTES],
     gat: usize,
     records: usize,
@@ -176,7 +178,7 @@ const _: () = assert!(core::mem::size_of::<Collect>() == dkneeds::COLLECT_BYTES 
 
 impl Collect {
     pub const fn new() -> Collect {
-        Collect { err: 0, machines: [M0; MAX_M], nm: 0, fxs: [F0; MAX_F], nf: 0, pages: [G0; MAX_PG], np: 0, params: [P0; MAX_PA], nparam: 0, grecs: [GRec { kind: 0, at: 0, len: 0 }; MAX_G], ng: 0, decl: Declare::new(), folder: [0; FOLDER], gbytes: [0; G_BYTES], gat: 0, records: 0 }
+        Collect { err: 0, machines: [M0; MAX_M], nm: 0, fxs: [F0; MAX_F], nf: 0, pages: [G0; MAX_PG], np: 0, params: [P0; MAX_PA], nparam: 0, grecs: [GRec { kind: 0, at: 0, len: 0 }; MAX_G], ng: 0, decl: Declare::new(), folder: [0; FOLDER], subs: [[0; FOLDER]; MAX_M], gbytes: [0; G_BYTES], gat: 0, records: 0 }
     }
 
     /// `dk_record_add`: keep one record of a generic kind (`[records.kinds]` `generic = true`; the typed kinds have their builders). The body is
@@ -244,17 +246,23 @@ impl Collect {
         &mut self.machines[i] as *mut CMachine as *mut u8
     }
 
-    /// `dk_module_ctx_folder`: the folder of the module's machines. A second call replaces the first; an empty or too long name keeps the
-    /// error (the folder stays as it was). Not a record: it takes no room in the collection.
+    /// `dk_module_ctx_folder`: the folder of the module's machines. A second call replaces the first; a bad path (see `folder_path`)
+    /// keeps the error and the folder stays as it was. Not a record: it takes no room in the collection.
     pub fn set_folder(&mut self, name: *const u8) {
-        let mut f = [0u8; FOLDER];
-        let mut e = 0;
-        unsafe { put_text(&mut f, name, &mut e) };
-        if e != 0 {
-            self.fail(e);
-            return;
+        match folder_path(name) {
+            Ok(f) => self.folder = f,
+            Err(e) => self.fail(e),
         }
-        self.folder = f;
+    }
+
+    /// `dk_machine_folder`: the folder of one machine, below the module's. A handle that is no machine of this collection (the
+    /// placeholder) changes nothing; a bad path keeps the error.
+    pub fn machine_folder(&mut self, m: *mut u8, path: *const u8) {
+        let Some(i) = find(&self.machines[..self.nm], m) else { return };
+        match folder_path(path) {
+            Ok(f) => self.subs[i] = f,
+            Err(e) => self.fail(e),
+        }
     }
 
     pub fn add_fx(&mut self, index: u32, name: *const u8, short: *const u8) -> *mut u8 {
@@ -474,6 +482,30 @@ fn find<T>(a: &[T], h: *mut u8) -> Option<usize> {
     Some((at - base) / size)
 }
 
+/// A folder path: 1 to 31 characters, names joined by '/', none of them empty (no '/' at either end, no "//"). E_FORMAT otherwise.
+fn folder_path(src: *const u8) -> Result<[u8; FOLDER], i32> {
+    let mut f = [0u8; FOLDER];
+    let mut e = 0;
+    unsafe { put_text(&mut f, src, &mut e) };
+    if e != 0 {
+        return Err(e);
+    }
+    let n = f.iter().position(|&b| b == 0).unwrap_or(FOLDER);
+    let mut prev = b'/';
+    let mut i = 0;
+    while i < n {
+        if f[i] == b'/' && prev == b'/' {
+            return Err(E_FORMAT);
+        }
+        prev = f[i];
+        i += 1;
+    }
+    if prev == b'/' {
+        return Err(E_FORMAT);
+    }
+    Ok(f)
+}
+
 unsafe fn put_text(dst: &mut [u8], src: *const u8, err: &mut i32) {
     if src.is_null() {
         *err = E_FORMAT;
@@ -533,6 +565,11 @@ pub unsafe extern "C" fn dk_module_ctx_folder(ctx: *mut u8, name: *const u8) {
         if crate::entry::is_ctx(ctx) {
             c.set_folder(name);
         }
+    }
+}
+pub unsafe extern "C" fn dk_machine_folder(m: *mut u8, path: *const u8) {
+    if let Some(c) = active() {
+        c.machine_folder(m, path);
     }
 }
 pub unsafe extern "C" fn dk_module_ctx_add_fx(ctx: *mut u8, index: u32, name: *const u8, short_name: *const u8) -> *mut u8 {
@@ -1402,6 +1439,27 @@ static mut FOLDERS: [[u8; FOLDER]; MAX_MODULES] = [[0; FOLDER]; MAX_MODULES];
 /// Keep the folder of module `rec` (`Collect::folder`) after its commit.
 pub unsafe fn keep_folder(rec: usize, folder: &[u8; FOLDER]) {
     (*addr_of_mut!(FOLDERS))[rec] = *folder;
+}
+
+/// Each run-time machine type's own folder below its module's (`dk_machine_folder`; empty: none), by type - first. Written at the
+/// commit for every machine, so a type another module fills later gets its own (or none).
+static mut TYPE_FOLDERS: [[u8; FOLDER]; MAX_M] = [[0; FOLDER]; MAX_M];
+
+/// Keep the folder of the machine on type `ty` at its module's commit.
+pub unsafe fn keep_type_folder(ty: u32, folder: &[u8; FOLDER]) {
+    let first = dkrt_sdk::device::DYN_TYPE_FIRST;
+    if ty >= first && ty - first < MAX_M as u32 {
+        (*addr_of_mut!(TYPE_FOLDERS))[(ty - first) as usize] = *folder;
+    }
+}
+
+/// The folder of the machine on type `ty` below its module's (empty: none).
+pub fn type_folder(ty: u32) -> [u8; FOLDER] {
+    let first = dkrt_sdk::device::DYN_TYPE_FIRST;
+    if ty < first || ty - first >= MAX_M as u32 {
+        return [0; FOLDER];
+    }
+    unsafe { (*addr_of!(TYPE_FOLDERS))[(ty - first) as usize] }
 }
 
 /// The folder module `rec` named (empty: none).

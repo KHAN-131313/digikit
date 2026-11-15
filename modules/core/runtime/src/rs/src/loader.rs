@@ -431,6 +431,7 @@ unsafe fn commit(rec: usize, c: &crate::collect::Collect, keys: &crate::collect:
         let mut m = 0;
         while m < c.nm {
             let t = crate::assign::resolve(col::machine_key(keys, &c.machines[m]));
+            col::keep_type_folder(t, &c.subs[m]);
             if services().has_voice(rec, t) {
                 let (rng, latched) = col::voice_declared(c, &plan, m);
                 if latched != 0 {

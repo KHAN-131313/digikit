@@ -125,7 +125,8 @@ keep_bytes = 0x1000
 # runtime's own region with the keep range. No peripheral registers; at most 4 ranges.
 peek = [[0x40000000, 0x466c0000], [0x46712000, 0x47fe1000]]
 
-# The runtime's per-type limits (docs/design/module-sdk.md 11.5 D8); generated into the runtime's device.rs.
+# The runtime's per-type limits (docs/design/module-sdk.md 11.5 D8); generated into the runtime's device.rs. Most are digikit's own sizes,
+# not firmware limits: sdk/sdk.toml [limits.max] says for each whether it is soft, a format or bound, and what a raise involves.
 [limits]
 modules = 8
 machine_rows = 8

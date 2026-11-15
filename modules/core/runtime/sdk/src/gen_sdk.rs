@@ -449,7 +449,7 @@ pub mod api {
     pub type UiTickFn = unsafe extern "C" fn(arg: *mut u8);
 
     /// The names a module may import, in the order of the runtime's table (`[[import]]`).
-    pub const IMPORT_NAMES: [&str; 114] = [
+    pub const IMPORT_NAMES: [&str; 115] = [
         "memcpy",
         "memset",
         "memcmp",
@@ -500,6 +500,7 @@ pub mod api {
         "dk_param_set",
         "dk_module_ctx_add_machine",
         "dk_module_ctx_folder",
+        "dk_machine_folder",
         "dk_module_ctx_add_fx",
         "dk_record_add",
         "dk_service_declare_kind",
@@ -567,7 +568,7 @@ pub mod api {
     ];
 
     /// The names the runtime's own table holds (`IMPORTS`), in order: the imports without `requires`.
-    pub const BUILTIN_NAMES: [&str; 79] = [
+    pub const BUILTIN_NAMES: [&str; 80] = [
         "memcpy",
         "memset",
         "memcmp",
@@ -613,6 +614,7 @@ pub mod api {
         "dk_param_set",
         "dk_module_ctx_add_machine",
         "dk_module_ctx_folder",
+        "dk_machine_folder",
         "dk_module_ctx_add_fx",
         "dk_record_add",
         "dk_service_declare_kind",
@@ -772,8 +774,11 @@ pub mod api {
     /// `dk_module_ctx_add_machine`: Declare a machine of this module: `index` is its DK_MACHINE_ID_<ID> (build/gen/module_ids.h): the position of the id in the `[[machine]]` list of module.toml, which is the row of its key in the keys table. `name` the long name, `short_name` the short one. The DSP entry points are found by the names `_<id>_render` and `_<id>_note_on`. Returns the builder handle; on an error (full, bad index) a placeholder, and the error is reported when `init` returns.
     pub type DkModuleCtxAddMachineFn = unsafe extern "C" fn(ctx: *mut u8, index: u32, name: *const u8, short_name: *const u8) -> *mut u8;
 
-    /// `dk_module_ctx_folder`: Name the folder this module's machines sit in on the machine list (core/machine-list): one folder row that opens to them. `name` has 1 to 15 characters; the list shows it in upper case, and modules that name the same folder share it. The machines of a module that names none sit at the top of the list. A second call replaces the first; an empty or too long name is an error reported when `init` returns.
+    /// `dk_module_ctx_folder`: Name the folder this module's machines sit in on the machine list (core/machine-list): one folder row that opens to them. `name` has 1 to 31 characters; '/' nests folders ("Machinedrum/EFM"), and no name in it may be empty. The list shows names in upper case; modules that name the same path share the folder. The machines of a module that names none sit at the top of the list. A second call replaces the first; a bad name is an error reported when `init` returns.
     pub type DkModuleCtxFolderFn = unsafe extern "C" fn(ctx: *mut u8, name: *const u8);
+
+    /// `dk_machine_folder`: Put machine `m` in a folder below its module's folder (dk_module_ctx_folder), for example the machine's family: "EFM" puts it in Machinedrum > EFM. `path` follows the rules of dk_module_ctx_folder. A machine without it sits in the module's folder. A second call replaces the first; a bad path is an error reported when `init` returns.
+    pub type DkMachineFolderFn = unsafe extern "C" fn(m: *mut u8, path: *const u8);
 
     /// `dk_module_ctx_add_fx`: Declare an effect of this module: `index` is its DK_FX_ID_<ID>: the position of the id in the `[[fx]]` list of module.toml, which is the row of its id in the keys table. `name` the long name, `short_name` the short one. The DSP entry is `_<id>_process`. Returns the builder handle (a placeholder on an error, reported at commit).
     pub type DkModuleCtxAddFxFn = unsafe extern "C" fn(ctx: *mut u8, index: u32, name: *const u8, short_name: *const u8) -> *mut u8;

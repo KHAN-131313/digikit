@@ -557,17 +557,38 @@ fn a_folder_is_kept_from_the_commit_until_release_and_a_second_call_replaces_the
 }
 
 #[test]
-fn an_empty_or_too_long_folder_is_an_error_at_commit_and_keeps_the_folder() {
+fn a_bad_folder_path_is_an_error_at_commit_and_keeps_the_folder() {
+    for bad in [&b"\0"[..], b"A folder name that is far too long\0", b"/MD\0", b"MD/\0", b"MD//EFM\0", b"/\0"] {
+        let mut b = Box::new(Collect::new());
+        b.set_folder(c(b"MD\0"));
+        b.set_folder(bad.as_ptr());
+        assert_eq!(b.err, E_FORMAT, "{:?}", core::str::from_utf8(bad));
+        assert_eq!(&b.folder[..3], b"MD\0", "the folder stays");
+    }
+    let mut ok = Box::new(Collect::new());
+    ok.set_folder(c(b"Machinedrum/EFM\0"));
+    ok.set_folder(c(b"THIRTY_ONE_CHARACTERS_IN_ALL_XX\0"));
+    assert_eq!(ok.err, 0, "nested names and 31 characters fit");
+}
+
+#[test]
+fn a_machine_folder_belongs_to_its_machine_and_a_foreign_handle_changes_nothing() {
+    let _g = LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let mut b = Box::new(Collect::new());
-    b.set_folder(c(b"MD\0"));
-    b.set_folder(c(b"A folder too long\0"));
-    assert_eq!(b.err, E_FORMAT);
-    assert_eq!(&b.folder[..3], b"MD\0");
-    let mut e = Box::new(Collect::new());
-    e.set_folder(c(b"\0"));
-    assert_eq!(e.err, E_FORMAT);
-    assert_eq!(e.folder[0], 0);
-    let mut fifteen = Box::new(Collect::new());
-    fifteen.set_folder(c(b"FIFTEEN_CHARS_X\0"));
-    assert_eq!(fifteen.err, 0, "15 characters fit with the NUL");
+    let m0 = b.add_machine(0, c(b"A\0"), c(b"A\0"));
+    let m1 = b.add_machine(1, c(b"B\0"), c(b"B\0"));
+    b.machine_folder(m1, c(b"EFM\0"));
+    b.machine_folder(placeholder(), c(b"X\0"));
+    b.machine_folder(m0, c(b"EFM//X\0"));
+    assert_eq!(b.err, E_FORMAT, "the bad path of m0");
+    assert_eq!(b.subs[0][0], 0, "m0 keeps none");
+    assert_eq!(&b.subs[1][..4], b"EFM\0");
+    unsafe {
+        let first = dkrt_sdk::device::DYN_TYPE_FIRST;
+        keep_type_folder(first + 1, &b.subs[1]);
+        assert_eq!(&type_folder(first + 1)[..4], b"EFM\0");
+        keep_type_folder(first + 1, &[0; FOLDER]);
+        assert_eq!(type_folder(first + 1)[0], 0, "a later module's machine on the type gets its own (none)");
+    }
+    assert_eq!(type_folder(0)[0], 0, "a stock type has none");
 }

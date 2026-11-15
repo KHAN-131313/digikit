@@ -221,8 +221,11 @@ int32_t dk_param_set(uint32_t track, uint32_t word, int32_t raw);
 /* Declare a machine of this module: `index` is its DK_MACHINE_ID_<ID> (build/gen/module_ids.h): the position of the id in the `[[machine]]` list of module.toml, which is the row of its key in the keys table. `name` the long name, `short_name` the short one. The DSP entry points are found by the names `_<id>_render` and `_<id>_note_on`. Returns the builder handle; on an error (full, bad index) a placeholder, and the error is reported when `init` returns. Context: init. Since runtime 0.7.0. */
 dk_machine *dk_module_ctx_add_machine(dk_module_ctx *ctx, uint32_t index, const char *name, const char *short_name);
 
-/* Name the folder this module's machines sit in on the machine list (core/machine-list): one folder row that opens to them. `name` has 1 to 15 characters; the list shows it in upper case, and modules that name the same folder share it. The machines of a module that names none sit at the top of the list. A second call replaces the first; an empty or too long name is an error reported when `init` returns. Context: init. Since runtime 0.8.1. */
+/* Name the folder this module's machines sit in on the machine list (core/machine-list): one folder row that opens to them. `name` has 1 to 31 characters; '/' nests folders ("Machinedrum/EFM"), and no name in it may be empty. The list shows names in upper case; modules that name the same path share the folder. The machines of a module that names none sit at the top of the list. A second call replaces the first; a bad name is an error reported when `init` returns. Context: init. Since runtime 0.8.1. */
 void dk_module_ctx_folder(dk_module_ctx *ctx, const char *name);
+
+/* Put machine `m` in a folder below its module's folder (dk_module_ctx_folder), for example the machine's family: "EFM" puts it in Machinedrum > EFM. `path` follows the rules of dk_module_ctx_folder. A machine without it sits in the module's folder. A second call replaces the first; a bad path is an error reported when `init` returns. Context: init. Since runtime 0.8.1. */
+void dk_machine_folder(dk_machine *m, const char *path);
 
 /* Add a page to the machine, after the pages already added: `name` is its title, `short_name` its tab label on a device that keeps knobs in page rows. Returns the page handle (a placeholder on an error). Context: init. Since runtime 0.7.0. */
 dk_page *dk_machine_add_page(dk_machine *m, const char *name, const char *short_name);

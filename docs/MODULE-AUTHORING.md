@@ -213,9 +213,11 @@ A machine needs DSP routines. A machine with no DSP code (a data-only clone of a
 by name (section 5.1).
 
 `dk_module_ctx_folder(ctx, name)` (runtime 0.8.1) puts the module's machines in a folder of the machine list (core/machine-list, FUNC + SYN or
-FUNC + SRC): one row that opens to them, in place of a row per machine at the top. `name` has 1 to 15 characters and is shown in upper case;
-modules that name the same folder share it. Call it once in `init`, before or after the machines. A module that names no folder has its
-machines at the top of the list.
+FUNC + SRC): one row that opens to them, in place of a row per machine at the top. `dk_machine_folder(m, name)` puts one machine in a folder below
+the module's, for example its family: khan/md names `"Machinedrum (MD)"` and each machine `"EFM"`, so the list shows MACHINEDRUM > EFM > EFM-BD.
+A name has 1 to 31 characters and is shown in upper case; `/` nests further, and modules that name the same path share the folder. A name may
+end in a short form in parentheses: the row shows the name, the folder's title bar (about eight characters) the short form. A module that names
+no folder has its machines at the top of the list.
 
 `dk_machine_add_page(m, name, short_name)` adds a page after the pages already added. `name` is the title. `short_name` is the tab label on a
 device that keeps knobs in page rows. The first page of a machine is its knob page.

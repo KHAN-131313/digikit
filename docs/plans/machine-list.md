@@ -31,7 +31,10 @@ stock view already shows its second list (filter types) as a sideways page, whic
 - NO closes the list; inside a folder NO goes up one level, with the cursor on the folder.
 - A folder with no loaded machine is not shown. A module's machines are in the folder the module names
   (`dk_module_ctx_folder(ctx, "MD")` in `init`, runtime 0.8.1); a module that names none has its machines in the root. Modules
-  that name the same folder share it (names compared in upper case). One level only.
+  that name the same folder share it (names compared in upper case). Folders nest: `dk_machine_folder(m, "EFM")` puts a machine in a
+  folder below its module's (Machinedrum > EFM); NO goes up one level; a folder row is marked when the track's machine is inside it at
+  any depth; the list opens down to the machine. A name may carry a short form for the title bar, "Machinedrum (MD)" (Khan: write
+  MD in full where it fits).
 
 ## Look
 
