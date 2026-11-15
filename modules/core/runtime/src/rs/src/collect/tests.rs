@@ -536,3 +536,37 @@ fn what_init_declared_must_be_what_the_header_table_carries() {
         assert_eq!(dk_service_declare_slot(core::ptr::null_mut(), 1, 0), E_CONTEXT);
     }
 }
+
+#[test]
+fn a_folder_is_kept_from_the_commit_until_release_and_a_second_call_replaces_the_first() {
+    let _g = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let mut b = Box::new(Collect::new());
+    b.set_folder(c(b"Perc\0"));
+    b.set_folder(c(b"MD\0"));
+    assert_eq!(b.err, 0);
+    assert_eq!(&b.folder[..3], b"MD\0");
+    unsafe {
+        keep_folder(2, &b.folder);
+        assert_eq!(&folder_of(2)[..3], b"MD\0");
+        assert_eq!(folder_of(1)[0], 0, "another module has none");
+        release(2);
+    }
+    assert_eq!(folder_of(2)[0], 0);
+    assert_eq!(folder_of(MAX_MODULES)[0], 0, "out of range is none");
+}
+
+#[test]
+fn an_empty_or_too_long_folder_is_an_error_at_commit_and_keeps_the_folder() {
+    let mut b = Box::new(Collect::new());
+    b.set_folder(c(b"MD\0"));
+    b.set_folder(c(b"A folder too long\0"));
+    assert_eq!(b.err, E_FORMAT);
+    assert_eq!(&b.folder[..3], b"MD\0");
+    let mut e = Box::new(Collect::new());
+    e.set_folder(c(b"\0"));
+    assert_eq!(e.err, E_FORMAT);
+    assert_eq!(e.folder[0], 0);
+    let mut fifteen = Box::new(Collect::new());
+    fifteen.set_folder(c(b"FIFTEEN_CHARS_X\0"));
+    assert_eq!(fifteen.err, 0, "15 characters fit with the NUL");
+}

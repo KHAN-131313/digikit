@@ -6,6 +6,7 @@ use dkrt_sdk::gen_abi::sig;
 const _: sig::dkrt_status = crate::dkrt_status;
 const _: sig::dkrt_load = crate::dkrt_load;
 const _: sig::dkrt_module = crate::dkrt_module;
+const _: sig::dkrt_machine_folder = crate::dkrt_machine_folder;
 const _: sig::dkrt_fx = crate::dkrt_fx;
 const _: sig::dkrt_health = crate::dkrt_health;
 const _: sig::dkrt_capacity = crate::dkrt_capacity;

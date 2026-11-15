@@ -22,12 +22,16 @@ stock view already shows its second list (filter types) as a sideways page, whic
   (labelled `SYN` on the DN2, `SRC` on the DT2) and the `FLTR` tab, with the label and page dots under the title. The list
   opens on the filter tab when the track shows its filter page. On a MIDI track the filter tab shows the stock words
   `NO FILTERS ON` / `MIDI TRACKS.`.
-- The cursor starts on the track's machine (or on the folder that holds it). The track's machine carries a marker.
+- The cursor starts on the track's machine. When that machine is in a folder the list opens inside the folder, over the top
+  list (Claude's call, 2026-11-15: it saves a press when moving between the machines of one folder, such as the MD set); NO
+  goes up to the folder row, and LEFT from the filter tab shows the top list with the cursor on the folder row. The track's
+  machine carries a marker, and so does the folder row that holds it.
 - YES on a machine sets it for the track: the marker moves and the list stays open (decided by Khan, as the stock view does).
   YES on the marked machine closes the list (the stock rule). YES on a folder opens it.
 - NO closes the list; inside a folder NO goes up one level, with the cursor on the folder.
-- A folder with no loaded machine is not shown. A module's machines are in the folder the module names; a module that names
-  none has its machines in the root.
+- A folder with no loaded machine is not shown. A module's machines are in the folder the module names
+  (`dk_module_ctx_folder(ctx, "MD")` in `init`, runtime 0.8.1); a module that names none has its machines in the root. Modules
+  that name the same folder share it (names compared in upper case). One level only.
 
 ## Look
 
@@ -52,8 +56,11 @@ a folder sign or a small icon. Wanted later (Khan): closer to the stock machine 
    `cf.page.fn.track_page` for opening on it), run on both devices in the emulator: LEFT and RIGHT, a pick on each tab, opening
    on the filter tab, the MIDI text. A first version put them in a `FILTER` folder row; that was replaced by the tab, which is
    what the stock view does.
-5. [ ] Folders: a module names a folder for its machines (a builder call `dk_module_ctx_folder(ctx, "MD")` or a manifest key;
-   decide), the registry keeps it per machine row, the list groups by it. SDK, runtime and tests.
+5. [x] Folders: a module names a folder for its machines with the builder call `dk_module_ctx_folder(ctx, "MD")` (chosen over a
+   manifest key: machines are declared by builder calls in `init`, and the folder commits with them); the runtime keeps it per
+   module from the commit until the unload and gives it per machine type to core modules (`dkrt_machine_folder`, through the
+   registry's row owners); the list groups by it. Runtime 0.8.1 (a new import). Host tests in `collect/tests.rs`; the fixture
+   `test/folder-sine` (two machines in the folder TEST). [ ] Run on both devices.
 6. [ ] Tests: host tests of the list logic; a device test on both devices (open, pick, marker, folder in and out, NO).
 7. [ ] Fallback and safety: when the list cannot be made the stock view opens (the spike does this); a patch set without
    `core/machine-list` keeps the stock view.

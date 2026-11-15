@@ -25,7 +25,7 @@ The `core/*` modules are patched into the image. Changes to `core/*` are firmwar
    With `--dir`, set `PATCHKIT_MODULES=DIR`.
 2. Edit `module.toml` and the source (guide 4 to 7). Reuse `references/dsp-recipes.md`, avoid `references/selas-pitfalls.md`, size with `references/devices.md`.
    A machine and an effect are built in `init` in `src/module.c` with the builder calls of `<dk/gen/imports.h>`: `dk_module_ctx_add_machine`, `dk_machine_add_page`,
-   `dk_page_add_param`, `dk_param_range`, `dk_param_glyph` for a machine; `dk_module_ctx_add_fx`, `dk_fx_routes`, `dk_fx_add_page`, `dk_page_add_fx_param` for an effect. List the ids
+   `dk_page_add_param`, `dk_param_range`, `dk_param_glyph` and `dk_module_ctx_folder` (a folder of the machine list) for a machine; `dk_module_ctx_add_fx`, `dk_fx_routes`, `dk_fx_add_page`, `dk_page_add_fx_param` for an effect. List the ids
    in `module.toml` as `[[machine]]` and `[[fx]]` with `id` and an optional `dsp` (the prefix of the SHARC entry points, when it differs from the id; analog uses `va`).
    `patchkit gen` writes `DK_MACHINE_ID_<ID>` and `DK_FX_ID_<ID>` to `build/gen/module_ids.h`: each is the 0-based position of the entry in its list and the index of its key in the keys table. `mise run module:check` runs `init` in the emulator and writes `[uses.dt2]` and `[uses.dn2]` per device (`machine_rows`, `param_rows`, `page_rows`, `record_bytes`). Never write them by hand.
    Word numbers go in a shared `src/NAME.h`. The declaration macros (`DK_MACHINE`, `DK_FX`, `DK_PAGE`, ...) are gone from run-time modules. A manifest with `[[voice]]`, `[[param]]` or `[[page]]` is refused.

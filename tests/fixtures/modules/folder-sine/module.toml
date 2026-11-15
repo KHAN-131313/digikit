@@ -1,0 +1,37 @@
+[module]
+id = "test/folder-sine"
+version = "0.1.0"
+name = "FOLDER SINE"
+category = "test"
+type = "machine"
+author = "digikit"
+status = "experimental"
+summary = "Test machines for the machine list's folders: two sines of test/sine's DSP body that name the folder TEST (dk_module_ctx_folder)."
+dynamic = true
+ports = ["dt2-1.17", "dn2-1.12"]
+requires = []
+conflicts = []
+
+[targets]
+"dt2-1.17" = "experimental"
+"dn2-1.12" = "experimental"
+
+# Two machines on one DSP body (test/sine's src/dsp/sine.s, symbols `sn`). init names the folder TEST, so core/machine-list
+# shows them in a folder row (docs/plans/machine-list.md). `[uses.<device>]` is written by `mise run module:check`.
+[[machine]]
+id = "fsa"
+dsp = "sn"
+
+[[machine]]
+id = "fsb"
+dsp = "sn"
+
+[[object]]
+path = "build/folder-sine-cf.dko.json"
+sources = ["src/module.c"]
+place = "cf.expansion"
+
+[[object]]
+path = "build/folder-sine-dsp.dko.json"
+sources = ["../sine/src/dsp/sine.s"]
+place = "dsp.l2"

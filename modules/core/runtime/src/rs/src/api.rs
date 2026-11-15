@@ -75,6 +75,30 @@ pub unsafe extern "C" fn dkrt_module_header(first: u32, out: *mut DkrtModuleHead
 
 
 
+/// The folder the module of run-time machine type `ty` names for its machines (`dk_module_ctx_folder`) into `out`, NUL-terminated: its
+/// length, 0 when it names none, `E_NOT_FOUND` when no loaded module fills that type, `E_SET_VALUE` when `cap` is too small (`out`
+/// untouched). For core/machine-list. UI task.
+#[no_mangle]
+pub unsafe extern "C" fn dkrt_machine_folder(ty: u32, out: *mut u8, cap: u32) -> i32 {
+    init_once();
+    let owner = crate::registry::owner_of_type(ty);
+    if owner == 0 || st().modules[owner as usize - 1].used == 0 {
+        return E_NOT_FOUND;
+    }
+    let f = crate::collect::folder_of(owner as usize - 1);
+    let n = crate::cstr_len(f.as_ptr(), f.len());
+    if out.is_null() || (cap as usize) < n + 1 {
+        return dkrt_sdk::proto::E_SET_VALUE;
+    }
+    let mut i = 0;
+    while i < n {
+        *out.add(i) = f[i];
+        i += 1;
+    }
+    *out.add(n) = 0;
+    n as i32
+}
+
 /// The `index`th loaded module (in load-slot order) into `out`; returns 0, or `E_NOT_FOUND` past the end.
 #[no_mangle]
 pub unsafe extern "C" fn dkrt_module(index: u32, out: *mut DkrtModule) -> i32 {

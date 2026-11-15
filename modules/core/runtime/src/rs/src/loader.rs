@@ -468,6 +468,7 @@ unsafe fn commit(rec: usize, c: &crate::collect::Collect, keys: &crate::collect:
             arena::free(block);
             return r;
         }
+        col::keep_folder(rec, &c.folder);
         rows = col::counts_of(c, &p);
     }
     col::keep(rec, block as u32, size as u32, keys);

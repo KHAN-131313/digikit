@@ -561,6 +561,9 @@ pub mod sig {
     /// The index-th loaded module (in load-slot order); OK, or E_NOT_FOUND past the end.
     pub type dkrt_module = unsafe extern "C" fn(index: u32, out: *mut DkrtModule) -> i32;
 
+    /// The folder the module of run-time machine type `machine` names for its machines (dk_module_ctx_folder), NUL-terminated into `out`: its length, 0 when the module names none, E_NOT_FOUND when no loaded module fills that type (a stock type too), E_SET_VALUE when `cap` is too small (`out` untouched). UI task.
+    pub type dkrt_machine_folder = unsafe extern "C" fn(machine: u32, out: *mut u8, cap: u32) -> i32;
+
     /// The index-th loaded effect that has a page (row order): tab, module id, allowed routes, default, the route it runs on and the route the settings give it; OK, or E_NOT_FOUND past the end.
     pub type dkrt_fx = unsafe extern "C" fn(index: u32, out: *mut DkrtFx) -> i32;
 

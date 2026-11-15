@@ -523,6 +523,9 @@ int32_t dkrt_load(const uint8_t *path);
 /* The index-th loaded module (in load-slot order); OK, or E_NOT_FOUND past the end. */
 int32_t dkrt_module(uint32_t index, DkrtModule *out);
 
+/* The folder the module of run-time machine type `machine` names for its machines (dk_module_ctx_folder), NUL-terminated into `out`: its length, 0 when the module names none, E_NOT_FOUND when no loaded module fills that type (a stock type too), E_SET_VALUE when `cap` is too small (`out` untouched). UI task. */
+int32_t dkrt_machine_folder(uint32_t machine, uint8_t *out, uint32_t cap);
+
 /* The index-th loaded effect that has a page (row order): tab, module id, allowed routes, default, the route it runs on and the route the settings give it; OK, or E_NOT_FOUND past the end. */
 int32_t dkrt_fx(uint32_t index, DkrtFx *out);
 

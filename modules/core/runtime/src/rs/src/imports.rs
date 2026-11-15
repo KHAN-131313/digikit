@@ -117,6 +117,7 @@ import_table! {
     ("dk_param_get", imp_param_get),
     ("dk_param_set", imp_param_set),
     ("dk_module_ctx_add_machine", collect::dk_module_ctx_add_machine),
+    ("dk_module_ctx_folder", collect::dk_module_ctx_folder),
     ("dk_module_ctx_add_fx", collect::dk_module_ctx_add_fx),
     ("dk_record_add", collect::dk_record_add),
     ("dk_service_declare_kind", collect::dk_service_declare_kind),
@@ -193,6 +194,7 @@ const _: dkrt_sdk::api::DkIntroTakeFn = imp_intro_take;
 const _: dkrt_sdk::api::DkParamGetFn = imp_param_get;
 const _: dkrt_sdk::api::DkParamSetFn = imp_param_set;
 const _: dkrt_sdk::api::DkModuleCtxAddMachineFn = collect::dk_module_ctx_add_machine;
+const _: dkrt_sdk::api::DkModuleCtxFolderFn = collect::dk_module_ctx_folder;
 const _: dkrt_sdk::api::DkModuleCtxAddFxFn = collect::dk_module_ctx_add_fx;
 const _: dkrt_sdk::api::DkMachineAddPageFn = collect::dk_machine_add_page;
 const _: dkrt_sdk::api::DkFxAddPageFn = collect::dk_fx_add_page;

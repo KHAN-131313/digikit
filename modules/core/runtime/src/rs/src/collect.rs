@@ -28,6 +28,8 @@ const MAX_F: usize = crate::dsp::MAX_FX;
 const MAX_PG: usize = 16;
 const MAX_PA: usize = MAX_RECORDS;
 const TEXT: usize = 24;
+/// The bytes of a folder name (`dk_module_ctx_folder`) with its NUL: 15 characters.
+pub const FOLDER: usize = 16;
 /// The characters of an effect's short name (the tab label of its page record).
 const FX_SHORT: usize = 3;
 const KNOBS: usize = limits::PAGE_KNOBS;
@@ -161,6 +163,8 @@ pub struct Collect {
     pub ng: usize,
     /// what a service module declared in `init` (`dk_service_declare_*`), compared with its header table at the commit
     pub decl: Declare,
+    /// the folder its machines sit in on the machine list (`dk_module_ctx_folder`; empty: none), kept per module at the commit
+    pub folder: [u8; FOLDER],
     gbytes: [u8; G_BYTES],
     gat: usize,
     records: usize,
@@ -172,7 +176,7 @@ const _: () = assert!(core::mem::size_of::<Collect>() == dkneeds::COLLECT_BYTES 
 
 impl Collect {
     pub const fn new() -> Collect {
-        Collect { err: 0, machines: [M0; MAX_M], nm: 0, fxs: [F0; MAX_F], nf: 0, pages: [G0; MAX_PG], np: 0, params: [P0; MAX_PA], nparam: 0, grecs: [GRec { kind: 0, at: 0, len: 0 }; MAX_G], ng: 0, decl: Declare::new(), gbytes: [0; G_BYTES], gat: 0, records: 0 }
+        Collect { err: 0, machines: [M0; MAX_M], nm: 0, fxs: [F0; MAX_F], nf: 0, pages: [G0; MAX_PG], np: 0, params: [P0; MAX_PA], nparam: 0, grecs: [GRec { kind: 0, at: 0, len: 0 }; MAX_G], ng: 0, decl: Declare::new(), folder: [0; FOLDER], gbytes: [0; G_BYTES], gat: 0, records: 0 }
     }
 
     /// `dk_record_add`: keep one record of a generic kind (`[records.kinds]` `generic = true`; the typed kinds have their builders). The body is
@@ -238,6 +242,19 @@ impl Collect {
         self.machines[i] = m;
         self.nm += 1;
         &mut self.machines[i] as *mut CMachine as *mut u8
+    }
+
+    /// `dk_module_ctx_folder`: the folder of the module's machines. A second call replaces the first; an empty or too long name keeps the
+    /// error (the folder stays as it was). Not a record: it takes no room in the collection.
+    pub fn set_folder(&mut self, name: *const u8) {
+        let mut f = [0u8; FOLDER];
+        let mut e = 0;
+        unsafe { put_text(&mut f, name, &mut e) };
+        if e != 0 {
+            self.fail(e);
+            return;
+        }
+        self.folder = f;
     }
 
     pub fn add_fx(&mut self, index: u32, name: *const u8, short: *const u8) -> *mut u8 {
@@ -509,6 +526,13 @@ pub unsafe extern "C" fn dk_module_ctx_add_machine(ctx: *mut u8, index: u32, nam
     match active() {
         Some(c) if crate::entry::is_ctx(ctx) => c.add_machine(index, name, short_name),
         _ => placeholder(),
+    }
+}
+pub unsafe extern "C" fn dk_module_ctx_folder(ctx: *mut u8, name: *const u8) {
+    if let Some(c) = active() {
+        if crate::entry::is_ctx(ctx) {
+            c.set_folder(name);
+        }
     }
 }
 pub unsafe extern "C" fn dk_module_ctx_add_fx(ctx: *mut u8, index: u32, name: *const u8, short_name: *const u8) -> *mut u8 {
@@ -1372,6 +1396,21 @@ fn contains(a: &[u32], v: u32) -> bool {
 
 /// Per module record: the arena block of the committed record block (address, size; 0: none) and the effect ids the module's header declares.
 static mut BLOCKS: [(u32, u32); MAX_MODULES] = [(0, 0); MAX_MODULES];
+/// The folder each loaded module named for its machines (`dk_module_ctx_folder`; empty: none), from its commit until it is unloaded.
+static mut FOLDERS: [[u8; FOLDER]; MAX_MODULES] = [[0; FOLDER]; MAX_MODULES];
+
+/// Keep the folder of module `rec` (`Collect::folder`) after its commit.
+pub unsafe fn keep_folder(rec: usize, folder: &[u8; FOLDER]) {
+    (*addr_of_mut!(FOLDERS))[rec] = *folder;
+}
+
+/// The folder module `rec` named (empty: none).
+pub fn folder_of(rec: usize) -> [u8; FOLDER] {
+    if rec >= MAX_MODULES {
+        return [0; FOLDER];
+    }
+    unsafe { (*addr_of!(FOLDERS))[rec] }
+}
 static mut FX_IDS: [[u32; MAX_RECORDS]; MAX_MODULES] = [[0; MAX_RECORDS]; MAX_MODULES];
 
 /// Remember the committed block and the module's effect ids.
@@ -1410,6 +1449,7 @@ pub unsafe fn loaded_fx_ids(rec: usize, out: &mut [u32; MAX_MODULES * MAX_RECORD
 pub unsafe fn release(rec: usize) -> u32 {
     let a = (*addr_of!(BLOCKS))[rec].0;
     (*addr_of_mut!(BLOCKS))[rec] = (0, 0);
+    (*addr_of_mut!(FOLDERS))[rec] = [0; FOLDER];
     (*addr_of_mut!(FX_IDS))[rec] = [0; MAX_RECORDS];
     a
 }

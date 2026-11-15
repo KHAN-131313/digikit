@@ -248,6 +248,15 @@ pub unsafe fn counts() -> [(u32, u32); 3] {
     ]
 }
 
+/// The owner (module record index + 1) of the machine row of type `ty`; 0 when no module fills it or `ty` is not a run-time type.
+pub fn owner_of_type(ty: u32) -> u8 {
+    let first = dkrt_sdk::device::DYN_TYPE_FIRST;
+    if ty < first || ty - first >= MAX_MACH as u32 {
+        return 0;
+    }
+    rs().mach_owner[(ty - first) as usize]
+}
+
 /// The machine type numbers of the machine rows `owner` filled (at most 8), in type order; returns how many.
 pub fn types_of(owner: u8, out: &mut [u8; MAX_MACH]) -> usize {
     let s = rs();
