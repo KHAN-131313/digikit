@@ -70,7 +70,7 @@ pub mod limits {
     pub const SEL_MAX: usize = 8;
     pub const MAP_N: usize = 8;
     pub const MACHINE_ROWS: usize = 8;
-    pub const PARAM_ROWS: usize = 16;
+    pub const PARAM_ROWS: usize = 64;
     pub const PAGE_ROWS: usize = 8;
     pub const STAGE_BYTES: usize = 65536;
     pub const PAGE_KNOBS: usize = 8;

@@ -118,15 +118,16 @@ fn the_collection_is_bounded_by_max_records_and_the_call_past_it_returns_the_pla
     for _ in 0..MAX_M {
         machines.push(b.add_machine(0, c(b"A\0"), c(b"A\0")));
     }
-    let mut first = core::ptr::null_mut();
+    let mut pages = std::vec::Vec::new();
     for i in 0..MAX_PG {
-        let g = b.machine_add_page(machines[i % MAX_M], c(b"G\0"), c(b"S\0"));
-        if i == 0 {
-            first = g;
-        }
+        pages.push(b.machine_add_page(machines[i % MAX_M], c(b"G\0"), c(b"S\0")));
     }
-    for _ in 0..(MAX_RECORDS - MAX_M - MAX_PG) {
-        assert_ne!(b.page_add_param(first, c(b"P\0"), c(b"P\0"), 0), placeholder());
+    let first = pages[0];
+    // the parameters spread over the pages: one page holds KNOBS
+    let params = MAX_RECORDS - MAX_M - MAX_PG;
+    assert!(params <= MAX_PG * KNOBS, "the records can be filled with parameters");
+    for k in 0..params {
+        assert_ne!(b.page_add_param(pages[k / KNOBS], c(b"P\0"), c(b"P\0"), 0), placeholder());
     }
     assert_eq!(b.err, 0, "exactly MAX_RECORDS records fit");
     assert_eq!(b.records, MAX_RECORDS);

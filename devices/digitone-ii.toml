@@ -133,7 +133,7 @@ arena_bytes = 524288
 stage_bytes = 65536
 fx_slots = 3   # effects in the chain; core/dynfx reserves this many free effect rows for run-time effects (at most DK_FX_MAX = 4)
 send_slots = 1 # effects that run on a send bus (core/fx send route, the send page of the FX key: one knob each; at most the entries of [fx] send_indices)
-param_rows = 16
+param_rows = 64
 page_rows = 8
 
 # The effect pages of run-time effects (core/fxpages, docs/design/digikit-registry.md "Effect pages", docs/findings/61-fx-pages.md "The Digitone II"): the

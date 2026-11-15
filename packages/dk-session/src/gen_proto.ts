@@ -10,7 +10,7 @@ export const MAX_REPLY_WIRE = 1024;
 /** The `.dkm` loader's format limits (`[limits.format]`). */
 export const DKM_HEADER = 160;
 export const DSP_HEADER = 64;
-export const MAX_RECORDS = 32;
+export const MAX_RECORDS = 96;
 export const MAX_RELOCS = 4096;
 export const MAX_IMPORTS = 32;
 export const MAX_CF_IMPORTS = 64;
@@ -19,7 +19,7 @@ export const MAX_STATE_BYTES = 16777216;
 export const GRANULE = 64;
 export const DSP_SLACK = 8;
 export const ARENA_HDR = 16;
-export const COLLECT_BYTES = 7222;
+export const COLLECT_BYTES = 13110;
 export const TABLE_MAGIC = 1145787458;
 export const TABLE_VERSION = 1;
 export const MAX_VOICES = 8;

@@ -371,6 +371,582 @@ max = 0
 default = 0
 devices = ["dt2"]
 
+[[entry]]
+registry = "params"
+id = "dp16"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp17"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp18"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp19"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp20"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp21"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp22"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp23"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp24"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp25"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp26"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp27"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp28"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp29"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp30"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp31"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp32"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp33"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp34"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp35"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp36"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp37"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp38"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp39"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp40"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp41"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp42"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp43"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp44"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp45"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp46"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp47"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp48"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp49"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp50"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp51"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp52"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp53"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp54"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp55"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp56"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp57"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp58"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp59"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp60"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp61"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp62"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
+[[entry]]
+registry = "params"
+id = "dp63"
+name = ""
+short = ""
+template = 0xd1
+slot = 0
+min = 0
+max = 0
+default = 0
+devices = ["dt2"]
+
 # Digitone II parameters: the template is a plain 0 .. 127 word (A Env Decay), the slot is the sound-array slot itself.
 [[entry]]
 registry = "params"
@@ -555,6 +1131,582 @@ devices = ["dn2"]
 [[entry]]
 registry = "params"
 id = "dp15"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp16"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp17"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp18"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp19"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp20"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp21"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp22"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp23"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp24"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp25"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp26"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp27"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp28"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp29"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp30"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp31"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp32"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp33"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp34"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp35"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp36"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp37"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp38"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp39"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp40"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp41"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp42"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp43"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp44"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp45"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp46"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp47"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp48"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp49"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp50"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp51"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp52"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp53"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp54"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp55"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp56"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp57"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp58"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp59"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp60"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp61"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp62"
+name = ""
+short = ""
+template = 0xd5
+slot = 25
+min = 0
+max = 0
+default = 0
+devices = ["dn2"]
+
+[[entry]]
+registry = "params"
+id = "dp63"
 name = ""
 short = ""
 template = 0xd5

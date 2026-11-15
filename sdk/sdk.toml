@@ -1646,7 +1646,7 @@ map_entries = 8     # sticky machine-type map entries: MAP_N = 8 (record format:
 fx_slots = 4        # effects in the chain: DK_FX_MAX of [fx] (kept equal by packages/patchkit/tests/sdkgen.rs)
 send_slots = 2      # effects on a send bus: the Sound array's free indices a send page can use, [fx] send_indices (at most SEND_MAX = 2 in core/fxpages)
 dsp_area_bytes = 524288  # the 17-bit word offset of a core/dsp-link chunk reaches 2^17 words
-param_rows = 16     # parameter rows core/dynreg reserves (tied to its manifest by packages/patchkit/tests/devdata.rs)
+param_rows = 64     # parameter rows core/dynreg reserves (tied to its manifest by packages/patchkit/tests/devdata.rs)
 page_rows = 8       # page rows core/dynreg reserves (Digitone II)
 machine_rows = 8    # run-time machine types core/dynreg reserves (tied to its manifest by packages/patchkit/tests/devdata.rs)
 stage_bytes = 65536  # the runtime's staging buffer: the largest .dkm file (patchkit refuses a larger one)
@@ -1662,7 +1662,7 @@ dkm_header = 160    # 0xa0: the header of a `.dkm` (init, fini, menu and tick of
 # machine keys, effect ids and the keys of a service's kind), 4 KINDS (kind, length, handler entry: a service module's kinds), 5 SLOTS, 6 HOOKS, 7 EXPORTS, 8 RESOURCES.
 # A module that needs and keeps nothing has the 8-byte head. A file with no table, or another magic, is the format of runtime 0.7: E_CONTRACT.
 dsp_header = 64     # 0x40: the header of the DSP section
-max_records = 32    # records of the `register` table
+max_records = 96    # records of the `register` table
 max_relocs = 4096   # ColdFire relocations
 max_imports = 32    # imports of the DSP section
 max_cf_imports = 64  # imports of the ColdFire import table (a different table from the DSP section's)
@@ -1673,7 +1673,7 @@ dsp_slack = 8       # bytes the DSP range may start before its alignment
 arena_hdr = 16      # the arena's block header
 table_magic = 1145787458  # 0x444b5442 "DKTB": the first word of the header table of a `.dkm` (packages/dkneeds/src/keys.rs); another word is a file of the 0.7 format
 table_version = 1   # the version of the header table (a change is a MINOR of the runtime)
-collect_bytes = 7222  # `size_of::<Collect>()` of the runtime's collect.rs on the ColdFire: the builder calls of one `init`, held in an arena block until the commit (the runtime checks it at compile time; the host's struct has more padding)
+collect_bytes = 13110  # `size_of::<Collect>()` of the runtime's collect.rs on the ColdFire: the builder calls of one `init`, held in an arena block until the commit (the runtime checks it at compile time; the host's struct has more padding)
 
 # The settings store (docs/design/digikit-store.md, "The settings record"): one record in two copies in the store range, next to the selection
 # record. `sectors` is the size of ONE copy; the runtime keeps the record in RAM and writes the copy that is not current. The area is part of the

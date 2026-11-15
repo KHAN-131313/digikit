@@ -289,7 +289,7 @@ fn a_limit_above_the_contract_maximum_is_refused() {
         ("modules", "modules = 8", "modules = 9"),
         ("fx_slots", "fx_slots = 3", "fx_slots = 5"),
         ("send_slots", "send_slots = 2", "send_slots = 3"),
-        ("param_rows", "param_rows = 16", "param_rows = 17"),
+        ("param_rows", "param_rows = 64", "param_rows = 65"),
         (
             "dsp_area_bytes",
             "dsp_area_bytes = 524288",

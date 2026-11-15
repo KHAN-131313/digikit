@@ -2,7 +2,7 @@
 
 pub const HEADER: u32 = 160;
 pub const DSP_HEADER: u32 = 64;
-pub const MAX_RECORDS: u32 = 32;
+pub const MAX_RECORDS: u32 = 96;
 pub const MAX_RELOCS: u32 = 4096;
 pub const MAX_IMPORTS: u32 = 32;
 pub const MAX_CF_IMPORTS: u32 = 64;
@@ -11,7 +11,7 @@ pub const MAX_STATE_BYTES: u32 = 16777216;
 pub const GRANULE: u32 = 64;
 pub const DSP_SLACK: u32 = 8;
 pub const ARENA_HDR: u32 = 16;
-pub const COLLECT_BYTES: u32 = 7222;
+pub const COLLECT_BYTES: u32 = 13110;
 pub const TABLE_MAGIC: u32 = 1145787458;
 pub const TABLE_VERSION: u32 = 1;
 pub const MAX_VOICES: u32 = 8;
