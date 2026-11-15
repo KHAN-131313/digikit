@@ -11,6 +11,10 @@ dk_ui *dk_ui_core_handle(void);
    Call it from a hook that rebuilds the stock menu; stock_menu is the menu object the hook gets. */
 void dk_ui_stock_row(uint8_t *stock_menu, const char *text, dk_ui_action_fn *fn, void *arg);
 
+/* A submenu row with a folder sign in the icon column (a plain menu; in a list it is a plain submenu row). */
+void dk_ui_menu_add_folder(dk_ui_menu *m, const char *text, dk_ui_menu *sub);
+/* In a plain menu dk_ui_menu_check(m, row, on) puts a mark (a dot at the right end) on a row and dk_ui_menu_checked reads it:
+   a "current choice" mark. It is the caller's state: YES does not toggle it, and a refill clears it (set it again in fill). */
 /* Implemented by an app (core/digikit-menu) and called by core/ui from its hook at the end of the SETTINGS item list rebuild: add the
    app's rows with dk_ui_stock_row. An optional link: core/ui resolves it at patch time and does nothing when no module provides it. */
 void dk_app_settings_rows(uint8_t *stock_menu);

@@ -1,13 +1,13 @@
 [module]
 id = "core/machine-list"
 version = "0.0.1"
-name = "Machine list (spike)"
+name = "Machine list"
 category = "core"
 role = "app"
 type = "framework"
 author = "khan"
 status = "experimental"
-summary = "SPIKE: FUNC + SRC (Digitakt II) or FUNC + SYN (Digitone II) opens a digikit list of the machines instead of the firmware's Machine Selection view; YES sets the track's machine."
+summary = "FUNC + SRC (Digitakt II) or FUNC + SYN (Digitone II) opens a digikit list of the machines instead of the firmware's Machine Selection view: the track's machine is marked, YES sets a machine and the list stays open."
 requires = ["core/runtime", "core/ui", "core/machines"]
 conflicts = []
 ports = ["dt2-1.17", "dn2-1.12"]
@@ -19,7 +19,7 @@ ports = ["dt2-1.17", "dn2-1.12"]
 # One C source on <dk/platform/ui.h> (core/ui draws it with the firmware's own views). Facts: docs/findings/130 and 131.
 [[object]]
 path = "build/machine-list.dko.json"
-sources = ["src/list.c"]
+sources = ["src/list.c", "src/shim.s"]
 place = "cf.expansion"
 
 # The one call that shows the stock view on FUNC + SYN (finding 131): its target becomes ml_push, with the same arguments.

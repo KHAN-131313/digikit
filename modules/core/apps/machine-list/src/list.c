@@ -1,52 +1,118 @@
-/* core/machine-list (SPIKE): a machine list that digikit owns, in place of the firmware's Machine Selection view.
+/* core/machine-list: the machine list that digikit owns, in place of the firmware's Machine Selection view.
+ * Plan: docs/plans/machine-list.md. Facts: docs/findings/130 and 131.
  *
- * It answers two questions (docs/findings/131-dn2-machine-sel-open-and-commit.md):
- *   1. can a core/ui list open where FUNC + SYN opens the stock view (the push call at the end of that key case)?
- *   2. does the stock commit, called from the list's row action, set the track's machine as the stock YES does?
+ * ml_push takes the place of the stock push at the one call site that shows the stock view on FUNC + SRC (Digitakt II) or
+ * FUNC + SYN (Digitone II): same arguments (the view manager, the shared_ptr of the stock view, replace), same result. It opens
+ * the list and leaves the stock view unpushed; when the list cannot be made it calls the stock push, so the stock view opens.
  *
- * ml_push takes the place of the stock push at that one call site: same arguments (the view manager, the shared_ptr of the
- * stock view, replace), same result. It opens the list and leaves the stock view unpushed; when the list cannot be made it
- * calls the stock push, so the stock view still opens.
+ * The list is a plain core/ui menu, filled at every open from the firmware's machine list (its order; core/dynreg leaves out
+ * unfilled run-time types): one row per machine, the track's machine marked and under the cursor. YES on a row sets that
+ * machine for the selected track: the mark moves and the list stays open. YES on the marked row closes the list (the stock
+ * view's rule). NO closes it.
  *
- * The list is filled at every open: one row per machine type that has a name (stock types and filled run-time rows), in
- * type order. YES on a row commits that type for the selected track and closes the list.
- * The globals without static are read by the proof by name. */
+ * The globals without static are read by the proofs by name. The module links without memcpy and memset. */
 #include <stdint.h>
 #include <stddef.h>
 #include <dk/platform/ui.h>
 #include <dk_ui_core.h>
 #include <dk_fw_machine.h>
+#include <dk_fw_mem.h>
 #include <dk_fw_page.h>
 #include <dk_fw_project.h>
 #include <dk_fw_view.h>
 
-#define ML_TYPES 24
+#define ML_MAX 40
 
-/* How often the hook ran and the last type a row committed (-1: none). */
+/* std::vector<int> as the getter returns it. */
+typedef struct vec {
+    int32_t *begin, *end, *cap;
+} vec;
+
+void ml_get_list(vec *out); /* shim.s */
+
+/* The rows of the list as it was last filled: the machine type of each row, their number, the track they are for and the
+   track's machine (-1: none). ML_OPENS counts the opens, ML_LAST is the last type a row committed (-1: none). */
+int32_t ML_TYPE[ML_MAX];
+uint32_t ML_N;
+int32_t ML_TRACK;
+int32_t ML_CUR = -1;
 uint32_t ML_OPENS;
 int32_t ML_LAST = -1;
 
 static dk_ui *g_ui;
 static dk_ui_menu *g_menu;
 
-static void pick(void *arg, int32_t type)
+static uint32_t kit_and_track(int32_t *track)
+{
+    uint32_t project = dk_fw_project_singleton();
+    *track = (int32_t)dk_fw_page_view_track((const uint8_t *)dk_fw_project_settings(project));
+    return dk_fw_project_active_kit(project);
+}
+
+/* Reads the machine list and the track's machine into the ML_ globals. */
+static void scan(void)
+{
+    vec v;
+    v.begin = v.end = v.cap = 0;
+    ml_get_list(&v);
+    uint32_t kit = kit_and_track(&ML_TRACK);
+    ML_CUR = dk_fw_project_track_type(kit, ML_TRACK);
+    ML_N = 0;
+    for (int32_t *p = v.begin; p && p < v.end && ML_N < ML_MAX; p++) {
+        const char *name = *p < 0 ? 0 : dk_fw_machine_name_long(*p);
+        if (name && name[0])
+            ML_TYPE[ML_N++] = *p;
+    }
+    if (v.begin)
+        dk_fw_mem_free((uint8_t *)v.begin);
+}
+
+static int32_t row_of(int32_t type)
+{
+    for (uint32_t i = 0; i < ML_N; i++)
+        if (ML_TYPE[i] == type)
+            return (int32_t)i;
+    return -1;
+}
+
+static void pick(void *arg, int32_t row)
 {
     (void)arg;
-    uint32_t project = dk_fw_project_singleton();
-    uint32_t kit = dk_fw_project_active_kit(project);
-    int32_t track = (int32_t)dk_fw_page_view_track((const uint8_t *)dk_fw_project_settings(project));
-    ML_LAST = type;
+    if (row < 0 || (uint32_t)row >= ML_N)
+        return;
+    int32_t type = ML_TYPE[row];
+    if (type == ML_CUR) { /* YES on the marked machine closes the list */
+        dk_ui_menu_close(g_menu);
+        return;
+    }
+    int32_t track;
+    uint32_t kit = kit_and_track(&track);
     dk_fw_project_set_track_type(kit, track, type, 1, 1);
-    dk_ui_menu_close(g_menu);
+    ML_LAST = type;
+    ML_CUR = dk_fw_project_track_type(kit, track);
+    for (uint32_t i = 0; i < ML_N; i++)
+        dk_ui_menu_check(g_menu, (int32_t)i, ML_TYPE[i] == ML_CUR);
+}
+
+/* The label of a row: the machine's name in upper case, as the firmware's menus write their rows. */
+static void label(char *out, const char *name)
+{
+    uint32_t i = 0;
+    for (; name[i] && i + 1 < DK_UI_ROW; i++)
+        out[i] = name[i] >= 'a' && name[i] <= 'z' ? (char)(name[i] - 32) : name[i];
+    out[i] = 0;
 }
 
 static void fill(dk_ui_menu *m, void *arg)
 {
     (void)arg;
-    for (int32_t type = 0; type < ML_TYPES; type++) {
-        const char *name = dk_fw_machine_name_long(type);
-        if (name && name[0])
-            dk_ui_menu_add_action(m, name, pick, NULL, type);
+    char text[DK_UI_ROW];
+    scan();
+    for (uint32_t i = 0; i < ML_N; i++) {
+        label(text, dk_fw_machine_name_long(ML_TYPE[i]));
+        dk_ui_menu_add_action(m, text, pick, NULL, (int32_t)i);
+        if (ML_TYPE[i] == ML_CUR)
+            dk_ui_menu_check(m, (int32_t)i, 1);
     }
 }
 
@@ -62,7 +128,9 @@ uint32_t ml_push(uint32_t manager, const shared_ptr *view, uint32_t replace)
     }
     if (!g_menu)
         return dk_fw_view_push_shared(manager, view, replace);
-    dk_ui_menu_refresh(g_menu);
+    scan(); /* for the cursor: the open fills again */
+    int32_t row = row_of(ML_CUR);
+    dk_ui_menu_select(g_menu, row < 0 ? 0 : row);
     dk_ui_menu_open(g_menu);
     return 1;
 }

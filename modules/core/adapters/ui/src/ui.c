@@ -59,12 +59,16 @@ void dk_make_sp(shared_ptr *out, uint8_t *parent, uint8_t *view);
 #define MAX_CHOICE 32
 #define LIST_ROWS 8
 #define LIST_COLS 20 /* characters of a list row that the label of a toggle or value row fills */
+#define MARK_DOT_X 0x49    /* a plain menu row's mark: its left edge from the row's draw origin */
+#define MARK_FOLDER_X 0    /* the folder sign: at the draw origin (the icon column of a stock row) */
 
 enum { K_MENU, K_TEXT, K_LIST, K_PANEL };
 enum { R_ACTION, R_SUBMENU, R_TEXT, R_TOGGLE, R_VALUE };
 
 typedef struct row {
     uint8_t kind;
+    uint8_t mark;   /* a plain menu: the row carries the mark (dk_ui_menu_check) */
+    uint8_t folder; /* a submenu row drawn with the folder sign */
     dk_ui_action_fn *fn;
     void *ctx;
     int arg;
@@ -207,6 +211,8 @@ static void inv_adjust(const uint32_t *any, uint8_t *item, int delta)
 static void rowcpy(row *d, const row *s)
 {
     d->kind = s->kind;
+    d->mark = s->mark;
+    d->folder = s->folder;
     d->fn = s->fn;
     d->ctx = s->ctx;
     d->arg = s->arg;
@@ -232,6 +238,8 @@ static row *add_row(dk_ui_menu *m)
     }
     row *r = &m->rows[m->n];
     r->kind = 0;
+    r->mark = 0;
+    r->folder = 0;
     r->fn = 0;
     r->ctx = 0;
     r->arg = 0;
@@ -325,7 +333,9 @@ static void add_item(dk_ui_menu *m, const char *text, int i, int with_value)
     if (with_value && m->rows[i].kind == R_VALUE)
         adj = make_fn((uint32_t)m, (uint32_t)i, inv_adjust);
     fn draw = make_fn((uint32_t)m, (uint32_t)i, inv_draw);
-    uint8_t *item = make_item(text, &act, &adj, with_value && !in_list ? &draw : 0, 0);
+    /* a plain menu gives every row the draw function: it draws the value, the mark and the folder sign (draw_row) */
+    int want_draw = (with_value && !in_list) || m->kind == K_MENU;
+    uint8_t *item = make_item(text, &act, &adj, want_draw ? &draw : 0, 0);
     if (item)
         dk_fw_menu_add_item(m->obj, item);
 }
@@ -429,6 +439,21 @@ static void draw_row(dk_ui_menu *m, int i, uint8_t *canvas, int x, int y)
         dk_fw_text_draw_box(canvas, m->font, x + 0x4e, y + 2, 2, 0, 0, "%s", v ? "ON" : "OFF");
     else if (r->kind == R_VALUE)
         dk_fw_text_draw_box(canvas, m->font, x + 0x4e, y + 2, 2, 0, 0, "%03d", v);
+    if (m->kind != K_MENU || (!r->mark && !r->folder))
+        return;
+    /* Colour -1 inverts the pixels (seen in the emulator: two overlapping fills leave a hole), and the selection bar inverts the
+       row after its items are drawn. So the pieces must not overlap, and one ink serves the selected row too. */
+    if (r->folder) {
+        /* a folder in the icon column: a tab on a body, 9 x 7 */
+        dk_fw_draw_fill_rect(canvas, x + MARK_FOLDER_X, y + 2, x + MARK_FOLDER_X + 8, y + 6, -1);
+        dk_fw_draw_fill_rect(canvas, x + MARK_FOLDER_X, y + 7, x + MARK_FOLDER_X + 3, y + 8, -1);
+    }
+    if (r->mark) {
+        /* a dot at the right end of the row, 5 x 5 without its corners */
+        dk_fw_draw_fill_rect(canvas, x + MARK_DOT_X + 1, y + 2, x + MARK_DOT_X + 3, y + 6, -1);
+        dk_fw_draw_fill_rect(canvas, x + MARK_DOT_X, y + 3, x + MARK_DOT_X, y + 5, -1);
+        dk_fw_draw_fill_rect(canvas, x + MARK_DOT_X + 4, y + 3, x + MARK_DOT_X + 4, y + 5, -1);
+    }
 }
 
 static void ui_action(dk_ui_menu *m, const char *text, dk_ui_action_fn *fn_, void *ctx, int arg)
@@ -762,6 +787,8 @@ static void ui_close(dk_ui_menu *m)
 
 static int ui_checked(const dk_ui_menu *list, int row_)
 {
+    if (list && list->kind == K_MENU && row_ >= 0 && row_ < list->n)
+        return list->rows[row_].mark;
     if (!list || list->kind != K_LIST || row_ < 0)
         return 0;
     return dk_fw_menu_is_checked(list->obj, row_) & 1;
@@ -769,6 +796,11 @@ static int ui_checked(const dk_ui_menu *list, int row_)
 
 static void ui_check(dk_ui_menu *list, int row_, int on)
 {
+    if (list && list->kind == K_MENU && row_ >= 0 && row_ < list->n) {
+        list->rows[row_].mark = on ? 1 : 0; /* drawn by draw_row */
+        invalidate(list);
+        return;
+    }
     if (!list || list->kind != K_LIST || row_ < 0)
         return;
     int cur = ui_checked(list, row_);
@@ -1015,6 +1047,17 @@ void dk_ui_menu_add_action(dk_ui_menu *m, const char *text, dk_ui_action_fn *run
 void dk_ui_menu_add_submenu(dk_ui_menu *m, const char *text, dk_ui_menu *sub)
 {
     ui_submenu(m, text, sub);
+}
+
+/* For other core modules: a submenu row with the folder sign (a plain menu only; elsewhere a plain submenu row). */
+void dk_ui_menu_add_folder(dk_ui_menu *m, const char *text, dk_ui_menu *sub)
+{
+    if (!m || !sub)
+        return;
+    int i = m->n;
+    ui_submenu(m, text, sub);
+    if (m->n > i && m->kind == K_MENU)
+        m->rows[i].folder = 1;
 }
 
 void dk_ui_menu_add_toggle(dk_ui_menu *m, const char *text, int32_t *value,
