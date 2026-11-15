@@ -38,14 +38,14 @@ a folder sign or a small icon. Wanted later (Khan): closer to the stock machine 
 0. [x] Spike (`modules/core/apps/machine-list`, commit 6c61be5d): the push of the stock view retargeted
    (`cf.machine.hook.sel.open_push`), a core/ui menu of the named machine types, `cf.project.fn.set_track_type` from a row. Run in
    the emulator: list opens, the commit changes the track's machine, NO closes.
-1. [ ] Declarations with `sig` in `devices/fw` (the spike declares in C): `set_track_type`, `push_shared`, `name.long`, and for
+1. [x] Declarations with `sig` in `devices/fw` (the spike declares in C): `set_track_type`, `push_shared`, `name.long`, and for
    the DN2 filter types `0x40031a56` (set) and `0x400313a6` (get). Core Rust objects rebuilt (the toolchain works here).
-2. [ ] Digitakt II 1.17: read the same owner, open site and commit (the cfdb is being built); declare `rule.dt2`. The DN2 1.11
-   port needs its image (not on this machine).
-3. [ ] core/ui: a row marker and a folder sign (row draw function); a way to keep a menu open and move the marker after an
-   action. Host tests in `modules/core/adapters/ui/host`.
-4. [ ] The list proper: rows from the machine list getter (so the registry's filter and order apply), marker and cursor on
-   the track's machine, stay open after a commit, `FILTER` folder on the DN2.
+2. [x] Digitakt II 1.17: the same owner, open site and commits read and declared (`rule.dt2`); run in the emulator. [ ] The DN2
+   1.11 port needs its image (not on this machine).
+3. [x] core/ui: a row mark (`dk_ui_menu_check` on a plain menu) and a folder row (`dk_ui_menu_add_folder`), drawn by the row
+   draw function. [ ] Host tests in `modules/core/adapters/ui/host`.
+4. [x] The list proper: rows from the machine list getter (so the registry's filter and order apply), mark and cursor on
+   the track's machine, stays open after a commit, a `FILTER` folder on both devices (not on a MIDI track).
 5. [ ] Folders: a module names a folder for its machines (a builder call `dk_module_ctx_folder(ctx, "MD")` or a manifest key;
    decide), the registry keeps it per machine row, the list groups by it. SDK, runtime and tests.
 6. [ ] Tests: host tests of the list logic; a device test on both devices (open, pick, marker, folder in and out, NO).

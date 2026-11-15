@@ -149,8 +149,16 @@ static void pick(void *arg, int32_t row)
     uint32_t kit = kit_and_track(&track);
     dk_fw_project_set_track_type(kit, track, type, 1, 1);
     ML_LAST = type;
-    /* fill again: the mark moves, and FILTER comes or goes with a MIDI machine; the cursor keeps its row */
-    dk_ui_menu_refresh(g_menu);
+    ML_CUR = dk_fw_project_track_type(kit, track);
+    /* FILTER comes or goes with a MIDI machine: fill again then (a refill scrolls the cursor row to the top). Otherwise the
+       mark moves in place. */
+    uint32_t has = g_filter && !dk_fw_project_track_is_midi(kit, track);
+    if (has != ML_HAS_FILTER) {
+        dk_ui_menu_refresh(g_menu);
+        return;
+    }
+    for (uint32_t i = 0; i < ML_N; i++)
+        dk_ui_menu_check(g_menu, (int32_t)i, ML_TYPE[i] == ML_CUR);
 }
 
 /* The label of a row: the machine's name in upper case, as the firmware's menus write their rows. */

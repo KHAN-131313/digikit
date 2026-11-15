@@ -70,14 +70,38 @@ the named machine types and does not push the stock view; a row's action calls `
 Both declarations resolve from the cfdb built here (Ghidra 12.2 with the ColdfireEMAC language): regenerating
 `devices/ports/dn2-1.12.toml` with `tools.patchkit.port_resolve` gave the committed file plus only the new anchors and the hook.
 
+## The Digitakt II 1.17
+
+**[D] read here, and run.** The same structure (`tools.coldfire.cfport dn2-1.12-emac dt2-1.17-emac` maps the functions; the weak
+matches were read at their call sites):
+
+| What | DN2 1.12 | DT2 1.17 |
+| --- | --- | --- |
+| view constructor | `0x4005b56e` | `0x400611fe` |
+| its `make_shared`, and the caller | `0x4019f456`, `0x40061c96` | `0x401b0066`, `0x400673e6` |
+| owner field that keeps the view | `+0xcc` | `+0xcc` |
+| row builder | `0x4005b2c0` | `0x40060f50` |
+| view key handler | `0x4005b9e8` | `0x40061678` |
+| owner key handler | `0x4005ed12` | `0x400649c4` |
+| the push call (the hook site) | `0x40060230` | `0x40065ce0` |
+| the push function | `0x4011e6cc` | `0x4011cd58` |
+| machine list getter (out vector in a0) | `0x4004d8b6` | `0x40052a08` |
+| commit a machine | `0x40031880` | `0x40036798` |
+| filter list getter (out vector in a0) | `0x4004dae2` | `0x40052c98` |
+| filter type name | `0x400dc508` | `0x400da71e` |
+| a track's filter type | `0x400313a6` | `0x400362be` |
+| commit a filter type | `0x40031a56` | `0x4003696e` |
+| is the track a MIDI track | `0x40031274` | `0x4003618c` |
+
+The Digitakt view has the same page word and second list, so its second page is the filter types too. Run in the emulator
+(2026-11-15, `core/machine-list` on DT2 1.17): FUNC + SRC shows the list (ONESHOT, WERP, STRETCH, REPITCH, SLICE, GRID, MIDI and
+the FILTER folder), a pick sets the track's machine (the track's page becomes WERP's), and the FILTER folder sets the filter
+type.
+
 ## Open
 
-- The spike declares its three firmware functions in its C file. With `sig` in `devices/fw` the generated Rust bindings change
-  and the committed core Rust objects need a rebuild (the codegen-gcc toolchain).
 
 - Which of the two tests at `0x4005f3d4` and `0x4005f3e0` is FUNC + SYN, and what the other is.
 - The meaning of the two `1` arguments of the commits.
 - Other paths that change a track's machine without this view: the encoder step `0x4004da90` named in the DN2 mk2 mod's notes
   (1.11), and whatever uses `MachineListView` (finding 131).
-- The Digitakt II 1.17: the same owner and case are expected (the row builder has the same hash on both devices,
-  [digikit-registry](../design/digikit-registry.md)), not read.
